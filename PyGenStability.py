@@ -100,8 +100,24 @@ class PyGenStability(object):
             A_neg = -0.5*(A - abs(A))
             deg_plus = np.array(A_plus.sum(1)).flatten()
             deg_neg = np.array(A_neg.sum(1)).flatten()
+
             self.deg_norm = deg_plus.sum()+deg_neg.sum()
-            self.null_model = np.array([deg_plus, deg_plus/deg_plus.sum(), deg_neg, -deg_neg/deg_neg.sum()])/self.deg_norm
+
+            if deg_neg.sum() < 1e-10:
+                deg_neg_norm = np.zeros(self.n)
+                deg_neg = np.zeros(self.n)
+            else:
+                deg_neg_norm = deg_neg/deg_neg.sum()
+
+            if deg_plus.sum() < 1e-10:
+                deg_plus_norm = np.zeros(self.n)
+                deg_plus = np.zeros(self.n)
+            else:
+                deg_plus_norm = deg_plus/deg_plus.sum()
+
+
+            self.null_model = np.array([deg_plus, deg_plus_norm, deg_neg, -deg_neg_norm])/self.deg_norm
+    
 
 
 
