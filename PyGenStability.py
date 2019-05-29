@@ -1,5 +1,3 @@
-import numpy as np
-
 import sys as sys
 import numpy as np
 import scipy as sc
@@ -15,6 +13,12 @@ from multiprocessing import current_process
 import os 
 from timeit import default_timer as timer
 from tqdm import tqdm
+
+import cppyy
+from array import array
+
+cppyy.include("cpp/louvain_to_python.h")
+from cppyy.gbl import run_louvain
 
 
 
@@ -162,16 +166,6 @@ class PyGenStability(object):
         self.Q = (np.max(self.Q)*self.precision)*np.round(self.Q/((np.max(self.Q)*self.precision)))
         self.Q = sc.sparse.csc_matrix(self.Q.toarray()) #needed to remove all the 0's and save memory
 
-    def save_quality_null(self, time):
-        """
-        save files for generalised Louvain cpp code
-        """
-
-        nx.write_weighted_edgelist(nx.Graph(self.Q), 'model/quality_'+str(time)+'.edj' )
-
-        np.savetxt('model/null_model_'+str(time)+'.edj', self.null_model.T)
-
-
     def scan_stability(self, times, disp=True):
         """
         Compute a time scan of the stability
@@ -239,7 +233,6 @@ class PyGenStability(object):
 
         #self.A_matrix(time)
         self.set_quality_matrix(time)
-        self.save_quality_null(time)
 
         if self.time_computation:
             end = timer()	
@@ -254,7 +247,7 @@ class PyGenStability(object):
         if self.time_computation:
             start = timer()
 
-        louvf = partial(louv_f, self.G, time, self.cpp_folder)
+        louvf = partial(louv_f, self.Q, self.null_model)
         with Pool(processes= self.n_processes_louv) as p_stab:  #initialise the parallel computation
             out = p_stab.map(louvf, np.ones(self.louvain_runs)) #run the louvain in parallel
 
@@ -309,7 +302,6 @@ class PyGenStability(object):
         #self.T_matrix()
         self.set_null_model()
         self.set_quality_matrix(time)
-        self.save_quality_null(time)
         self.run_stability(time)
 
 
@@ -733,33 +725,33 @@ def pprocess_f(args, i):
 
 
    
-def run_gen_louvain(G, time, time_global, proc_id, cpp_folder):
-
-    import os as os
-    os.system(cpp_folder+'/cpp/run_gen_louvain.sh model/quality_'+str(time_global)+'.edj model/null_model_'+str(time_global)+'.edj ' + str(time) + ' ' + str(np.random.randint(1000)) + ' ' + str(proc_id))
-    partitions = np.loadtxt('data/optimal_partitions_'+str(proc_id)+'.dat')
-    #os.remove('data/optimal_partitions_'+str(proc_id)+'.dat')
-    if len(np.shape(partitions))>1:
-        partitions = partitions[-1]
-        
-    return partitions 
-
-def louv_f(G, time_global, cpp_folder, time):
+def louv_f(Q, null_model, time):
         """
         Function to run in parallel for Louvain evaluations
         """
 
-        current = current_process()
-        proc_id = np.int(current._identity[0])
-        #(stability, number_of_comms, community_id) = lv.stability(args[0],time, args[1])
+        non_zero = Q.nonzero()
+        from_vec = non_zero[0]
+        to_vec = non_zero[1]
+        w_vec = Q[non_zero]
+        n_edges = len(from_vec)
 
-        community_id = run_gen_louvain(G, time, time_global, proc_id, cpp_folder)
-        stability = np.float(np.loadtxt('data/stability_value_'+str(proc_id)+'.dat'))
+        null_model_input = array('d', null_model.flatten())
+        num_null_vectors = np.shape(null_model)[0] 
+        time = 1 #set the time to 1
+
+        stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model_input, num_null_vectors, time)
+        print("lkjlkjljk")
+
+       
+        #stability = np.float(np.loadtxt('data/stability_value_'+str(proc_id)+'.dat'))
         #os.remove('data/stability_value_'+str(proc_id)+'.dat')
+
         number_of_comms = len(set(community_id))
 
         return stability, number_of_comms, community_id
         
+       
 def mi_f(louv_ensemble, args):
         """
         Function to run in paralell for MI evaluations
