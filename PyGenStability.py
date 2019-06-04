@@ -163,7 +163,7 @@ class PyGenStability(object):
 
 
         if self.tpe is 'modularity_signed':
-            self.Q = 2*time*self.A/self.deg_norm
+            self.Q = time*self.A/self.deg_norm
 
 
         self.Q = (np.max(self.Q)*self.precision)*np.round(self.Q/((np.max(self.Q)*self.precision)))
