@@ -1,0 +1,6 @@
+<lcgdict>
+    <selection>
+        <class pattern="clq::*"/>
+        <class pattern="lemon::*"/>
+    </selection>        
+</lcgdict>
