@@ -202,6 +202,7 @@ class PyGenStability(object):
             if self.post_process:
                 self.Q_matrices.append(self.Q) 
                 
+        ttprime = self.compute_ttprime(community_id_array, number_of_comms_array, times)
 
         #save the results
         timesteps = [element[0] for element in enumerate(times)]
@@ -211,12 +212,12 @@ class PyGenStability(object):
                 'stability' : stability_array,
                 'number_of_communities' : number_of_comms_array,
                 'community_id' : community_id_array,
-                'MI' : MI_array
+                'MI' : MI_array,
+                'ttprime': ttprime
             },
             index = timesteps,
         )
         
-        self.ttprime = self.compute_ttprime()
 
         #do the postprocessing here
         if self.post_process:
@@ -488,14 +489,10 @@ class PyGenStability(object):
 ## ttprime ##
 #############
 
-    def compute_ttprime(self):
+    def compute_ttprime(self, C, N, T):
         """
         Compute the mutual information score of several Louvain run
         """
-        C = self.stability_results['community_id']
-        N = self.stability_results['number_of_communities']
-        T = self.stability_results['Markov time']
-        Tprime = self.stability_results['Markov time']
 
         ttprime_id = []
         for t in range(len(T)):
@@ -506,13 +503,15 @@ class PyGenStability(object):
         with Pool(processes= self.n_processes_louv) as p_ttprime:  #initialise the parallel computation
             out = p_ttprime.map(ttprimef, ttprime_id) #run the MI
 
-        ttprime = np.zeros((len(T), len(T)))
+        ttprime = [] # np.zeros((len(T), len(T)))
 
         k=0
         for t in range(len(T)):
+            ttprime_tmp = np.zeros(len(T))
             for tprime in range(len(T)):
-                ttprime[t,tprime]= out[k]
+                ttprime_tmp[tprime]= out[k]
                 k+=1
+            ttprime.append(ttprime_tmp)
 
         return ttprime
     
@@ -539,51 +538,80 @@ class PyGenStability(object):
         Simple plot of a scan
         """
 
-        #self.compute_ttprime()
-        fig, ax0 = plt.subplots()
-        
-        t_max = len(self.ttprime)
+        #get the times paramters
+        n_t = len(self.stability_results['ttprime'])
+        times = np.log10(self.stability_results['Markov time'].values)
 
-        ax0.imshow(self.ttprime,aspect='auto', cmap='YlOrBr',vmin=0.0,vmax=1.1,alpha=0.6,extent=[0,t_max,0,t_max])#,origin='bottom')
-        ax0.get_yaxis().set_visible(False)
-        ax0.axis([0,len(self.ttprime),0,t_max])
+        import matplotlib.gridspec as gridspec
+        import matplotlib.ticker as ticker
+
+        plt.figure(figsize=(5,5))
+
+        gs = gridspec.GridSpec(2, 1, height_ratios = [ 1., 0.5])#, width_ratios = [1,0.2] )
+        gs.update(hspace=0)
+ 
+        #first plot tt' 
+        ax0 = plt.subplot(gs[0, 0])
+
+
+        #make the ttprime matrix
+        ttprime = np.zeros([n_t,n_t])
+        for i, tt in enumerate(self.stability_results['ttprime']):
+            ttprime[i] = tt 
+
+        ax0.contourf(times, times, ttprime, cmap='YlOrBr')
+
+        ax0.yaxis.tick_left()
+        ax0.yaxis.set_label_position('left')
+
+        ax0.set_ylabel(r'$log_{10}(t^\prime)$')
+
+        ax0.axis([times[0],times[-1],times[0],times[-1]])
+
+        #plot the number of clusters
         ax1 = ax0.twinx()
-
         if time_axis == True:
-            ax1.semilogx(self.stability_results['Markov time'], self.stability_results['stability'], label=r'$Q$',c='C2')
-            if self.calcMI:
-                ax1.semilogx(self.stability_results['Markov time'], self.stability_results['MI'],'-+',lw=2.,c='C3',label='MI')
+            ax1.plot(times, self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
         else:
-            ax1.plot(self.stability_results['stability'], label=r'$Q$',c='C2')
-
-            if self.calcMI:
-                ax1.plot(self.stability_results['MI'],'-',lw=2.,c='C3',label='MI')
+            ax1.plot(self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
             
-        ax1.axhline(1,ls='--',lw=1.,c='C3')
-
         ax1.yaxis.tick_right()
-        ax1.set_ylabel(r'$MI,Q$')
+        ax1.tick_params('y', colors='C0')
         ax1.yaxis.set_label_position('right')
-        ax1.legend(loc='center right')
-
-        ax1.axis([0, t_max, 0, 1.05])
-
-        ax2 = ax0.twinx()
-        
-        if time_axis == True:
-            ax2.plot(self.stability_results['Markov time'], self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
-        else:
-            ax2.plot(self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
-            
-        ax2.yaxis.tick_left()
-        ax2.yaxis.set_label_position('left')
-        ax2.set_ylabel(r'$size$')
-        ax2.set_xlabel(r'$time$')
+        ax1.set_ylabel('Number of clusters', color='C0')
     
-        ax2.legend(loc='center left')
-        ax2.axis([0,t_max,0,self.stability_results.at[0,'number_of_communities']])
+        #make a subplot for stability and MI
+        ax2 = plt.subplot(gs[1, 0])
 
+        #first plot the stability
+        if time_axis == True:
+            ax2.plot(times, self.stability_results['stability'], label=r'$Q$',c='C2')
+        else:
+            ax2.plot(self.stability_results['stability'], label=r'$Q$',c='C2')
 
+        ax2.set_yscale('log') 
+
+        ax2.tick_params('y', colors='C2')
+        ax2.set_ylabel(r'$Modularity$', c='C2')
+        ax2.yaxis.set_label_position('left')
+        #ax2.legend(loc='center right')
+        ax2.set_xlabel(r'$log_{10}(t)$')
+        
+        #ax2.axis([0,n_t,0,self.stability_results.at[0,'number_of_communities']])
+
+        #plot the MMI
+        if self.calcMI:
+            ax3 = ax2.twinx()
+            if time_axis == True:
+                ax3.plot(times, self.stability_results['MI'],'-',lw=2.,c='C3',label='MI')
+            else:
+                ax3.plot(self.stability_results['MI'],'-',lw=2.,c='C3',label='MI')
+
+            ax3.yaxis.tick_right()
+            ax3.tick_params('y', colors='C3')
+            ax3.set_ylabel(r'Mutual information', color='C3')
+            ax3.axhline(1,ls='--',lw=1.,c='C3')
+            ax3.axis([times[0], times[-1], 0,1.1])
 
 #################### 
 ## Sankey diagram ##
