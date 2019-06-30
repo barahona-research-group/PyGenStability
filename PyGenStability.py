@@ -383,7 +383,8 @@ class PyGenStability(object):
         S = self.stability_results.stability.values #store the stability of the commutity for each time
         
         times = self.stability_results['Markov time'].values #store the times
-        
+        ttprime = self.stability_results['ttprime'].values #store the times
+
         community_id_array_new = [] #to store the cleaned communities
         stability_array_new = []
         number_of_comms_array_new = []
@@ -431,7 +432,8 @@ class PyGenStability(object):
                 'stability' : stability_array_new,
                 'number_of_communities' : number_of_comms_array_new,
                 'community_id' : community_id_array_new,
-                'MI' : self.stability_results.MI.values
+                'MI' : self.stability_results.MI.values, 
+                'ttprime': ttprime 
             },
             index = self.stability_results.index,
         )
