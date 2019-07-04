@@ -39,6 +39,7 @@ class PyGenStability(object):
         self.m = len(G.edges) # number of edges 
 
         self.tpe = tpe #type of stability, linear or Markov
+        self.use_spectral_gap = False #if True, rescale the Markov time by the spectral gap 
         self.louvain_runs = louvains_runs #number of Louvain run 
         self.precision = precision #precision threshold for Markov stability
 
@@ -128,15 +129,29 @@ class PyGenStability(object):
         """
 
         if self.tpe is 'continuous_combinatorial':
-            L = 1.*nx.laplacian_matrix(self.G)
-            l_min = 1.#abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
+            if nx.is_directed(self.G): #for directed graph
+                print("Not implemented for directed graph, need latest networkx version")
+            else:
+                L = 1.*nx.laplacian_matrix(self.G)
+                
+            if self.use_spectral_gap:
+                l_min = abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
+            else:
+                l_min = 1. 
+                
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
         if self.tpe is 'continuous_normalized':
-            L = np.diag(1./self.degree).dot(nx.laplacian_matrix(self.G).toarray())
-
-            l_min = 1.#abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
+            if nx.is_directed(self.G): #for directed graph
+                L = nx.directed_laplacian_matrix(self.G, walk_type='pagerank', alpha=0.8)
+            else:
+                L = np.diag(1./self.degree).dot(nx.laplacian_matrix(self.G).toarray())
+            
+            if self.use_spectral_gap:
+                l_min = abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
+            else:
+                l_min = 1.
             
             ex = sc.sparse.linalg.expm(-time/l_min * L)
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
@@ -149,8 +164,11 @@ class PyGenStability(object):
             degree = abs(A).sum(1)
             D = np.diag(degree)
             L = sc.sparse.csr_matrix(D - A)
-
-            l_min = 1.#abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
+            
+            if self.use_spectral_gap:
+                l_min = abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
+            else:
+                l_min = 1.
 
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(ex)
@@ -373,7 +391,8 @@ class PyGenStability(object):
         S = self.stability_results.stability.values #store the stability of the commutity for each time
         
         times = self.stability_results['Markov time'].values #store the times
-        
+        ttprime = self.stability_results['ttprime'].values #store the times
+
         community_id_array_new = [] #to store the cleaned communities
         stability_array_new = []
         number_of_comms_array_new = []
@@ -421,7 +440,8 @@ class PyGenStability(object):
                 'stability' : stability_array_new,
                 'number_of_communities' : number_of_comms_array_new,
                 'community_id' : community_id_array_new,
-                'MI' : self.stability_results.MI.values
+                'MI' : self.stability_results.MI.values, 
+                'ttprime': ttprime 
             },
             index = self.stability_results.index,
         )
