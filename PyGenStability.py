@@ -23,17 +23,14 @@ a = clq.VectorPartition
 #cppyy.include("cpp/louvain_to_python.h")
 #from cppyy.gbl import run_louvain
 
-
-
 class PyGenStability(object):
     """ 
     Main class
     """
 
-#####################
-## init parameters ##
-#####################
-
+# =============================================================================
+# init parameters
+# =============================================================================
     def __init__(self, G, tpe, louvains_runs, precision):
         
         self.G = G # graph
@@ -79,10 +76,9 @@ class PyGenStability(object):
 
         self.cpp_folder = '/home/arnaudon/codes/PyGenStability'
 
-###########################################
-## create the generalized Louvain models ##
-###########################################
-
+# =============================================================================
+# create the generalized Louvain models
+# =============================================================================
     def set_null_model(self):
         """
         create the null models
@@ -126,8 +122,6 @@ class PyGenStability(object):
             self.null_model = np.array([deg_plus, deg_plus_norm, deg_neg, -deg_neg_norm])/self.deg_norm
     
 
-
-
     def set_quality_matrix(self, time):
         """
         create the quality matrix 
@@ -168,6 +162,7 @@ class PyGenStability(object):
 
         self.Q = (np.max(self.Q)*self.precision)*np.round(self.Q/((np.max(self.Q)*self.precision)))
         self.Q = sc.sparse.csc_matrix(self.Q.toarray()) #needed to remove all the 0's and save memory
+
 
     def scan_stability(self, times, disp=True):
         """
@@ -224,9 +219,7 @@ class PyGenStability(object):
             print("Apply postprocessing...")
             self.stability_postprocess()
         
-   
-
-   
+        
     def run_stability(self, time):
         """
         run the stability analysis at a given time, only used internally, as it does create the transition matrix
@@ -309,11 +302,9 @@ class PyGenStability(object):
         self.set_quality_matrix(time)
         self.run_stability(time)
 
-
-#####################
-## MI computations ##
-#####################
-
+# =============================================================================
+# MI computations
+# =============================================================================
     def minfo(self, louvain_ensemble, stability):
         """
         Compute the mutual information score of several Louvain run
@@ -365,10 +356,9 @@ class PyGenStability(object):
 
         return MI_mat, MI/n_MI   
  
-#################### 
-## postprocessing ##
-#################### 
-
+# =============================================================================
+# postprocessing
+# =============================================================================
     def stability_postprocess(self, disp=False):
         """
         Post-process the scan of the stability run
@@ -394,7 +384,7 @@ class PyGenStability(object):
                 print('Done ', i ,' of ', len(times))
 
             Q = self.Q_matrices[i].toarray() #use already computed exponential to save time
-            
+           
 
             #compute the Q matrix to sandwich with the community labels
             R = Q 
@@ -436,7 +426,6 @@ class PyGenStability(object):
             index = self.stability_results.index,
         )
  
-            
 
     def stability_postprocess_parallel(self, disp=False):
         """
@@ -485,10 +474,9 @@ class PyGenStability(object):
         os.environ["OMP_NUM_THREADS"] = str(num_threads)
 
 
-#############
-## ttprime ##
-#############
-
+# =============================================================================
+# ttprime
+# =============================================================================
     def compute_ttprime(self, C, N, T):
         """
         Compute the mutual information score of several Louvain run
@@ -516,12 +504,9 @@ class PyGenStability(object):
         return ttprime
     
              
-
-#######################
-## plotting/printing ##
-#######################
-
-
+# =============================================================================
+# plotting/printing
+# =============================================================================
     def print_single_result(self, i, j ):
         """
         Simple printing function
@@ -553,19 +538,15 @@ class PyGenStability(object):
         #first plot tt' 
         ax0 = plt.subplot(gs[0, 0])
 
-
         #make the ttprime matrix
         ttprime = np.zeros([n_t,n_t])
         for i, tt in enumerate(self.stability_results['ttprime']):
             ttprime[i] = tt 
 
         ax0.contourf(times, times, ttprime, cmap='YlOrBr')
-
         ax0.yaxis.tick_left()
         ax0.yaxis.set_label_position('left')
-
         ax0.set_ylabel(r'$log_{10}(t^\prime)$')
-
         ax0.axis([times[0],times[-1],times[0],times[-1]])
 
         #plot the number of clusters
@@ -590,9 +571,8 @@ class PyGenStability(object):
             ax2.plot(self.stability_results['stability'], label=r'$Q$',c='C2')
 
         ax2.set_yscale('log') 
-
         ax2.tick_params('y', colors='C2')
-        ax2.set_ylabel(r'$Modularity$', c='C2')
+        ax2.set_ylabel('Modularity', color='C2')
         ax2.yaxis.set_label_position('left')
         #ax2.legend(loc='center right')
         ax2.set_xlabel(r'$log_{10}(t)$')
@@ -613,11 +593,9 @@ class PyGenStability(object):
             ax3.axhline(1,ls='--',lw=1.,c='C3')
             ax3.axis([times[0], times[-1], 0,1.1])
 
-#################### 
-## Sankey diagram ##
-####################
-
-
+# =============================================================================
+# Sankey diagram
+# =============================================================================
     def create_sankey(self, timesteps, comm_sources, comm_allosterics):
         """
         Given a list of times, return a dictonary useable by the sankeywidget
@@ -678,18 +656,9 @@ class PyGenStability(object):
         return links
 
 
-
-
-
-
-
-
-########################################
-## function for parallel computations ##
-########################################
-
-
-
+# =============================================================================
+# function for parallel computations
+# =============================================================================
 def pprocess_inner_f(args,j):
     n_neigh = args[0]
     times = args[1]
@@ -753,9 +722,7 @@ def pprocess_f(args, i):
         #find the best partition for time i, t
         index = np.argmax(stabilities)
         return  stabilities[index], C[index], len(np.unique(C[index]))
-
-
-
+    
    
 def louv_f(Q, null_model, time):
         """
@@ -797,5 +764,3 @@ def ttprime_f(C, args):
         """
         
         return normalized_mutual_info_score(C[args[0]],C[args[1]], average_method='arithmetic' )
-    
-
