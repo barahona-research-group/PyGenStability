@@ -7,19 +7,16 @@ import pylab as plt
 import networkx as nx
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from functools import partial
-import pickle 
 from multiprocessing import Pool
-from multiprocessing import current_process
+#from multiprocessing import current_process
 import os 
 from timeit import default_timer as timer
 from tqdm import tqdm
-
-import cppyy
 from array import array
-
 from Louvain_to_python import clq 
 a = clq.VectorPartition
 
+#import cppyy
 #cppyy.include("cpp/louvain_to_python.h")
 #from cppyy.gbl import run_louvain
 
@@ -57,8 +54,7 @@ class PyGenStability(object):
             self.n_processes_mi = int(os.environ['OMP_NUM_THREADS']) #for the MI run
         else:
             self.n_processes_louv = int(1)
-            self.n_processes_mi = int(1)
-           
+            self.n_processes_mi = int(1)  
 
         #for temporary files from cpp louvain code
         if not os.path.isdir('data'):
@@ -85,20 +81,20 @@ class PyGenStability(object):
         create the null models
         """
 
-        if self.tpe is 'continuous_combinatorial':
+        if self.tpe == 'continuous_combinatorial':
             self.pi = np.ones(self.n)/self.n
             self.null_model = np.array([self.pi, self.pi])
 
-        if self.tpe is 'continuous_normalized' or self.tpe is 'linearized':
+        if self.tpe == 'continuous_normalized' or self.tpe == 'linearized':
             self.degree = np.array(self.A.sum(1)).flatten()
             self.pi = self.degree / self.degree.sum()
             self.null_model = np.array([self.pi, self.pi])
 
-        if self.tpe is 'continuous_signed':
+        if self.tpe == 'continuous_signed':
             self.pi = np.zeros(self.n) 
             self.null_model = np.array([self.pi, self.pi])
 
-        if self.tpe is 'modularity_signed':
+        if self.tpe == 'modularity_signed':
             A = self.A.toarray()
             A_plus = 0.5*(A + abs(A))
             A_neg = -0.5*(A - abs(A))
@@ -128,7 +124,7 @@ class PyGenStability(object):
         create the quality matrix 
         """
 
-        if self.tpe is 'continuous_combinatorial':
+        if self.tpe == 'continuous_combinatorial':
             if nx.is_directed(self.G): #for directed graph
                 print("Not implemented for directed graph, need latest networkx version")
             else:
@@ -142,7 +138,7 @@ class PyGenStability(object):
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
-        if self.tpe is 'continuous_normalized':
+        if self.tpe == 'continuous_normalized':
             if nx.is_directed(self.G): #for directed graph
                 L = nx.directed_laplacian_matrix(self.G, walk_type='pagerank', alpha=0.8)
             else:
@@ -156,10 +152,10 @@ class PyGenStability(object):
             ex = sc.sparse.linalg.expm(-time/l_min * L)
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
-        if self.tpe is 'linearized':
+        if self.tpe == 'linearized':
             self.Q = time*self.A/self.degree.sum()
         
-        if self.tpe is 'continuous_signed':
+        if self.tpe == 'continuous_signed':
             A = nx.adjacency_matrix(self.G).toarray()
             degree = abs(A).sum(1)
             D = np.diag(degree)
@@ -173,10 +169,8 @@ class PyGenStability(object):
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(ex)
 
-
-        if self.tpe is 'modularity_signed':
+        if self.tpe == 'modularity_signed':
             self.Q = time*self.A/self.deg_norm
-
 
         self.Q = (np.max(self.Q)*self.precision)*np.round(self.Q/((np.max(self.Q)*self.precision)))
         self.Q = sc.sparse.csc_matrix(self.Q.toarray()) #needed to remove all the 0's and save memory
@@ -201,7 +195,7 @@ class PyGenStability(object):
         for i in tqdm(range(len(times))):
             stability, number_of_comms, community_id, MI_mat, MI = self.run_stability(times[i])
 
-            if self.tpe is 'linearized':
+            if self.tpe == 'linearized':
                 stability += (1-times[i])
 
             stability_array.append(stability)
@@ -231,7 +225,6 @@ class PyGenStability(object):
             index = timesteps,
         )
         
-
         #do the postprocessing here
         if self.post_process:
             print("Apply postprocessing...")
@@ -254,7 +247,6 @@ class PyGenStability(object):
             end = timer()	
             print("Matrix exponential:", np.around(end-start,2), "seconds")
 
-
         #run Louvain several times and store the communities
         louvain_ensemble = []
         stability_partition_list = []
@@ -271,7 +263,6 @@ class PyGenStability(object):
             end = timer()
             print("Louvain runs:", np.around(end-start,2) , "seconds")
 
-       
         #re-arange the outputs
         for i in range(self.louvain_runs):
             stability_partition_list.append(out[i][0])
@@ -371,7 +362,6 @@ class PyGenStability(object):
                     MI += MI_mat[i,j]
                     n_MI +=1
 
-
         return MI_mat, MI/n_MI   
  
 # =============================================================================
@@ -402,8 +392,7 @@ class PyGenStability(object):
             if disp:
                 print('Done ', i ,' of ', len(times))
 
-            Q = self.Q_matrices[i].toarray() #use already computed exponential to save time
-           
+            Q = self.Q_matrices[i].toarray() #use already computed exponential to save time     
 
             #compute the Q matrix to sandwich with the community labels
             R = Q 
@@ -418,7 +407,7 @@ class PyGenStability(object):
                 stabilities = p_pprocess.map(pprocess_innerf, range(2*self.n_neigh)) #run the louvain in parallel
 
             #if linear shift modularity to match the Louvain code
-            if self.tpe is 'linearized':
+            if self.tpe == 'linearized':
                 stabilities += (1-times[i])
                 
             #find the best partition for time i, t
