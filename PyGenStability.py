@@ -1,14 +1,11 @@
-import sys as sys
 import numpy as np
 import scipy as sc
 import pandas as pd
-
 import pylab as plt
 import networkx as nx
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from functools import partial
 from multiprocessing import Pool
-#from multiprocessing import current_process
 import os 
 from timeit import default_timer as timer
 from tqdm import tqdm
@@ -21,23 +18,21 @@ a = clq.VectorPartition
 #from cppyy.gbl import run_louvain
 
 class PyGenStability(object):
-    """ 
-    Main class
-    """
+    """Main class"""
 
 # =============================================================================
 # init parameters
 # =============================================================================
-    def __init__(self, G, tpe, louvains_runs, precision):
+    def __init__(self, G, cluster_tpe, louvain_runs=10, precision=1e-6):
         
         self.G = G # graph
         self.A = nx.adjacency_matrix(self.G, weight='weight')
         self.n = len(G.nodes) # number of nodes 
-        self.m = len(G.edges) # number of edges 
+        self.e = len(G.edges) # number of edges 
 
-        self.tpe = tpe #type of stability, linear or Markov
+        self.cluster_tpe = cluster_tpe #type of stability, linear or Markov
         self.use_spectral_gap = False #if True, rescale the Markov time by the spectral gap 
-        self.louvain_runs = louvains_runs #number of Louvain run 
+        self.louvain_runs = louvain_runs #number of Louvain run 
         self.precision = precision #precision threshold for Markov stability
 
         self.calcMI = True #compute the Mutual info score 
@@ -77,24 +72,24 @@ class PyGenStability(object):
 # create the generalized Louvain models
 # =============================================================================
     def set_null_model(self):
-        """
-        create the null models
-        """
+        """create the null models"""
+        
+        assert self.A.sum()>0, "Adjacency matrix is zero!!"
 
-        if self.tpe == 'continuous_combinatorial':
+        if self.cluster_tpe == 'continuous_combinatorial':
             self.pi = np.ones(self.n)/self.n
             self.null_model = np.array([self.pi, self.pi])
 
-        if self.tpe == 'continuous_normalized' or self.tpe == 'linearized':
+        if self.cluster_tpe == 'continuous_normalized' or self.cluster_tpe == 'linearized':
             self.degree = np.array(self.A.sum(1)).flatten()
             self.pi = self.degree / self.degree.sum()
             self.null_model = np.array([self.pi, self.pi])
 
-        if self.tpe == 'continuous_signed':
+        if self.cluster_tpe == 'continuous_signed':
             self.pi = np.zeros(self.n) 
             self.null_model = np.array([self.pi, self.pi])
 
-        if self.tpe == 'modularity_signed':
+        if self.cluster_tpe == 'modularity_signed':
             A = self.A.toarray()
             A_plus = 0.5*(A + abs(A))
             A_neg = -0.5*(A - abs(A))
@@ -115,16 +110,13 @@ class PyGenStability(object):
             else:
                 deg_plus_norm = deg_plus/deg_plus.sum()
 
-
             self.null_model = np.array([deg_plus, deg_plus_norm, deg_neg, -deg_neg_norm])/self.deg_norm
     
 
     def set_quality_matrix(self, time):
-        """
-        create the quality matrix 
-        """
+        """create the quality matrix"""
 
-        if self.tpe == 'continuous_combinatorial':
+        if self.cluster_tpe == 'continuous_combinatorial':
             if nx.is_directed(self.G): #for directed graph
                 print("Not implemented for directed graph, need latest networkx version")
             else:
@@ -138,7 +130,7 @@ class PyGenStability(object):
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
-        if self.tpe == 'continuous_normalized':
+        if self.cluster_tpe == 'continuous_normalized':
             if nx.is_directed(self.G): #for directed graph
                 L = nx.directed_laplacian_matrix(self.G, walk_type='pagerank', alpha=0.8)
             else:
@@ -152,10 +144,10 @@ class PyGenStability(object):
             ex = sc.sparse.linalg.expm(-time/l_min * L)
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
-        if self.tpe == 'linearized':
+        if self.cluster_tpe == 'linearized':
             self.Q = time*self.A/self.degree.sum()
         
-        if self.tpe == 'continuous_signed':
+        if self.cluster_tpe == 'continuous_signed':
             A = nx.adjacency_matrix(self.G).toarray()
             degree = abs(A).sum(1)
             D = np.diag(degree)
@@ -169,7 +161,7 @@ class PyGenStability(object):
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(ex)
 
-        if self.tpe == 'modularity_signed':
+        if self.cluster_tpe == 'modularity_signed':
             self.Q = time*self.A/self.deg_norm
 
         self.Q = (np.max(self.Q)*self.precision)*np.round(self.Q/((np.max(self.Q)*self.precision)))
@@ -177,9 +169,7 @@ class PyGenStability(object):
 
 
     def scan_stability(self, times, disp=True):
-        """
-        Compute a time scan of the stability
-        """
+        """Compute a time scan of the stability"""
         
         self.set_null_model()
             
@@ -195,7 +185,7 @@ class PyGenStability(object):
         for i in tqdm(range(len(times))):
             stability, number_of_comms, community_id, MI_mat, MI = self.run_stability(times[i])
 
-            if self.tpe == 'linearized':
+            if self.cluster_tpe == 'linearized':
                 stability += (1-times[i])
 
             stability_array.append(stability)
@@ -301,23 +291,18 @@ class PyGenStability(object):
             }
         return stability, number_of_comms, community_id, MI_mat, MI
 
+
     def run_single_stability(self,time):
-        """
-        Run one stability analysis at a given time
-        """
+        """Run one stability analysis at a given time"""
         
         #self.T_matrix()
         self.set_null_model()
         self.set_quality_matrix(time)
         self.run_stability(time)
 
-# =============================================================================
-# MI computations
-# =============================================================================
+
     def minfo(self, louvain_ensemble, stability):
-        """
-        Compute the mutual information score of several Louvain run
-        """
+        """Compute the mutual information score of several Louvain run"""
         
         #initialize datasets
         number_of_partitions = len(louvain_ensemble)
@@ -368,9 +353,7 @@ class PyGenStability(object):
 # postprocessing
 # =============================================================================
     def stability_postprocess(self, disp=False):
-        """
-        Post-process the scan of the stability run
-        """
+        """Post-process the scan of the stability run"""
 
         import os as os
         os.environ["OMP_NUM_THREADS"] = "1"
@@ -407,7 +390,7 @@ class PyGenStability(object):
                 stabilities = p_pprocess.map(pprocess_innerf, range(2*self.n_neigh)) #run the louvain in parallel
 
             #if linear shift modularity to match the Louvain code
-            if self.tpe == 'linearized':
+            if self.cluster_tpe == 'linearized':
                 stabilities += (1-times[i])
                 
             #find the best partition for time i, t
@@ -437,9 +420,7 @@ class PyGenStability(object):
  
 
     def stability_postprocess_parallel(self, disp=False):
-        """
-        Post-process the scan of the stability run
-        """
+        """Post-process the scan of the stability run"""
 
         import os as os
         num_threads = os.environ["OMP_NUM_THREADS"]
@@ -483,13 +464,8 @@ class PyGenStability(object):
         os.environ["OMP_NUM_THREADS"] = str(num_threads)
 
 
-# =============================================================================
-# ttprime
-# =============================================================================
     def compute_ttprime(self, C, N, T):
-        """
-        Compute the mutual information score of several Louvain run
-        """
+        """Compute the mutual information score of several Louvain run"""
 
         ttprime_id = []
         for t in range(len(T)):
@@ -537,21 +513,18 @@ class PyGenStability(object):
         times = np.log10(self.stability_results['Markov time'].values)
 
         import matplotlib.gridspec as gridspec
-        import matplotlib.ticker as ticker
 
         plt.figure(figsize=(5,5))
 
         gs = gridspec.GridSpec(2, 1, height_ratios = [ 1., 0.5])#, width_ratios = [1,0.2] )
-        gs.update(hspace=0)
- 
-        #first plot tt' 
-        ax0 = plt.subplot(gs[0, 0])
+        gs.update(hspace=0)      
 
-        #make the ttprime matrix
+        #plot tt' 
         ttprime = np.zeros([n_t,n_t])
         for i, tt in enumerate(self.stability_results['ttprime']):
             ttprime[i] = tt 
 
+        ax0 = plt.subplot(gs[0, 0])
         ax0.contourf(times, times, ttprime, cmap='YlOrBr')
         ax0.yaxis.tick_left()
         ax0.yaxis.set_label_position('left')
@@ -693,83 +666,77 @@ def pprocess_inner_f(args,j):
     return stabilities 
 
 def pprocess_f(args, i):
-        Q_matrices = args[0]
-        null_model = args[1]
-        C = args[2]
-        times = args[3] 
+    Q_matrices = args[0]
+    null_model = args[1]
+    C = args[2]
+    times = args[3] 
 
-        Q = Q_matrices[i].toarray() #use already computed exponential to save time
-        t = times[i]
+    Q = Q_matrices[i].toarray() #use already computed exponential to save time
+    t = times[i]
 
-        #compute the Q matrix to sandwich with the community labels
-        #if tpe == 'linear':
-        #    Q =  t*A - np.outer(pi.T, pi) #use time here instead
-        #else:                    
-        #    Q = A - np.outer(pi.T, pi)
+    #compute the Q matrix to sandwich with the community labels
+    #if cluster_tpe == 'linear':
+    #    Q =  t*A - np.outer(pi.T, pi) #use time here instead
+    #else:                    
+    #    Q = A - np.outer(pi.T, pi)
         
-        R = Q
-        for i in range(int(len(null_model)/2)):
-            R =- np.outer(null_model[2*i], null_model[2*i+1])
+    R = Q
+    for i in range(int(len(null_model)/2)):
+        R =- np.outer(null_model[2*i], null_model[2*i+1])
 
-        stabilities = np.zeros(len(times)) #to record the stability value of the other communities
-        #compute the staiblities of other partitions (we could paralellise this loop, but it is fast enough now)
-        for j in range(len(times)):
-            #create H matrix
-            nr_nodes = len(C[j])
-            cols = C[j].astype(int)
-            rows = np.arange(0, nr_nodes , 1)
-            data = np.ones(nr_nodes)
-            H = sc.sparse.csr_matrix((data, (rows, cols))).toarray()
+    stabilities = np.zeros(len(times)) #to record the stability value of the other communities
+    #compute the staiblities of other partitions (we could paralellise this loop, but it is fast enough now)
+    for j in range(len(times)):
+        #create H matrix
+        nr_nodes = len(C[j])
+        cols = C[j].astype(int)
+        rows = np.arange(0, nr_nodes , 1)
+        data = np.ones(nr_nodes)
+        H = sc.sparse.csr_matrix((data, (rows, cols))).toarray()
             
-            #compute stability
-            stabilities[j] =  np.trace( (H.T).dot(R).dot(H) )
+        #compute stability
+        stabilities[j] =  np.trace( (H.T).dot(R).dot(H) )
             
-        #if linear shift modularity to match the Louvain code
-        #if tpe == 'linear':
-        #    stabilities += (1-t)
-            
-        #find the best partition for time i, t
-        index = np.argmax(stabilities)
-        return  stabilities[index], C[index], len(np.unique(C[index]))
+    #if linear shift modularity to match the Louvain code
+    #if cluster_tpe == 'linear':
+    #    stabilities += (1-t)
+    
+    #find the best partition for time i, t
+    index = np.argmax(stabilities)
+    return  stabilities[index], C[index], len(np.unique(C[index]))
     
    
 def louv_f(Q, null_model, time):
-        """
-        Function to run in parallel for Louvain evaluations
-        """
+    """Function to run in parallel for Louvain evaluations"""
 
-        non_zero = Q.nonzero()
-        from_vec = non_zero[0]
-        to_vec = non_zero[1]
-        w_vec = Q[non_zero]
-        n_edges = len(from_vec)
+    non_zero = Q.nonzero()
+    from_vec = non_zero[0]
+    to_vec = non_zero[1]
+    w_vec = Q[non_zero]
+    n_edges = len(from_vec)
 
-        null_model_input = array('d', null_model.flatten())
-        num_null_vectors = np.shape(null_model)[0] 
-        time = 1 #set the time to 1
+    null_model_input = array('d', null_model.flatten())
+    num_null_vectors = np.shape(null_model)[0] 
+    time = 1 #set the time to 1
 
-        stability, community_id = clq.run_louvain(from_vec, to_vec, w_vec, n_edges, null_model_input, num_null_vectors, time)
+    stability, community_id = clq.run_louvain(from_vec, to_vec, w_vec, n_edges, null_model_input, num_null_vectors, time)
 
-        community_id = np.array(community_id)  #convert to array
+    community_id = np.array(community_id)  #convert to array
 
-        #stability = np.float(np.loadtxt('data/stability_value_'+str(proc_id)+'.dat'))
-        #os.remove('data/stability_value_'+str(proc_id)+'.dat')
+    #stability = np.float(np.loadtxt('data/stability_value_'+str(proc_id)+'.dat'))
+    #os.remove('data/stability_value_'+str(proc_id)+'.dat')
 
-        number_of_comms = len(set(community_id))
+    number_of_comms = len(set(community_id))
 
-        return stability, number_of_comms, community_id
+    return stability, number_of_comms, community_id
         
        
 def mi_f(louv_ensemble, args):
-        """
-        Function to run in paralell for MI evaluations
-        """
+    """Function to run in parallel for MI evaluations"""
         
-        return normalized_mutual_info_score(louv_ensemble[args[0]],louv_ensemble[args[1]], average_method='arithmetic')
+    return normalized_mutual_info_score(louv_ensemble[args[0]],louv_ensemble[args[1]], average_method='arithmetic')
 
 def ttprime_f(C, args):
-        """
-        Function to run in paralell for ttprime evaluations
-        """
+    """Function to run in parallel for ttprime evaluations"""
         
-        return normalized_mutual_info_score(C[args[0]],C[args[1]], average_method='arithmetic' )
+    return normalized_mutual_info_score(C[args[0]],C[args[1]], average_method='arithmetic' )
