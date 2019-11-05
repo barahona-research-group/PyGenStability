@@ -12,7 +12,7 @@ from tqdm import tqdm
 from array import array
 #from Louvain_to_python import clq 
 #a = clq.VectorPartition
-import cpp as cpp
+from cpp import run_louvain
 
 #import cppyy
 #cppyy.include("cpp/louvain_to_python.h")
@@ -720,7 +720,7 @@ def louv_f(Q, null_model, time):
     num_null_vectors = np.shape(null_model)[0] 
     time = 1 #set the time to 1
 
-    stability, community_id = clq.run_louvain(from_vec, to_vec, w_vec, n_edges, null_model_input, num_null_vectors, time)
+    stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model_input, num_null_vectors, time)
 
     community_id = np.array(community_id)  #convert to array
 

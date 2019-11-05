@@ -29,10 +29,7 @@ ext_modules = [
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True),
-            #'/home/arnaudon/'
         ],
-        #library_dirs = ['/home/arnaudon/'], 
-        extra_compile_args = ["-O3"], 
         language='c++'
     ),
 ]
@@ -58,7 +55,7 @@ def cpp_flag(compiler):
 
     The newer version is prefered over c++11 (when it is available).
     """
-    flags = ['-std=c++0x' , '-O3', '-Wall']#'-std=c++17', '-std=c++14', '-std=c++11']
+    flags = ['-std=c++17', '-std=c++14', '-std=c++11']
 
     for flag in flags:
         if has_flag(compiler, flag): return flag
@@ -99,8 +96,6 @@ class BuildExt(build_ext):
             ext.extra_link_args = link_opts
         build_ext.build_extensions(self)
 
-import numpy as np
-
 setup(
     name='pygenstability',
     version=__version__,
@@ -109,10 +104,16 @@ setup(
     url='https://github.com/pybind/python_example',
     description='A test project using pybind11',
     long_description='',
-    #include_dirs = [np.get_include()], #Add Include path of numpy
     ext_modules=ext_modules,
     packages=['pygenstability', 'cpp'],
-    install_requires=['pybind11>=2.4'],
+    install_requires=['pybind11>=2.4', 
+                    'numpy', 
+                    'scipy', 
+                    'pandas', 
+                    'matplotlib', 
+                    'networkx', 
+                    'sklearn',
+                    'tqdm'],
     setup_requires=['pybind11>=2.4'],
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,

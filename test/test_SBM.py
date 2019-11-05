@@ -6,18 +6,11 @@
 
 import networkx as nx
 
-import PyGenStability as pgs
+import pygenstability.pygenstability as pgs
 
 import numpy as np
 import networkx as nx
 import pylab as plt
-get_ipython().run_line_magic('matplotlib', 'notebook')
-
-
-# In[2]:
-
-
-get_ipython().run_line_magic('matplotlib', 'notebook')
 
 #set a SBM model
 sizes = [10, 15, 9]
@@ -31,7 +24,7 @@ for i,j in G.edges():
     G[i][j]['weight'] = 1
 
 #ground truth
-community_labels = [G.node[i]['block'] for i in G]
+community_labels = [G.nodes[i]['block'] for i in G]
 
 #spring layout
 pos = nx.spring_layout(G,weight=None,scale=1)
