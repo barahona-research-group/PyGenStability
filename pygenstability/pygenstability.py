@@ -12,7 +12,7 @@ from tqdm import tqdm
 from array import array
 #from Louvain_to_python import clq 
 #a = clq.VectorPartition
-import cpp as cpp
+from cpp import run_louvain
 
 #import cppyy
 #cppyy.include("cpp/louvain_to_python.h")

@@ -104,4 +104,4 @@ if not os.path.isdir('communities'):
 #plot the communities at each Markov time
 for t in range(len(times)):
     plot_communities(t)
-
+plt.show()
