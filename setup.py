@@ -23,17 +23,14 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'cpp',
-        ['cpp/main.cpp'],
+        'generalizedLouvain_API',
+        ['generalizedLouvain_API/cpp_to_python.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True),
-	    './lemon-lib/include'
+	    'generalizedLouvain_API/lemon_include' #path to lemon library 
         ],
-        include_libs=[
-	    './lemon-lib/include'
-],
         language='c++'
     ),
 ]
@@ -109,7 +106,7 @@ setup(
     description='A test project using pybind11',
     long_description='',
     ext_modules=ext_modules,
-    packages=['pygenstability', 'cpp'],
+    packages=['pygenstability', 'generalizedLouvain_API'],
     install_requires=['pybind11>=2.4', 
                     'numpy', 
                     'scipy', 

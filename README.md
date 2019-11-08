@@ -1,4 +1,17 @@
 # PyGenStability
-Python wrapper of the generalised Louvain code of https://github.com/michaelschaub/generalizedLouvain with python code to run various versions of MarkovStability. 
+Python wrapper of the generalised Louvain code of Micheal Schaub at https://github.com/michaelschaub/generalizedLouvain with python code to run various versions of MarkovStability. 
 
-This is a new dev branch to use https://github.com/pybind/pybind11 as a python wrapper of thte c++ code. 
+The wrapper uses Pybond11 https://github.com/pybind/pybind11 and the package can simply be installed with 
+
+```
+pip install -e . 
+```
+
+in the `test` folder, a demo script with stochastic block model can be tried with 
+
+```
+python test_cpp.py
+```
+
+
+

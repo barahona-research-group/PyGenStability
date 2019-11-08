@@ -10,13 +10,8 @@ import os
 from timeit import default_timer as timer
 from tqdm import tqdm
 from array import array
-#from Louvain_to_python import clq 
-#a = clq.VectorPartition
-from cpp import run_louvain
 
-#import cppyy
-#cppyy.include("cpp/louvain_to_python.h")
-#from cppyy.gbl import run_louvain
+from generalizedLouvain_API import run_louvain
 
 class PyGenStability(object):
     """Main class"""
