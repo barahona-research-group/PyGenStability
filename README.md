@@ -24,7 +24,7 @@ Example
 In the `test` folder, a demo script with stochastic block model can be tried with 
 
 ```
-python test_cpp.py
+python test_SBM.py
 ```
 
 
