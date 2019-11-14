@@ -163,7 +163,6 @@ class PyGenStability(object):
         self.Q = (np.max(self.Q)*self.precision)*np.round(self.Q/((np.max(self.Q)*self.precision)))
         self.Q = sc.sparse.csc_matrix(self.Q.toarray()) #needed to remove all the 0's and save memory
 
-
     def scan_stability(self, times, disp=True):
         """Compute a time scan of the stability"""
         
@@ -548,7 +547,7 @@ class PyGenStability(object):
         else:
             ax2.plot(self.stability_results['stability'], label=r'$Q$',c='C2')
 
-        ax2.set_yscale('log') 
+        #ax2.set_yscale('log') 
         ax2.tick_params('y', colors='C2')
         ax2.set_ylabel('Modularity', color='C2')
         ax2.yaxis.set_label_position('left')
