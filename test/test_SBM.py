@@ -44,7 +44,7 @@ precision = 1e-6
 # continuous_combinatorial: continuous RW with combintaorial Laplacian
 # continuous_normalized:    continuous RW with normalized Laplacian
 # linearized:               modularity with time parameter
-# modulatirty_signed:       modularity of signed networks, (Arenas et al. 2008)
+# modularity_signed:       modularity of signed networks, (Arenas et al. 2008)
 
 stability = pgs.PyGenStability(G,'continuous_combinatorial', louvain_runs , precision) 
 
