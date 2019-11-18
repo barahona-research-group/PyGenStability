@@ -6,7 +6,7 @@ import networkx as nx
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from functools import partial
 from multiprocessing import Pool
-import os 
+import os
 from timeit import default_timer as timer
 from tqdm import tqdm
 
@@ -19,7 +19,7 @@ class PyGenStability(object):
 # init parameters
 # =============================================================================
     def __init__(self, G, cluster_tpe, louvain_runs=10, precision=1e-6, use_spectral_gap = False, post_process = True):
- 	        
+
         self.G = G # graph
 
         if not nx.is_connected(self.G):
@@ -29,15 +29,15 @@ class PyGenStability(object):
 
 
         self.A = nx.adjacency_matrix(self.G, weight='weight')
-        self.n = len(G.nodes) # number of nodes 
-        self.e = len(G.edges) # number of edges 
+        self.n = len(G.nodes) # number of nodes
+        self.e = len(G.edges) # number of edges
 
         self.cluster_tpe = cluster_tpe #type of stability, linear or Markov
-        self.use_spectral_gap = use_spectral_gap #if True, rescale the Markov time by the spectral gap 
-        self.louvain_runs = louvain_runs #number of Louvain run 
+        self.use_spectral_gap = use_spectral_gap #if True, rescale the Markov time by the spectral gap
+        self.louvain_runs = louvain_runs #number of Louvain run
         self.precision = precision #precision threshold for Markov stability
 
-        self.calcMI = True #compute the Mutual info score 
+        self.calcMI = True #compute the Mutual info score
         self.all_mi = False #set to true if all the possible pairs of Louvain are used
         self.n_mi = 10 #or set the number of top Louvain to use
 
@@ -51,14 +51,14 @@ class PyGenStability(object):
             self.n_processes_mi = int(os.environ['OMP_NUM_THREADS']) #for the MI run
         else:
             self.n_processes_louv = int(1)
-            self.n_processes_mi = int(1)  
+            self.n_processes_mi = int(1)
 
 # =============================================================================
 # create the generalized Louvain models
 # =============================================================================
     def set_null_model(self):
         """create the null models"""
-        
+
         assert self.A.sum()>0, "Adjacency matrix is zero!!"
 
         if self.cluster_tpe == 'continuous_combinatorial':
@@ -71,7 +71,7 @@ class PyGenStability(object):
             self.null_model = np.array([self.pi, self.pi])
 
         if self.cluster_tpe == 'continuous_signed':
-            self.pi = np.zeros(self.n) 
+            self.pi = np.zeros(self.n)
             self.null_model = np.array([self.pi, self.pi])
 
         if self.cluster_tpe == 'modularity_signed':
@@ -96,7 +96,7 @@ class PyGenStability(object):
                 deg_plus_norm = deg_plus/deg_plus.sum()
 
             self.null_model = np.array([deg_plus, deg_plus_norm, deg_neg, -deg_neg_norm])/self.deg_norm
-    
+
 
     def set_quality_matrix(self, time):
         """create the quality matrix"""
@@ -106,12 +106,12 @@ class PyGenStability(object):
                 print("Not implemented for directed graph, need latest networkx version")
             else:
                 L = 1.*nx.laplacian_matrix(self.G)
-                
+
             if self.use_spectral_gap:
                 l_min = abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
             else:
-                l_min = 1. 
-                
+                l_min = 1.
+
             ex = sc.sparse.linalg.expm(-time/l_min * L.toarray())
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
@@ -120,24 +120,24 @@ class PyGenStability(object):
                 L = nx.directed_laplacian_matrix(self.G, walk_type='pagerank', alpha=0.8)
             else:
                 L = np.diag(1./self.degree).dot(nx.laplacian_matrix(self.G).toarray())
-            
+
             if self.use_spectral_gap:
                 l_min = abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
             else:
                 l_min = 1.
-            
+
             ex = sc.sparse.linalg.expm(-time/l_min * L)
             self.Q = sc.sparse.csc_matrix(np.dot(np.diag(self.pi), ex))
 
         if self.cluster_tpe == 'linearized':
             self.Q = time*self.A/self.degree.sum()
-        
+
         if self.cluster_tpe == 'continuous_signed':
             A = nx.adjacency_matrix(self.G).toarray()
             degree = abs(A).sum(1)
             D = np.diag(degree)
             L = sc.sparse.csr_matrix(D - A)
-            
+
             if self.use_spectral_gap:
                 l_min = abs(sc.sparse.linalg.eigs(L, which='SM',k=2)[0][1])
             else:
@@ -154,20 +154,20 @@ class PyGenStability(object):
 
     def scan_stability(self, times, disp=True):
         """Compute a time scan of the stability"""
-        
+
         self.set_null_model()
-            
+
         stability_array = []
         number_of_comms_array = []
         community_id_array = []
         MI_array = []
-        
+
         if self.post_process:
             self.Q_matrices = [] #initialise the array to record the exponential
-            
+
         #compute the stability for each time
         for i in tqdm(range(len(times))):
-            stability, number_of_comms, community_id, MI_mat, MI = self.run_stability(times[i]) 
+            stability, number_of_comms, community_id, MI_mat, MI = self.run_stability(times[i])
 
             if self.cluster_tpe == 'linearized':
                 stability += (1-times[i])
@@ -176,13 +176,13 @@ class PyGenStability(object):
             number_of_comms_array.append(number_of_comms)
             community_id_array.append(community_id)
             MI_array.append(MI)
-        
+
             if disp:
                 self.print_single_result(i, len(times))
-                
+
             if self.post_process:
-                self.Q_matrices.append(self.Q) 
-                
+                self.Q_matrices.append(self.Q)
+
         ttprime = self.compute_ttprime(community_id_array, number_of_comms_array, times)
 
         #save the results
@@ -198,13 +198,13 @@ class PyGenStability(object):
             },
             index = timesteps,
         )
-        
+
         #do the postprocessing here
         if self.post_process:
             print("Apply postprocessing...")
             self.stability_postprocess()
-        
-        
+
+
     def run_stability(self, time):
         """
         run the stability analysis at a given time, only used internally, as it does create the transition matrix
@@ -212,13 +212,13 @@ class PyGenStability(object):
 
         #compute the adjacency matrix for Louvain
         if self.time_computation:
-            start = timer()	
+            start = timer()
 
         #self.A_matrix(time)
         self.set_quality_matrix(time)
 
         if self.time_computation:
-            end = timer()	
+            end = timer()
             print("Matrix exponential:", np.around(end-start,2), "seconds")
 
         #run Louvain several times and store the communities
@@ -242,15 +242,15 @@ class PyGenStability(object):
             stability_partition_list.append(out[i][0])
             number_of_comms_partition_list.append(out[i][1])
             louvain_ensemble.append(out[i][2])
-            
+
         self.louvain_ensemble = louvain_ensemble
-        
+
         stability = max(stability_partition_list)
         index = stability_partition_list.index(stability)
         number_of_comms = number_of_comms_partition_list[index]
         community_id = louvain_ensemble[index]
         if self.time_computation:
-            start = timer()	
+            start = timer()
 
         if self.calcMI:
             MI_mat, MI = self.minfo(louvain_ensemble, stability_partition_list)
@@ -259,9 +259,9 @@ class PyGenStability(object):
         else:
             MI_mat = []
             MI = []
-        
+
         if self.time_computation:
-            end = timer()	
+            end = timer()
             print("MI computations:", np.around(end-start,2), "seconds")
 
         #save the result
@@ -278,7 +278,7 @@ class PyGenStability(object):
 
     def run_single_stability(self,time):
         """Run one stability analysis at a given time"""
-        
+
         #self.T_matrix()
         self.set_null_model()
         self.set_quality_matrix(time)
@@ -287,14 +287,14 @@ class PyGenStability(object):
 
     def minfo(self, louvain_ensemble, stability):
         """Compute the mutual information score of several Louvain run"""
-        
+
         #initialize datasets
         number_of_partitions = len(louvain_ensemble)
-        louv_ensemble = np.array(louvain_ensemble) 
+        louv_ensemble = np.array(louvain_ensemble)
         MI_mat = np.zeros((number_of_partitions, number_of_partitions))
-        MI = 0 
-        n_MI = 0 
-        
+        MI = 0
+        n_MI = 0
+
         if self.all_mi:
             #create the list of louvain pairs for MI
             mi_id= []
@@ -321,9 +321,9 @@ class PyGenStability(object):
                 louvain_ensemble_reduced = np.array(louvain_ensemble)[stability_argsort[-self.n_mi:]]
             else:
                 louvain_ensemble_reduced = louvain_ensemble
- 
-            MI = 0 
-            n_MI = 0 
+
+            MI = 0
+            n_MI = 0
             for i in range(len(louvain_ensemble_reduced)):
                 for j in range(i):
                     MI_mat[i,j] = normalized_mutual_info_score(list(louvain_ensemble[i]),list(louvain_ensemble[j]), average_method='arithmetic' )
@@ -331,8 +331,8 @@ class PyGenStability(object):
                     MI += MI_mat[i,j]
                     n_MI +=1
 
-        return MI_mat, MI/n_MI   
- 
+        return MI_mat, MI/n_MI
+
 # =============================================================================
 # postprocessing
 # =============================================================================
@@ -346,7 +346,7 @@ class PyGenStability(object):
         C = np.vstack(self.stability_results.community_id.values) #store the community label for each time
         N = self.stability_results.number_of_communities.values #store the number of commutities for each time
         S = self.stability_results.stability.values #store the stability of the commutity for each time
-        
+
         times = self.stability_results['Markov time'].values #store the times
         ttprime = self.stability_results['ttprime'].values #store the times
 
@@ -355,14 +355,14 @@ class PyGenStability(object):
         number_of_comms_array_new = []
 
         #for each time, find the best community structure among all the others
-        for i in tqdm(range(len(times))): 
+        for i in tqdm(range(len(times))):
             if disp:
                 print('Done ', i ,' of ', len(times))
 
-            Q = self.Q_matrices[i].toarray() #use already computed exponential to save time     
+            Q = self.Q_matrices[i].toarray() #use already computed exponential to save time
 
             #compute the Q matrix to sandwich with the community labels
-            R = Q 
+            R = Q
             for i in range(int(len(self.null_model)/2)):
                 R -= np.outer(self.null_model[2*i], self.null_model[2*i+1])
 
@@ -376,19 +376,19 @@ class PyGenStability(object):
             #if linear shift modularity to match the Louvain code
             if self.cluster_tpe == 'linearized':
                 stabilities += (1-times[i])
-                
+
             #find the best partition for time i, t
-            index = np.argmax(stabilities) 
+            index = np.argmax(stabilities)
             index_n = index + (i-self.n_neigh)
-            
+
             #record the new partition
             stability_array_new.append(stabilities[index])
             community_id_array_new.append(C[index_n])
             number_of_comms_array_new.append(len(np.unique(C[index_n])))
-            
+
             if disp:
                 print('Previous number of comms: ', N[i], ', New number of comms: ', number_of_comms_array_new[-1])
-        
+
 
         self.stability_results = pd.DataFrame(
             {
@@ -396,12 +396,12 @@ class PyGenStability(object):
                 'stability' : stability_array_new,
                 'number_of_communities' : number_of_comms_array_new,
                 'community_id' : community_id_array_new,
-                'MI' : self.stability_results.MI.values, 
-                'ttprime': ttprime 
+                'MI' : self.stability_results.MI.values,
+                'ttprime': ttprime
             },
             index = self.stability_results.index,
         )
- 
+
 
     def stability_postprocess_parallel(self, disp=False):
         """Post-process the scan of the stability run"""
@@ -414,9 +414,9 @@ class PyGenStability(object):
         C = np.vstack(self.stability_results.community_id.values) #store the community label for each time
         N = self.stability_results.number_of_communities.values #store the number of commutities for each time
         S = self.stability_results.stability.values #store the stability of the commutity for each time
-        
+
         times = self.stability_results['Markov time'].values #store the times
-        
+
         #for each time, find the best community structure among all the others
         args = [self.Q_matrices, self.null_model, C, times]
         pprocessf = partial(pprocess_f, args)
@@ -434,7 +434,7 @@ class PyGenStability(object):
             stability_array_new.append(out[i][0])
             community_id_array_new.append(out[i][1])
             number_of_comms_array_new.append(out[i][2])
-        
+
         self.stability_results = pd.DataFrame(
             {
                 'Markov time' : times,
@@ -471,8 +471,8 @@ class PyGenStability(object):
             ttprime.append(ttprime_tmp)
 
         return ttprime
-    
-             
+
+
 # =============================================================================
 # plotting/printing
 # =============================================================================
@@ -480,7 +480,7 @@ class PyGenStability(object):
         """
         Simple printing function
         """
-        print("Step ", i, "/", j) 
+        print("Step ", i, "/", j)
         print("T      = ", np.round(self.single_stability_result['time'],3))
         print("N_comm = ", self.single_stability_result['number_of_comms'])
         print("MI     = ", np.round(self.single_stability_result['MI'],3))
@@ -501,12 +501,12 @@ class PyGenStability(object):
         plt.figure(figsize=(5,5))
 
         gs = gridspec.GridSpec(2, 1, height_ratios = [ 1., 0.5])#, width_ratios = [1,0.2] )
-        gs.update(hspace=0)      
+        gs.update(hspace=0)
 
-        #plot tt' 
+        #plot tt'
         ttprime = np.zeros([n_t,n_t])
         for i, tt in enumerate(self.stability_results['ttprime']):
-            ttprime[i] = tt 
+            ttprime[i] = tt
 
         ax0 = plt.subplot(gs[0, 0])
         ax0.contourf(times, times, ttprime, cmap='YlOrBr')
@@ -521,12 +521,12 @@ class PyGenStability(object):
             ax1.plot(times, self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
         else:
             ax1.plot(self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
-            
+
         ax1.yaxis.tick_right()
         ax1.tick_params('y', colors='C0')
         ax1.yaxis.set_label_position('right')
         ax1.set_ylabel('Number of clusters', color='C0')
-    
+
         #make a subplot for stability and MI
         ax2 = plt.subplot(gs[1, 0])
 
@@ -536,13 +536,13 @@ class PyGenStability(object):
         else:
             ax2.plot(self.stability_results['stability'], label=r'$Q$',c='C2')
 
-        #ax2.set_yscale('log') 
+        #ax2.set_yscale('log')
         ax2.tick_params('y', colors='C2')
         ax2.set_ylabel('Modularity', color='C2')
         ax2.yaxis.set_label_position('left')
         #ax2.legend(loc='center right')
         ax2.set_xlabel(r'$log_{10}(t)$')
-        
+
         #ax2.axis([0,n_t,0,self.stability_results.at[0,'number_of_communities']])
 
         #plot the MMI
@@ -566,7 +566,7 @@ class PyGenStability(object):
         """
         Given a list of times, return a dictonary useable by the sankeywidget
         """
-        
+
         C = self.stability_results['community_id']
         N = self.stability_results['number_of_communities']
         T = self.stability_results['Markov time']
@@ -583,40 +583,40 @@ class PyGenStability(object):
                 d[str(int(c))].append(str(i))
 
             partitions["timestep {0}".format(t)] = d
-    
+
         #now create each link between communities, with width proportional to the common number of nodes
         links = []
-        for n, t in enumerate(timesteps[:-1]): 
+        for n, t in enumerate(timesteps[:-1]):
 
-            initial_community =  partitions["timestep {0}". format(timesteps[n])] 
+            initial_community =  partitions["timestep {0}". format(timesteps[n])]
             final_community  =  partitions["timestep {0}". format(timesteps[n+1])]
             initial_comms = N[timesteps[n]]
             final_comms = N[timesteps[n+1]]
 
             for i in range(int(initial_comms)):
                 for j in range(int(final_comms)):
-            
+
                     initial_list = initial_community[str(i)]
                     final_list = final_community[str(j)]
 
                     value = len(set(initial_list).intersection(final_list))
-                    
+
                     if i in comm_allosterics[n] and j in comm_allosterics[n+1] and i in comm_sources[n] and j in comm_sources[n+1]:
                         color='salmon'
                     elif i in comm_sources[n] and j in comm_sources[n+1]:
                         color='green'
- 
+
                     elif i in comm_allosterics[n] and j in comm_allosterics[n+1]:
                         color='magenta'
 
 
                     else:
                         color='steelblue'
-                    link = {'source': "T {0}: c {1}".format(n,i), 
+                    link = {'source': "T {0}: c {1}".format(n,i),
                             'target': "T {0}: c {1}".format(n+1,j),
-                            'value': value, 
+                            'value': value,
                             'color': color}
-                
+
                     links.append(link)
 
         return links
@@ -632,7 +632,7 @@ def pprocess_inner_f(args,j):
     C = args[3]
     R = args[4]
 
-    #compute the stabilities of other partitions 
+    #compute the stabilities of other partitions
     j_n = j + (i-n_neigh)
     if j_n<len(times) and j_n>=0: #don't try to compute it for time outside the interval
         #create H matrix
@@ -641,19 +641,19 @@ def pprocess_inner_f(args,j):
         rows = np.arange(0, nr_nodes , 1)
         data = np.ones(nr_nodes)
         H = sc.sparse.csr_matrix((data, (rows, cols))).toarray()
-        
+
         #compute stability
         stabilities =  np.trace( (H.T).dot(R).dot(H) )
     else:
-        stabilities = -1. 
+        stabilities = -1.
 
-    return stabilities 
+    return stabilities
 
 def pprocess_f(args, i):
     Q_matrices = args[0]
     null_model = args[1]
     C = args[2]
-    times = args[3] 
+    times = args[3]
 
     R = Q_matrices[i].toarray() #use already computed exponential to save time
     t = times[i]
@@ -670,40 +670,41 @@ def pprocess_f(args, i):
         rows = np.arange(0, nr_nodes , 1)
         data = np.ones(nr_nodes)
         H = sc.sparse.csr_matrix((data, (rows, cols))).toarray()
-            
+
         #compute stability
         stabilities[j] =  np.trace( (H.T).dot(R).dot(H) )
-            
+
     #find the best partition for time i, t
     index = np.argmax(stabilities)
 
     return  stabilities[index], C[index], len(np.unique(C[index]))
-    
-   
+
+
 def louv_f(Q, null_model, time):
     """Function to run in parallel for Louvain evaluations"""
 
-    non_zero = Q.nonzero()
+    Qt = sc.sparse.tril(Q)
+    non_zero = Qt.nonzero()
     from_vec = non_zero[0]
     to_vec = non_zero[1]
     w_vec = Q[non_zero]
     n_edges = len(from_vec)
 
-    num_null_vectors = np.shape(null_model)[0] 
+    num_null_vectors = np.shape(null_model)[0]
 
     stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1) #calling the C++ code here
 
     number_of_comms = len(set(community_id))
 
     return stability, number_of_comms, np.array(community_id)
-        
-       
+
+
 def mi_f(louv_ensemble, args):
     """Function to run in parallel for MI evaluations"""
-        
+
     return normalized_mutual_info_score(louv_ensemble[args[0]],louv_ensemble[args[1]], average_method='arithmetic')
 
 def ttprime_f(C, args):
     """Function to run in parallel for ttprime evaluations"""
-        
+
     return normalized_mutual_info_score(C[args[0]],C[args[1]], average_method='arithmetic' )
