@@ -38,7 +38,7 @@ louvain_runs = 50
 # continuous_normalized:    continuous RW with normalized Laplacian
 # linearized:               modularity with time parameter
 # modularity_signed:       modularity of signed networks, (Arenas et al. 2008)
-stability_type = 'linearized'
+stability_type = 'continuous_normalized'
 
 #crete the stability object
 stability = pgs.PyGenStability(G, stability_type, louvain_runs) 
