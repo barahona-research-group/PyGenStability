@@ -557,7 +557,7 @@ class PyGenStability(object):
             ax3.tick_params('y', colors='C3')
             ax3.set_ylabel(r'Mutual information', color='C3')
             ax3.axhline(1,ls='--',lw=1.,c='C3')
-            ax3.axis([times[0], times[-1], 0,1.1])
+            ax3.axis([times[0], times[-1], np.min(self.stability_results['MI'])*0.9 ,1.1])
 
 # =============================================================================
 # Sankey diagram
