@@ -26,11 +26,11 @@ class PyGenStability(object):
             graphs = sorted(nx.connected_components(self.G), key = len, reverse=True)
             print('WARNING: graph not connected! We are using the largest connected component.')
             self.G = nx.subgraph(self.G, graphs[0])
-
+            
 
         self.A = nx.adjacency_matrix(self.G, weight='weight')
-        self.n = len(G.nodes) # number of nodes
-        self.e = len(G.edges) # number of edges
+        self.n = len(self.G.nodes) # number of nodes
+        self.e = len(self.G.edges) # number of edges
 
         self.cluster_tpe = cluster_tpe #type of stability, linear or Markov
         self.use_spectral_gap = use_spectral_gap #if True, rescale the Markov time by the spectral gap
