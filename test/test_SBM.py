@@ -49,11 +49,11 @@ stability.all_mi = False
 stability.n_mi = 10  
 
 #number of cpu for parallel compuations
-stability.n_processes_louv = 2 # of Louvain
-stability.n_processes_mi   = 2 # of MI
+stability.n_processes_louv = 1 # of Louvain
+stability.n_processes_mi   = 1 # of MI
 
 # apply the postprocessing or not
-stability.post_process = False 
+stability.post_process = False
 stability.n_neigh = 10 #use only these number of neighbors for postprocessing
 
 #run a single time, and print result
@@ -61,11 +61,11 @@ stability.run_single_stability(time = 1.)
 stability.print_single_result(1, 1)
 
 #scan over a time interval
-times = np.logspace(-2.5, 1.5, 100)
+times = np.logspace(-0.5, 0.5, 100)
 stability.scan_stability(times, disp=False)
 
-stability.plot_scan()
-plt.savefig('scan_results.svg', bbox_inches='tight')
+#stability.plot_scan()
+#plt.savefig('scan_results.svg', bbox_inches='tight')
 
 #now plot the community structures at each time in a folder
 def plot_communities(t):
@@ -85,7 +85,7 @@ if not os.path.isdir('communities'):
     os.mkdir('communities')
 
 #plot the communities at each Markov time
-for t in range(len(times)):
-    plot_communities(t)
+#for t in range(len(times)):
+#    plot_communities(t)
 
-plt.show()
+#plt.show()

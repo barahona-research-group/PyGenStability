@@ -10,7 +10,7 @@ import os
 from timeit import default_timer as timer
 from tqdm import tqdm
 
-from generalizedLouvain_API import run_louvain
+from generalizedLouvain_API import run_louvain, evaluate_quality
 
 class PyGenStability(object):
     """Main class"""
@@ -693,6 +693,7 @@ def louv_f(Q, null_model, time):
     num_null_vectors = np.shape(null_model)[0]
 
     stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1) #calling the C++ code here
+    print("quality", evaluate_quality(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1, community_id), stability)
 
     number_of_comms = len(set(community_id))
 
