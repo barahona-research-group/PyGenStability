@@ -9,7 +9,6 @@ from multiprocessing import Pool
 import os 
 from timeit import default_timer as timer
 from tqdm import tqdm
-from array import array
 
 from generalizedLouvain_API import run_louvain
 
@@ -19,24 +18,31 @@ class PyGenStability(object):
 # =============================================================================
 # init parameters
 # =============================================================================
-    def __init__(self, G, cluster_tpe, louvain_runs=10, precision=1e-6):
-        
+    def __init__(self, G, cluster_tpe, louvain_runs=10, precision=1e-6, use_spectral_gap = False, post_process = True):
+ 	        
         self.G = G # graph
+
+        if not nx.is_connected(self.G):
+            graphs = sorted(nx.connected_components(self.G), key = len, reverse=True)
+            print('WARNING: graph not connected! We are using the largest connected component.')
+            self.G = nx.subgraph(self.G, graphs[0])
+
+
         self.A = nx.adjacency_matrix(self.G, weight='weight')
         self.n = len(G.nodes) # number of nodes 
         self.e = len(G.edges) # number of edges 
 
         self.cluster_tpe = cluster_tpe #type of stability, linear or Markov
-        self.use_spectral_gap = False #if True, rescale the Markov time by the spectral gap 
+        self.use_spectral_gap = use_spectral_gap #if True, rescale the Markov time by the spectral gap 
         self.louvain_runs = louvain_runs #number of Louvain run 
         self.precision = precision #precision threshold for Markov stability
 
         self.calcMI = True #compute the Mutual info score 
-        self.all_mi = False
-        self.n_mi = 5
+        self.all_mi = False #set to true if all the possible pairs of Louvain are used
+        self.n_mi = 10 #or set the number of top Louvain to use
 
-        self.post_process = True #use post-processing of the scan as default
-        self.n_neigh = 5 #number of nearby times to use in postprocessing
+        self.post_process = post_process #use post-processing of the scan as default
+        self.n_neigh = 10 #number of nearby times to use in postprocessing
         self.time_computation = False #display the computation times of exponential, Louvain and MI
 
         #set the number of cores for parallel computing
@@ -46,23 +52,6 @@ class PyGenStability(object):
         else:
             self.n_processes_louv = int(1)
             self.n_processes_mi = int(1)  
-
-        #for temporary files from cpp louvain code
-        if not os.path.isdir('data'):
-            os.mkdir('data')
-        else:
-            import shutil
-            shutil.rmtree('data')
-            os.mkdir('data')
-
-        if not os.path.isdir('model'):
-            os.mkdir('model')
-        else:
-            import shutil
-            shutil.rmtree('model')
-            os.mkdir('model')
-
-        self.cpp_folder = '/home/arnaudon/codes/PyGenStability'
 
 # =============================================================================
 # create the generalized Louvain models
@@ -178,7 +167,7 @@ class PyGenStability(object):
             
         #compute the stability for each time
         for i in tqdm(range(len(times))):
-            stability, number_of_comms, community_id, MI_mat, MI = self.run_stability(times[i])
+            stability, number_of_comms, community_id, MI_mat, MI = self.run_stability(times[i]) 
 
             if self.cluster_tpe == 'linearized':
                 stability += (1-times[i])
@@ -666,16 +655,9 @@ def pprocess_f(args, i):
     C = args[2]
     times = args[3] 
 
-    Q = Q_matrices[i].toarray() #use already computed exponential to save time
+    R = Q_matrices[i].toarray() #use already computed exponential to save time
     t = times[i]
 
-    #compute the Q matrix to sandwich with the community labels
-    #if cluster_tpe == 'linear':
-    #    Q =  t*A - np.outer(pi.T, pi) #use time here instead
-    #else:                    
-    #    Q = A - np.outer(pi.T, pi)
-        
-    R = Q
     for i in range(int(len(null_model)/2)):
         R =- np.outer(null_model[2*i], null_model[2*i+1])
 
@@ -692,12 +674,9 @@ def pprocess_f(args, i):
         #compute stability
         stabilities[j] =  np.trace( (H.T).dot(R).dot(H) )
             
-    #if linear shift modularity to match the Louvain code
-    #if cluster_tpe == 'linear':
-    #    stabilities += (1-t)
-    
     #find the best partition for time i, t
     index = np.argmax(stabilities)
+
     return  stabilities[index], C[index], len(np.unique(C[index]))
     
    
@@ -710,20 +689,13 @@ def louv_f(Q, null_model, time):
     w_vec = Q[non_zero]
     n_edges = len(from_vec)
 
-    null_model_input = array('d', null_model.flatten())
     num_null_vectors = np.shape(null_model)[0] 
-    time = 1 #set the time to 1
 
-    stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model_input, num_null_vectors, time)
-
-    community_id = np.array(community_id)  #convert to array
-
-    #stability = np.float(np.loadtxt('data/stability_value_'+str(proc_id)+'.dat'))
-    #os.remove('data/stability_value_'+str(proc_id)+'.dat')
+    stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1) #calling the C++ code here
 
     number_of_comms = len(set(community_id))
 
-    return stability, number_of_comms, community_id
+    return stability, number_of_comms, np.array(community_id)
         
        
 def mi_f(louv_ensemble, args):
