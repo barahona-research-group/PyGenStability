@@ -7,7 +7,7 @@ import networkx as nx
 import pygenstability.pygenstability as pgs
 
 #set a simple SBM model
-sizes = [10, 15, 9]
+sizes = [15, 25, 19]
 probs = [[0.7, 0.05, 0.08],   
          [0.05, 0.8, 0.02],   
          [0.08, 0.02, 0.80]]
