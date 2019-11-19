@@ -45,6 +45,8 @@ class PyGenStability(object):
         self.n_neigh = 10 #number of nearby times to use in postprocessing
         self.time_computation = False #display the computation times of exponential, Louvain and MI
 
+        self.evaluate_ttprime = True #compute tttprime or not TODO: include this everywhere
+
         #set the number of cores for parallel computing
         if "OMP_NUM_THREADS" in os.environ:
             self.n_processes_louv = int(os.environ['OMP_NUM_THREADS']) #for the Louvain run
@@ -183,7 +185,6 @@ class PyGenStability(object):
             if self.post_process:
                 self.Q_matrices.append(self.Q)
 
-        ttprime = self.compute_ttprime(community_id_array, number_of_comms_array, times)
 
         #save the results
         timesteps = [element[0] for element in enumerate(times)]
@@ -194,7 +195,6 @@ class PyGenStability(object):
                 'number_of_communities' : number_of_comms_array,
                 'community_id' : community_id_array,
                 'MI' : MI_array,
-                'ttprime': ttprime
             },
             index = timesteps,
         )
@@ -203,7 +203,10 @@ class PyGenStability(object):
         if self.post_process:
             print("Apply postprocessing...")
             self.stability_postprocess()
-
+        
+        if self.evaluate_ttprime:
+            ttprime = self.compute_ttprime(community_id_array, number_of_comms_array, times)
+            self.stability_results['ttprime'] = ttprime
 
     def run_stability(self, time):
         """
@@ -336,7 +339,57 @@ class PyGenStability(object):
 # =============================================================================
 # postprocessing
 # =============================================================================
-    def stability_postprocess(self, disp=False):
+
+
+    def stability_postprocess(self):
+        """Post-process the scan of the stability run"""
+
+        import os as os
+        os.environ["OMP_NUM_THREADS"] = "1"
+
+        #print('Apply the post-processing')
+        C = np.vstack(self.stability_results.community_id.values) #store the community label for each time
+        N = self.stability_results.number_of_communities.values #store the number of commutities for each time
+        S = self.stability_results.stability.values #store the stability of the commutity for each time
+
+        times = self.stability_results['Markov time'].values #store the times
+
+        community_id_array_new = [] #to store the cleaned communities
+        stability_array_new = []
+        number_of_comms_array_new = []
+
+        #for each time, find the best community structure among all the others
+        args = []
+        for i in range(len(times)):
+
+            times_id = np.array([ i + j - self.n_neigh for j in range(2*self.n_neigh+1)]) 
+            times_id = times_id[times_id>=0]
+            times_id = times_id[times_id<len(times)]
+
+            args +=  [ [times_id, C, self.Q_matrices[i], self.null_model] ,] 
+
+        with Pool(processes = self.n_processes_louv) as p_pprocess:  #initialise the parallel computation
+            best_qualities = list(tqdm(p_pprocess.imap(postprocess_f, args), total = len(args))) 
+
+        for index, quality in best_qualities:
+            #record the new partition
+            stability_array_new.append(quality)
+            community_id_array_new.append(C[index])
+            number_of_comms_array_new.append(len(np.unique(C[index])))
+
+        self.stability_results = pd.DataFrame(
+            {
+                'Markov time' : times,
+                'stability' : stability_array_new,
+                'number_of_communities' : number_of_comms_array_new,
+                'community_id' : community_id_array_new,
+                'MI' : self.stability_results.MI.values,
+            },
+            index = self.stability_results.index,
+        )
+
+
+    def stability_postprocess_old(self, disp=False):
         """Post-process the scan of the stability run"""
 
         import os as os
@@ -401,52 +454,6 @@ class PyGenStability(object):
             },
             index = self.stability_results.index,
         )
-
-
-    def stability_postprocess_parallel(self, disp=False):
-        """Post-process the scan of the stability run"""
-
-        import os as os
-        num_threads = os.environ["OMP_NUM_THREADS"]
-        os.environ["OMP_NUM_THREADS"] = "1"
-
-        print('Apply the post-processing')
-        C = np.vstack(self.stability_results.community_id.values) #store the community label for each time
-        N = self.stability_results.number_of_communities.values #store the number of commutities for each time
-        S = self.stability_results.stability.values #store the stability of the commutity for each time
-
-        times = self.stability_results['Markov time'].values #store the times
-
-        #for each time, find the best community structure among all the others
-        args = [self.Q_matrices, self.null_model, C, times]
-        pprocessf = partial(pprocess_f, args)
-
-        with Pool(processes = self.n_processes_mi) as p_pprocess:  #initialise the parallel computation
-            out = p_pprocess.map(pprocessf, range(len(times))) #run the louvain in parallel
-
-        #record the new partition
-        community_id_array_new = [] #to store the cleaned communities
-        stability_array_new = []
-        number_of_comms_array_new = []
-
-
-        for i in range(len(times)):
-            stability_array_new.append(out[i][0])
-            community_id_array_new.append(out[i][1])
-            number_of_comms_array_new.append(out[i][2])
-
-        self.stability_results = pd.DataFrame(
-            {
-                'Markov time' : times,
-                'stability' : stability_array_new,
-                'number_of_communities' : number_of_comms_array_new,
-                'community_id' : community_id_array_new,
-                'MI' : self.stability_results.MI.values
-            },
-            index = self.stability_results.index,
-        )
-        os.environ["OMP_NUM_THREADS"] = str(num_threads)
-
 
     def compute_ttprime(self, C, N, T):
         """Compute the mutual information score of several Louvain run"""
@@ -693,12 +700,26 @@ def louv_f(Q, null_model, time):
     num_null_vectors = np.shape(null_model)[0]
 
     stability, community_id = run_louvain(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1) #calling the C++ code here
-    print("quality", evaluate_quality(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1, community_id), stability)
 
     number_of_comms = len(set(community_id))
 
     return stability, number_of_comms, np.array(community_id)
 
+def quality_f(Q, null_model, partition_id):
+    """Function to evaluate quality function of a partition at a time """
+
+    Qt = sc.sparse.tril(Q)
+    non_zero = Qt.nonzero()
+    from_vec = non_zero[0]
+    to_vec = non_zero[1]
+    w_vec = Q[non_zero]
+    n_edges = len(from_vec)
+
+    num_null_vectors = np.shape(null_model)[0]
+
+    quality = evaluate_quality(from_vec, to_vec, w_vec, n_edges, null_model, num_null_vectors, 1, partition_id)
+
+    return quality
 
 def mi_f(louv_ensemble, args):
     """Function to run in parallel for MI evaluations"""
@@ -709,3 +730,20 @@ def ttprime_f(C, args):
     """Function to run in parallel for ttprime evaluations"""
 
     return normalized_mutual_info_score(C[args[0]],C[args[1]], average_method='arithmetic' )
+
+def postprocess_f(args):
+    """ run the postprocess for one time for parallel computations"""
+
+    times_id        = args[0]
+    partition_ids   = args[1]
+    Q               = args[2]
+    null_model      = args[3]
+   
+    qualities = []
+    for i in times_id:
+        qualities.append(quality_f(Q, null_model, partition_ids[i]))
+
+    max_id = np.argmax(qualities)
+
+    return times_id[max_id], qualities[max_id]
+
