@@ -389,75 +389,9 @@ class PyGenStability(object):
         )
 
 
-    def stability_postprocess_old(self, disp=False):
-        """Post-process the scan of the stability run"""
-
-        import os as os
-        os.environ["OMP_NUM_THREADS"] = "1"
-
-        #print('Apply the post-processing')
-        C = np.vstack(self.stability_results.community_id.values) #store the community label for each time
-        N = self.stability_results.number_of_communities.values #store the number of commutities for each time
-        S = self.stability_results.stability.values #store the stability of the commutity for each time
-
-        times = self.stability_results['Markov time'].values #store the times
-        ttprime = self.stability_results['ttprime'].values #store the times
-
-        community_id_array_new = [] #to store the cleaned communities
-        stability_array_new = []
-        number_of_comms_array_new = []
-
-        #for each time, find the best community structure among all the others
-        for i in tqdm(range(len(times))):
-            if disp:
-                print('Done ', i ,' of ', len(times))
-
-            Q = self.Q_matrices[i].toarray() #use already computed exponential to save time
-
-            #compute the Q matrix to sandwich with the community labels
-            R = Q
-            for i in range(int(len(self.null_model)/2)):
-                R -= np.outer(self.null_model[2*i], self.null_model[2*i+1])
-
-            args = [self.n_neigh, times, i, C, R]
-
-            pprocess_innerf = partial(pprocess_inner_f, args)
-
-            with Pool(processes = self.n_processes_louv) as p_pprocess:  #initialise the parallel computation
-                stabilities = p_pprocess.map(pprocess_innerf, range(2*self.n_neigh)) #run the louvain in parallel
-
-            #if linear shift modularity to match the Louvain code
-            if self.cluster_tpe == 'linearized':
-                stabilities += (1-times[i])
-
-            #find the best partition for time i, t
-            index = np.argmax(stabilities)
-            index_n = index + (i-self.n_neigh)
-
-            #record the new partition
-            stability_array_new.append(stabilities[index])
-            community_id_array_new.append(C[index_n])
-            number_of_comms_array_new.append(len(np.unique(C[index_n])))
-
-            if disp:
-                print('Previous number of comms: ', N[i], ', New number of comms: ', number_of_comms_array_new[-1])
-
-
-        self.stability_results = pd.DataFrame(
-            {
-                'Markov time' : times,
-                'stability' : stability_array_new,
-                'number_of_communities' : number_of_comms_array_new,
-                'community_id' : community_id_array_new,
-                'MI' : self.stability_results.MI.values,
-                'ttprime': ttprime
-            },
-            index = self.stability_results.index,
-        )
-
     def compute_ttprime(self, C, N, T):
         """Compute the mutual information score of several Louvain run"""
-
+        print('Computing ttprime')
         ttprime_id = []
         for t in range(len(T)):
             for tprime in range(len(T)):
@@ -465,7 +399,7 @@ class PyGenStability(object):
 
         ttprimef = partial(ttprime_f, C)
         with Pool(processes= self.n_processes_louv) as p_ttprime:  #initialise the parallel computation
-            out = p_ttprime.map(ttprimef, ttprime_id) #run the MI
+            out = list(tqdm(p_ttprime.imap(ttprimef, ttprime_id), total = len(ttprime_id))) #run the MI
 
         ttprime = [] # np.zeros((len(T), len(T)))
 
@@ -500,7 +434,7 @@ class PyGenStability(object):
         """
 
         #get the times paramters
-        n_t = len(self.stability_results['ttprime'])
+        n_t = len(self.stability_results['Markov time'])
         times = np.log10(self.stability_results['Markov time'].values)
 
         import matplotlib.gridspec as gridspec
@@ -510,28 +444,34 @@ class PyGenStability(object):
         gs = gridspec.GridSpec(2, 1, height_ratios = [ 1., 0.5])#, width_ratios = [1,0.2] )
         gs.update(hspace=0)
 
-        #plot tt'
-        ttprime = np.zeros([n_t,n_t])
-        for i, tt in enumerate(self.stability_results['ttprime']):
-            ttprime[i] = tt
 
-        ax0 = plt.subplot(gs[0, 0])
-        ax0.contourf(times, times, ttprime, cmap='YlOrBr')
-        ax0.yaxis.tick_left()
-        ax0.yaxis.set_label_position('left')
-        ax0.set_ylabel(r'$log_{10}(t^\prime)$')
-        ax0.axis([times[0],times[-1],times[0],times[-1]])
+        #plot tt'
+        if self.evaluate_ttprime:
+            ax0 = plt.subplot(gs[0, 0])
+            ttprime = np.zeros([n_t,n_t])
+            for i, tt in enumerate(self.stability_results['ttprime']):
+                ttprime[i] = tt
+
+            ax0.contourf(times, times, ttprime, cmap='YlOrBr')
+            ax0.set_ylabel(r'$log_{10}(t^\prime)$')
+            ax0.yaxis.tick_left()
+            ax0.yaxis.set_label_position('left')
+            ax0.axis([times[0],times[-1],times[0],times[-1]])
+
+            ax1 = ax0.twinx()
+        else:
+            ax1 = plt.subplot(gs[0, 0])
 
         #plot the number of clusters
-        ax1 = ax0.twinx()
         if time_axis == True:
             ax1.plot(times, self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
         else:
             ax1.plot(self.stability_results['number_of_communities'],c='C0',label='size',lw=2.)
 
-        ax1.yaxis.tick_right()
         ax1.tick_params('y', colors='C0')
-        ax1.yaxis.set_label_position('right')
+        if self.evaluate_ttprime:
+            ax1.yaxis.tick_right()
+            ax1.yaxis.set_label_position('right')
         ax1.set_ylabel('Number of clusters', color='C0')
 
         #make a subplot for stability and MI

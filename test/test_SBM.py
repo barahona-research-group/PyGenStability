@@ -50,6 +50,8 @@ stability.n_mi = 10
 
 stability.use_spectral_gap = True
 
+stability.evaluate_ttprime = True
+
 #number of cpu for parallel compuations
 stability.n_processes_louv = 1 # of Louvain
 stability.n_processes_mi   = 1 # of MI
