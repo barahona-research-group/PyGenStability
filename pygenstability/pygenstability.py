@@ -61,7 +61,8 @@ class PyGenStability(object):
     def set_null_model(self):
         """create the null models"""
 
-        assert self.A.sum()>0, "Adjacency matrix is zero!!"
+        if not self.cluster_tpe == 'modularity_signed':
+            assert self.A.sum()>0, "Adjacency matrix is zero!!"
 
         if self.cluster_tpe == 'continuous_combinatorial':
             self.pi = np.ones(self.n)/self.n
@@ -96,7 +97,7 @@ class PyGenStability(object):
                 deg_plus = np.zeros(self.n)
             else:
                 deg_plus_norm = deg_plus/deg_plus.sum()
-
+            
             self.null_model = np.array([deg_plus, deg_plus_norm, deg_neg, -deg_neg_norm])/self.deg_norm
 
 
