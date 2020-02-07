@@ -2,12 +2,8 @@ from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
-import imp
 
-if sys.version_info < (2, 7):
-    sys.exit("Sorry, Python < 2.7 is not supported")
-
-VERSION = imp.load_source("", "pygenstability/version.py").__version__
+__version__ = '0.0.1'
 
 
 class get_pybind_include(object):
@@ -107,7 +103,7 @@ setup(
     author='Alexis Arnaudon',
     author_email='alexis.arnaudon@epfl.ch',
     url='https://github.com/pybind/python_example',
-    description='Python binding of generalised Markov Stability'
+    description='A test project using pybind11',
     long_description='',
     ext_modules=ext_modules,
     packages=['pygenstability', 'generalizedLouvain_API'],
@@ -119,7 +115,7 @@ setup(
                     'networkx', 
                     'sklearn',
                     'tqdm',
-		            'cmake'],
+		    'cmake'],
     setup_requires=['pybind11>=2.4'],
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,
