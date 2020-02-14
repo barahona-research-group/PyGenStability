@@ -7,7 +7,7 @@ import imp
 if sys.version_info < (2, 7):
     sys.exit("Sorry, Python < 2.7 is not supported")
 
-VERSION = imp.load_source("", "pygenstability/version.py").__version__
+__version__ = imp.load_source("", "pygenstability/version.py").__version__
 
 
 class get_pybind_include(object):
@@ -22,20 +22,21 @@ class get_pybind_include(object):
 
     def __str__(self):
         import pybind11
+
         return pybind11.get_include(self.user)
 
 
 ext_modules = [
     Extension(
-        'generalizedLouvain_API',
-        ['generalizedLouvain_API/cpp_to_python.cpp'],
+        "generalizedLouvain_API",
+        ["generalizedLouvain_API/cpp_to_python.cpp"],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True),
-	    'generalizedLouvain_API/lemon_include' #path to lemon library 
+            "generalizedLouvain_API/lemon_include",  # path to lemon library
         ],
-        language='c++'
+        language="c++",
     ),
 ]
 
@@ -46,8 +47,9 @@ def has_flag(compiler, flagname):
     the specified compiler.
     """
     import tempfile
-    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
-        f.write('int main (int argc, char **argv) { return 0; }')
+
+    with tempfile.NamedTemporaryFile("w", suffix=".cpp") as f:
+        f.write("int main (int argc, char **argv) { return 0; }")
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
@@ -60,67 +62,69 @@ def cpp_flag(compiler):
 
     The newer version is prefered over c++11 (when it is available).
     """
-    flags = [ '-std=c++14', '-std=c++11'] #'-std=c++17',
+    flags = ["-std=c++14", "-std=c++11"]  #'-std=c++17',
 
     for flag in flags:
-        if has_flag(compiler, flag): return flag
+        if has_flag(compiler, flag):
+            return flag
 
-    raise RuntimeError('Unsupported compiler -- at least C++11 support '
-                       'is needed!')
+    raise RuntimeError("Unsupported compiler -- at least C++11 support " "is needed!")
 
 
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
+
     c_opts = {
-        'msvc': ['/EHsc'],
-        'unix': [],
+        "msvc": ["/EHsc"],
+        "unix": [],
     }
     l_opts = {
-        'msvc': [],
-        'unix': [],
+        "msvc": [],
+        "unix": [],
     }
 
-    if sys.platform == 'darwin':
-        darwin_opts = ['-stdlib=libc++', '-mmacosx-version-min=10.7']
-        c_opts['unix'] += darwin_opts
-        l_opts['unix'] += darwin_opts
+    if sys.platform == "darwin":
+        darwin_opts = ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
+        c_opts["unix"] += darwin_opts
+        l_opts["unix"] += darwin_opts
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         link_opts = self.l_opts.get(ct, [])
-        if ct == 'unix':
+        if ct == "unix":
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             opts.append(cpp_flag(self.compiler))
-            if has_flag(self.compiler, '-fvisibility=hidden'):
-                opts.append('-fvisibility=hidden')
-        elif ct == 'msvc':
+            if has_flag(self.compiler, "-fvisibility=hidden"):
+                opts.append("-fvisibility=hidden")
+        elif ct == "msvc":
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
         for ext in self.extensions:
             ext.extra_compile_args = opts
             ext.extra_link_args = link_opts
         build_ext.build_extensions(self)
 
+
 setup(
-    name='pygenstability',
+    name="pygenstability",
     version=__version__,
-    author='Alexis Arnaudon',
-    author_email='alexis.arnaudon@epfl.ch',
-    url='https://github.com/pybind/python_example',
-    description='Python binding of generalised Markov Stability'
-    long_description='',
+    author="Alexis Arnaudon",
+    author_email="alexis.arnaudon@epfl.ch",
+    url="https://github.com/ImperialCollegeLondon/PyGenStability",
+    description="Python binding of generalised Markov Stability",
+    long_description="",
     ext_modules=ext_modules,
-    packages=['pygenstability', 'generalizedLouvain_API'],
-    install_requires=['pybind11>=2.4', 
-                    'numpy', 
-                    'scipy', 
-                    'pandas', 
-                    'matplotlib', 
-                    'networkx', 
-                    'sklearn',
-                    'tqdm',
-		            'cmake'],
-    setup_requires=['pybind11>=2.4'],
-    cmdclass={'build_ext': BuildExt},
+    packages=["pygenstability", "generalizedLouvain_API"],
+    install_requires=[
+        "pybind11>=2.4",
+        "numpy",
+        "scipy",
+        "matplotlib",
+        "networkx",
+        "sklearn",
+        "cmake",
+    ],
+    setup_requires=["pybind11>=2.4"],
+    cmdclass={"build_ext": BuildExt},
     zip_safe=False,
 )

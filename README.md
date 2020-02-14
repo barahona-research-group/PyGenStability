@@ -21,10 +21,10 @@ using a fresh `virtualenv` in python3 may be recommanded to avoid conflict of py
 Example
 -------
 
-In the `test` folder, a demo script with stochastic block model can be tried with 
+In the `example` folder, a demo script with stochastic block model can be tried with 
 
 ```
-python test_SBM.py
+python simple_example.py
 ```
 
 
