@@ -3,6 +3,14 @@ import numpy as np
 import scipy as sc
 import networkx as nx
 
+THRESHOLD = 1e-6
+
+
+def _threshold_matrix(matrix):
+    mask = np.abs(matrix.data) < THRESHOLD * np.max(matrix)
+    matrix.data[mask] = 0
+    matrix.eliminate_zeros()
+
 
 def constructor_continuous_linearized(graph, time):
     """constructor for continuous linearized"""
@@ -23,7 +31,10 @@ def constructor_continuous_combinatorial(graph, time):
     pi = np.ones(len(graph)) / len(graph)
 
     laplacian = 1.0 * nx.laplacian_matrix(graph).tocsc()
+
     exp = sc.sparse.linalg.expm(-time * laplacian)
+
+    _threshold_matrix(exp)
 
     null_model = np.array([pi, pi])
     quality_matrix = sc.sparse.diags(pi).dot(exp)
@@ -39,6 +50,8 @@ def constructor_continuous_normalized(graph, time):
     laplacian = sc.sparse.diags(1.0 / degrees).dot(nx.laplacian_matrix(graph)).tocsc()
 
     exp = sc.sparse.linalg.expm(-time * laplacian)
+
+    _threshold_matrix(exp)
 
     null_model = np.array([pi, pi])
     quality_matrix = sc.sparse.diags(pi).dot(exp)
