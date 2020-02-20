@@ -120,11 +120,14 @@ setup(
         "numpy",
         "scipy",
         "matplotlib",
-        "networkx",
+        "networkx>=2.4",
         "sklearn",
         "cmake",
     ],
     setup_requires=["pybind11>=2.4"],
     cmdclass={"build_ext": BuildExt},
     zip_safe=False,
+    entry_points={
+        'console_scripts': ['pygenstability=pygenstability.app:cli'],
+    }
 )

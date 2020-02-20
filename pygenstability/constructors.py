@@ -1,9 +1,17 @@
 """quality matrix and null model constructor functions"""
+import sys
 import numpy as np
 import scipy as sc
 import networkx as nx
 
 THRESHOLD = 1e-6
+
+
+def _load_constructor(constructor_type):
+    try:
+        return getattr(sys.modules[__name__], "constructor_%s" % constructor_type)
+    except:
+        raise Exception("Could not load constructor %s" % constructor_type)
 
 
 def _threshold_matrix(matrix):

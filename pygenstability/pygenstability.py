@@ -1,26 +1,58 @@
 """main functions"""
 import multiprocessing
+import logging
+import os
 
 import numpy as np
 import scipy as sc
+import networkx as nx
 
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
 from generalizedLouvain_API import run_louvain, evaluate_quality
-from .io import save_all_results
+from .io import save
+from .constructors import _load_constructor
+
+L = logging.getLogger("pygenstability")
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 
-def run(graph, times, constructor, params):
+def _graph_checks(graph):
+    """do some checks and preprocessing of the graph"""
+    if not nx.is_connected(graph):
+        L.warning("Graph not connected, so we will use the largest connected component")
+        graph = max(nx.connected_components(graph), key=len)
+
+    if nx.is_directed(graph):
+        L.warning(
+            "given graph is directed, we convert it to undirected, as directed not implemented yet"
+        )
+        graph = graph.to_undirected()
+
+    return graph
+
+
+def run(graph, params):
     """main funtion to compute clustering at various time scales"""
-    all_results = {"times": []}
-    pool = multiprocessing.Pool(params["n_workers"])
+
+    graph = _graph_checks(graph)
+
+    constructor = _load_constructor(params["constructor"])
+
+    if params["log_time"]:
+        times = np.logspace(params["min_time"], params["max_time"], params["n_time"])
+    else:
+        times = np.linspace(params["min_time"], params["max_time"], params["n_time"])
 
     if params["save_qualities"]:
         quality_matrices = []
         null_models = []
 
+    pool = multiprocessing.Pool(params["n_workers"])
+
+    all_results = {"times": []}
     for time in times:
-        print("Computing time 10^" + str(np.round(np.log10(time), 3)))
+        L.info("Computing time 10^" + str(np.round(np.log10(time), 3)))
 
         quality_matrix, null_model = constructor(graph, time)
 
@@ -39,7 +71,7 @@ def run(graph, times, constructor, params):
                 louvain_results, all_results, pool, n_partitions=params["n_partitions"]
             )
 
-        save_all_results(all_results)
+        save(all_results)
 
     if params["compute_ttprime"]:
         compute_ttprime(all_results, pool)
@@ -198,7 +230,7 @@ def apply_postprocessing(
     all_results_raw = all_results.copy()
 
     for i, time in enumerate(all_results["times"]):
-        print("Postprocessing, computing time 10^" + str(np.round(np.log10(time), 3)))
+        L.info("Postprocessing, computing time 10^" + str(np.round(np.log10(time), 3)))
 
         if quality_matrices is None:
             quality_matrix, null_model = constructor(graph, time)

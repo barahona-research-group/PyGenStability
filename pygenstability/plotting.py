@@ -95,6 +95,7 @@ def plot_scan(all_results, time_axis=True, figure_name="scan_results.svg"):
 
     plt.savefig(figure_name, bbox_inches="tight")
 
+
 def plot_communities(graph, all_results, folder="communities"):
     """now plot the community structures at each time in a folder"""
 
