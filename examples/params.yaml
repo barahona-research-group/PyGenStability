@@ -1,5 +1,5 @@
 # time parmaeters
-min_time: -3.
+min_time: -2.0
 max_time: 0.5
 n_time: 20
 log_time: True
@@ -8,6 +8,8 @@ n_runs: 50  # number of Louvain runs
 n_workers: 4  # number of workers for parallel computing
 
 constructor: 'continuous_combinatorial'  # quality constructor
+#constructor: 'continuous_linearized'  # quality constructor
+#constructor: 'continuous_normalized'  # quality constructor
 
 # additional parameters
 save_qualities: True

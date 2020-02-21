@@ -6,7 +6,7 @@ import networkx as nx
 def create_sbm():
     """simple test"""
     # set a simple SBM model
-    sizes = [15, 55, 25]
+    sizes = [15, 35, 25]
     probs = [[0.7, 0.08, 0.10], [0.08, 0.8, 0.02], [0.10, 0.02, 0.80]]
 
     graph = nx.stochastic_block_model(sizes, probs, seed=0)

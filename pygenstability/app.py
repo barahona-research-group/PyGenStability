@@ -4,7 +4,6 @@ import click
 from .pygenstability import run as _run
 from .io import load_graph, load_params, load
 from .plotting import plot_scan
- 
 
 
 @click.group()
@@ -25,5 +24,3 @@ def run(graph_path, params_path):
 def plot(results):
     """ Run pygenstability"""
     plot_scan(load(results))
-
-

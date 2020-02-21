@@ -1,10 +1,13 @@
 """plotting functions"""
 import os
+import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import networkx as nx
+
+L = logging.getLogger("pygenstability")
 
 
 def plot_scan(all_results, time_axis=True, figure_name="scan_results.svg"):
@@ -14,6 +17,13 @@ def plot_scan(all_results, time_axis=True, figure_name="scan_results.svg"):
 
     # get the times paramters
     n_t = len(all_results["times"])
+    if n_t == 1:
+        L.info(
+            "Cannot plot the results if only one time point, we display the result instead:"
+        )
+        L.info(all_results)
+        return
+
     times = np.log10(all_results["times"])
 
     plt.figure(figsize=(5, 5))

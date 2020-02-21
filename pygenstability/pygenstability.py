@@ -64,14 +64,17 @@ def run(graph, params):
             null_models.append(null_model)
 
         louvain_results = run_several_louvains(
-            quality_matrix, null_model, params["n_runs"], mapper 
+            quality_matrix, null_model, params["n_runs"], mapper
         )
 
         process_louvain_run(time, np.array(louvain_results), all_results)
 
         if params["compute_mutual_information"]:
             compute_mutual_information(
-                louvain_results, all_results, mapper, n_partitions=params["n_partitions"]
+                louvain_results,
+                all_results,
+                mapper,
+                n_partitions=params["n_partitions"],
             )
 
         save(all_results)
@@ -92,14 +95,16 @@ def run(graph, params):
                 all_results, mapper, graph=graph, constructor=constructor
             )
 
+    save(all_results)
+
     return all_results
 
 
 def process_louvain_run(time, louvain_results, all_results, mutual_information=None):
     """convert the louvain outputs to useful data and save it"""
 
-    if "time" not in all_results:
-        all_results["time"] = []
+    if "times" not in all_results:
+        all_results["times"] = []
     if "number_of_communities" not in all_results:
         all_results["number_of_communities"] = []
     if "stability" not in all_results:
@@ -158,7 +163,7 @@ class WorkerLouvain:
     """worker for Louvain runs"""
 
     def __init__(self, quality_indices, quality_values, null_model):
-        self.quality_indices = quality_indices 
+        self.quality_indices = quality_indices
         self.quality_values = quality_values
         self.null_model = null_model
 
@@ -245,9 +250,11 @@ def apply_postprocessing(
 
         quality_indices, quality_values = _to_indices(quality_matrix)
         worker = WorkerQuality(quality_indices, quality_values, null_model)
-        qualities = list(mapper(worker, all_results_raw["community_id"]))
 
-        best_quality_id = np.argmax(qualities)
+        best_quality_id = np.argmax(
+            list(mapper(worker, all_results_raw["community_id"]))
+        )
+
         all_results["community_id"][i] = all_results_raw["community_id"][
             best_quality_id
         ]
