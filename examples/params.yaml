@@ -14,7 +14,7 @@ save_qualities: True
 compute_mutual_information: True
 n_partitions: 10  # number of louvian runs for MI computation
 compute_ttprime: True
-apply_postprocessing: = True
+apply_postprocessing: True
 
 
 

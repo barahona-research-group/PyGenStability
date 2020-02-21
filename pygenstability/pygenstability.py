@@ -47,8 +47,11 @@ def run(graph, params):
     if params["save_qualities"]:
         quality_matrices = []
         null_models = []
-
-    pool = multiprocessing.Pool(params["n_workers"])
+    if params["n_workers"] == 1:
+        mapper = map
+    else:
+        pool = multiprocessing.Pool(params["n_workers"])
+        mapper = pool.map
 
     all_results = {"times": []}
     for time in times:
@@ -61,32 +64,32 @@ def run(graph, params):
             null_models.append(null_model)
 
         louvain_results = run_several_louvains(
-            quality_matrix, null_model, params["n_runs"], pool
+            quality_matrix, null_model, params["n_runs"], mapper 
         )
 
         process_louvain_run(time, np.array(louvain_results), all_results)
 
         if params["compute_mutual_information"]:
             compute_mutual_information(
-                louvain_results, all_results, pool, n_partitions=params["n_partitions"]
+                louvain_results, all_results, mapper, n_partitions=params["n_partitions"]
             )
 
         save(all_results)
 
     if params["compute_ttprime"]:
-        compute_ttprime(all_results, pool)
+        compute_ttprime(all_results, mapper)
 
     if params["apply_postprocessing"]:
         if params["save_qualities"]:
             apply_postprocessing(
                 all_results,
-                pool,
+                mapper,
                 quality_matrices=quality_matrices,
                 null_models=null_models,
             )
         else:
             apply_postprocessing(
-                all_results, pool, graph=graph, constructor=constructor
+                all_results, mapper, graph=graph, constructor=constructor
             )
 
     return all_results
@@ -118,7 +121,7 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
         all_results["mutual_information"].append(mutual_information)
 
 
-def compute_mutual_information(louvain_results, all_results, pool, n_partitions=10):
+def compute_mutual_information(louvain_results, all_results, mapper, n_partitions=10):
     """compute the mutual information between the top partitions"""
     top_run_ids = np.argsort(louvain_results[:, 0])[-n_partitions:]
     top_partitions = louvain_results[top_run_ids, 1]
@@ -128,7 +131,7 @@ def compute_mutual_information(louvain_results, all_results, pool, n_partitions=
 
     if "mutual_information" not in all_results:
         all_results["mutual_information"] = []
-    all_results["mutual_information"].append(np.mean(pool.map(worker, index_pairs)))
+    all_results["mutual_information"].append(np.mean(list(mapper(worker, index_pairs))))
 
 
 class WorkerMI:
@@ -147,16 +150,16 @@ class WorkerMI:
 
 def _to_indices(matrix):
     """convert a sparse matrix to indices and values"""
-    indices = sc.sparse.tril(matrix).nonzero()
-    values = [matrix[index[0], index[1]] for index in zip(*indices)]
-    return indices, values
+    rows, cols, values = sc.sparse.find(sc.sparse.tril(matrix))
+    return (rows, cols), values
 
 
 class WorkerLouvain:
     """worker for Louvain runs"""
 
-    def __init__(self, quality_matrix, null_model):
-        self.quality_indices, self.quality_values = _to_indices(quality_matrix)
+    def __init__(self, quality_indices, quality_values, null_model):
+        self.quality_indices = quality_indices 
+        self.quality_values = quality_values
         self.null_model = null_model
 
     def __call__(self, i):
@@ -175,8 +178,9 @@ class WorkerLouvain:
 class WorkerQuality:
     """worker for Louvain runs"""
 
-    def __init__(self, quality_matrix, null_model):
-        self.quality_indices, self.quality_values = _to_indices(quality_matrix)
+    def __init__(self, quality_indices, quality_values, null_model):
+        self.quality_indices = quality_indices
+        self.quality_values = quality_values
         self.null_model = null_model
 
     def __call__(self, partition_id):
@@ -193,13 +197,15 @@ class WorkerQuality:
         return quality
 
 
-def run_several_louvains(quality_matrix, null_model, n_runs, pool):
+def run_several_louvains(quality_matrix, null_model, n_runs, mapper):
     """run several louvain on the current quality matrix"""
-    worker = WorkerLouvain(quality_matrix, null_model)
-    return np.array(pool.map(worker, range(n_runs)))
+
+    quality_indices, quality_values = _to_indices(quality_matrix)
+    worker = WorkerLouvain(quality_indices, quality_values, null_model)
+    return np.array(list(mapper(worker, range(n_runs))))
 
 
-def compute_ttprime(all_results, pool):
+def compute_ttprime(all_results, mapper):
     """compute ttprime from the stability results"""
     index_pairs = [
         [i, j]
@@ -208,7 +214,7 @@ def compute_ttprime(all_results, pool):
     ]
 
     worker = WorkerMI(all_results["community_id"])
-    ttprime_list = pool.map(worker, index_pairs)
+    ttprime_list = list(mapper(worker, index_pairs))
 
     all_results["ttprime"] = np.zeros(
         [len(all_results["times"]), len(all_results["times"])]
@@ -219,7 +225,7 @@ def compute_ttprime(all_results, pool):
 
 def apply_postprocessing(
     all_results,
-    pool,
+    mapper,
     graph=None,
     constructor=None,
     quality_matrices=None,
@@ -237,8 +243,9 @@ def apply_postprocessing(
         else:
             quality_matrix, null_model = quality_matrices[i], null_models[i]
 
-        worker = WorkerQuality(quality_matrix, null_model)
-        qualities = pool.map(worker, all_results_raw["community_id"])
+        quality_indices, quality_values = _to_indices(quality_matrix)
+        worker = WorkerQuality(quality_indices, quality_values, null_model)
+        qualities = list(mapper(worker, all_results_raw["community_id"]))
 
         best_quality_id = np.argmax(qualities)
         all_results["community_id"][i] = all_results_raw["community_id"][
