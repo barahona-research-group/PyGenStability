@@ -10,7 +10,9 @@ import networkx as nx
 L = logging.getLogger("pygenstability")
 
 
-def plot_scan(all_results, time_axis=True, figure_name="scan_results.svg"):
+def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
+    all_results, time_axis=True, figure_name="scan_results.svg"
+):
     """
     Simple plot of a scan
     """
@@ -24,7 +26,10 @@ def plot_scan(all_results, time_axis=True, figure_name="scan_results.svg"):
         L.info(all_results)
         return
 
-    times = np.log10(all_results["times"])
+    if all_results["params"]["log_time"]:
+        times = np.log10(all_results["times"])
+    else:
+        times = all_results["times"]
 
     plt.figure(figsize=(5, 5))
 
@@ -66,10 +71,11 @@ def plot_scan(all_results, time_axis=True, figure_name="scan_results.svg"):
     ax2 = plt.subplot(gs[1, 0])
 
     # first plot the stability
-    if time_axis:
-        ax2.plot(times, all_results["stability"], label=r"$Q$", c="C2")
-    else:
-        ax2.plot(all_results["stability"], label=r"$Q$", c="C2")
+    if "stability" in all_results:
+        if time_axis:
+            ax2.plot(times, all_results["stability"], label=r"$Q$", c="C2")
+        else:
+            ax2.plot(all_results["stability"], label=r"$Q$", c="C2")
 
     # ax2.set_yscale('log')
     ax2.tick_params("y", colors="C2")

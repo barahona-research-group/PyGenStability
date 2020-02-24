@@ -32,12 +32,15 @@ def _graph_checks(graph):
     return graph
 
 
-def run(graph, params):
+def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
     """main funtion to compute clustering at various time scales"""
 
     graph = _graph_checks(graph)
 
-    constructor = _load_constructor(params["constructor"])
+    if constructor is None:
+        constructor = _load_constructor(params["constructor"])
+    elif not callable(constructor):
+        raise Exception("Please pass a function as constructor")
 
     if params["log_time"]:
         times = np.logspace(params["min_time"], params["max_time"], params["n_time"])
@@ -47,6 +50,7 @@ def run(graph, params):
     if params["save_qualities"]:
         quality_matrices = []
         null_models = []
+
     if params["n_workers"] == 1:
         mapper = map
     else:
@@ -54,8 +58,12 @@ def run(graph, params):
         mapper = pool.map
 
     all_results = {"times": []}
+    all_results["params"] = params
     for time in times:
-        L.info("Computing time 10^" + str(np.round(np.log10(time), 3)))
+        if params["log_time"]:
+            L.info("Computing time 10^" + str(np.round(np.log10(time), 3)))
+        else:
+            L.info("Computing time " + str(np.round(time, 3)))
 
         quality_matrix, null_model = constructor(graph, time)
 
@@ -87,12 +95,13 @@ def run(graph, params):
             apply_postprocessing(
                 all_results,
                 mapper,
+                params,
                 quality_matrices=quality_matrices,
                 null_models=null_models,
             )
         else:
             apply_postprocessing(
-                all_results, mapper, graph=graph, constructor=constructor
+                all_results, mapper, params, graph=graph, constructor=constructor
             )
 
     save(all_results)
@@ -128,8 +137,12 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
 
 def compute_mutual_information(louvain_results, all_results, mapper, n_partitions=10):
     """compute the mutual information between the top partitions"""
-    top_run_ids = np.argsort(louvain_results[:, 0])[-n_partitions:]
-    top_partitions = louvain_results[top_run_ids, 1]
+    if len(louvain_results[0]) == 2:
+        top_run_ids = np.argsort(louvain_results[:, 0])[-n_partitions:]
+        top_partitions = louvain_results[top_run_ids, 1]
+    else:  # if no stability provided, take first partitions
+        top_partitions = louvain_results[:n_partitions]
+
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
 
     worker = WorkerMI(top_partitions)
@@ -228,9 +241,10 @@ def compute_ttprime(all_results, mapper):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
 
 
-def apply_postprocessing(
+def apply_postprocessing(  # pylint: disable=too-many-locals
     all_results,
     mapper,
+    params,
     graph=None,
     constructor=None,
     quality_matrices=None,
@@ -241,7 +255,12 @@ def apply_postprocessing(
     all_results_raw = all_results.copy()
 
     for i, time in enumerate(all_results["times"]):
-        L.info("Postprocessing, computing time 10^" + str(np.round(np.log10(time), 3)))
+        if params["log_time"]:
+            L.info(
+                "Postprocessing, computing time 10^" + str(np.round(np.log10(time), 3))
+            )
+        else:
+            L.info("Postprocessing, computing time " + str(np.round(time, 3)))
 
         if quality_matrices is None:
             quality_matrix, null_model = constructor(graph, time)

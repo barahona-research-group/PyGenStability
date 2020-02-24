@@ -68,7 +68,8 @@ def constructor_continuous_normalized(graph, time):
 
 
 def constructor_signed_modularity(graph, time):
-    """constructor of signed mofularitye (Arenas 2008)"""
+    """constructor of signed mofularitye (Gomes, Jensen, Arenas, PRE 2009)
+    the time only multiplies the quality matrix (this many not mean anything, use with care!)"""
     adjacency_matrix = nx.adjacency_matrix(graph, weight="weight").toarray()
 
     adj_pos = adjacency_matrix.copy()
