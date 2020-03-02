@@ -13,6 +13,137 @@ L = logging.getLogger("pygenstability")
 def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
     all_results, time_axis=True, figure_name="scan_results.svg"
 ):
+
+    from plotly.subplots import make_subplots
+    import plotly.graph_objects as go
+
+    hovertemplate = str(
+        "<b>Time</b>: %{x:.2f}"
+        + "<br><i>Number of communities</i>: %{y}"
+        + "<br>%{text}<extra></extra>"
+    )
+    text = [
+        "Stability: {0:.3f}, <br> Mutual Information: {1:.3f}, <br> Index: {2}".format(
+            s, mi, i
+        )
+        for s, mi, i in zip(
+            all_results["stability"],
+            all_results["mutual_information"],
+            np.arange(0, len(all_results["times"])),
+        )
+    ]
+
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
+    ncom = go.Scatter(
+        x=np.log10(all_results["times"]),
+        y=all_results["number_of_communities"],
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        name="Number of communities",
+        xaxis="x2",
+        yaxis="y4",
+        text=text,
+        marker_color="red",
+    )
+
+    ttprime = go.Heatmap(
+        z=all_results["ttprime"],
+        x=np.log10(all_results["times"]),
+        y=np.log10(all_results["times"]),
+        colorscale="Blues",
+        yaxis="y2",
+        xaxis="x2",
+        hoverinfo="skip",
+        colorbar=dict(title="ttprime MI", len=0.2, yanchor="middle", y=0.5,),
+    )
+
+    stab = go.Scatter(
+        x=np.log10(all_results["times"]),
+        y=all_results["stability"],
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        text=text,
+        name="Stability",
+        marker_color="blue",
+    )
+
+    mi = go.Scatter(
+        x=np.log10(all_results["times"]),
+        y=all_results["mutual_information"],
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        text=text,
+        name="Mutual information",
+        yaxis="y3",
+        xaxis="x",
+        marker_color="green",
+    )
+
+    layout = go.Layout(
+        yaxis=dict(
+            title="Stability",
+            titlefont=dict(color="blue",),
+            tickfont=dict(color="blue",),
+            domain=[0, 0.28],
+        ),
+        yaxis2=dict(
+            title="tprime",
+            titlefont=dict(color="black",),
+            tickfont=dict(color="black",),
+            domain=[0.32, 1],
+            side="right",
+            range=[
+                np.log10(all_results["times"][0]),
+                np.log10(all_results["times"][-1]),
+            ],
+        ),
+        yaxis3=dict(
+            title="Mutual information",
+            titlefont=dict(color="green",),
+            tickfont=dict(color="green",),
+            overlaying="y",
+            side="right",
+        ),
+        yaxis4=dict(
+            title="Number of communities",
+            titlefont=dict(color="red",),
+            tickfont=dict(color="red",),
+            overlaying="y2",
+        ),
+        xaxis=dict(
+            range=[
+                np.log10(all_results["times"][0]),
+                np.log10(all_results["times"][-1]),
+            ],
+        ),
+        xaxis1=dict(
+            title="Time",
+            range=[
+                np.log10(all_results["times"][0]),
+                np.log10(all_results["times"][-1]),
+            ],
+        ),
+        xaxis2=dict(
+            range=[
+                np.log10(all_results["times"][0]),
+                np.log10(all_results["times"][-1]),
+            ],
+        ),
+        xaxis3=dict(
+            range=[
+                np.log10(all_results["times"][0]),
+                np.log10(all_results["times"][-1]),
+            ],
+        ),
+    )
+    data = [stab, ncom, mi, ttprime]
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()
+
+
+def plot_scan_plt(  # pylint: disable=too-many-branches,too-many-statements
+    all_results, time_axis=True, figure_name="scan_results.svg"
+):
     """
     Simple plot of a scan
     """

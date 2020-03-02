@@ -21,7 +21,7 @@ def _graph_checks(graph):
     """do some checks and preprocessing of the graph"""
     if not nx.is_connected(graph):
         L.warning("Graph not connected, so we will use the largest connected component")
-        graph = max(nx.connected_components(graph), key=len)
+        graph = nx.subgraph(graph, max(nx.connected_components(graph), key=len))
 
     if nx.is_directed(graph):
         L.warning(
