@@ -11,31 +11,70 @@ L = logging.getLogger("pygenstability")
 
 
 def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
-    all_results, time_axis=True, figure_name="scan_results.svg"
+    all_results, time_axis=True, figure_name="scan_results.svg", use_plotly=True
 ):
+    """Plot results of pygenstability with matplotlib or plotly"""
 
-    from plotly.subplots import make_subplots
-    import plotly.graph_objects as go
+    if len(all_results["times"]) == 1:
+        L.info(
+            "Cannot plot the results if only one time point, we display the result instead:"
+        )
+        L.info(all_results)
+        return
+
+    if use_plotly:
+        try:
+            plot_scan_plotly(all_results)
+        except ImportError:
+            L.warning(
+                "Plotly is not installed, please install package with \
+                 pip install pygenstabiliy[plotly], using matplotlib instead."
+            )
+
+    plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+
+
+def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+    all_results,
+):
+    """Plot results of pygenstability with plotly"""
+    from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
+    import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
+
+    if all_results["params"]["log_time"]:
+        times = np.log10(all_results["times"])
+    else:
+        times = all_results["times"]
 
     hovertemplate = str(
         "<b>Time</b>: %{x:.2f}"
         + "<br><i>Number of communities</i>: %{y}"
         + "<br>%{text}<extra></extra>"
     )
+
+    if "mutual_information" in all_results:
+        mi_data = all_results["mutual_information"]
+        mi_opacity = 1.0
+        mi_title = "Mutual information"
+        mi_ticks = True
+    else:
+        mi_data = np.zeros(len(times))
+        mi_opacity = 0.0
+        mi_title = None
+        mi_ticks = False
+
     text = [
         "Stability: {0:.3f}, <br> Mutual Information: {1:.3f}, <br> Index: {2}".format(
             s, mi, i
         )
         for s, mi, i in zip(
-            all_results["stability"],
-            all_results["mutual_information"],
-            np.arange(0, len(all_results["times"])),
+            all_results["stability"], mi_data, np.arange(0, len(times)),
         )
     ]
 
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
     ncom = go.Scatter(
-        x=np.log10(all_results["times"]),
+        x=times,
         y=all_results["number_of_communities"],
         mode="lines+markers",
         hovertemplate=hovertemplate,
@@ -46,19 +85,29 @@ def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
         marker_color="red",
     )
 
+    if "ttprime" in all_results:
+        z = all_results["ttprime"]
+        showscale = True
+        tprime_title = "tprime"
+    else:
+        z = np.nan + np.zeros([len(times), len(times)])
+        showscale = False
+        tprime_title = None
+
     ttprime = go.Heatmap(
-        z=all_results["ttprime"],
-        x=np.log10(all_results["times"]),
-        y=np.log10(all_results["times"]),
-        colorscale="Blues",
+        z=z,
+        x=times,
+        y=times,
+        colorscale="YlOrBr",
         yaxis="y2",
         xaxis="x2",
         hoverinfo="skip",
         colorbar=dict(title="ttprime MI", len=0.2, yanchor="middle", y=0.5,),
+        showscale=showscale,
     )
 
     stab = go.Scatter(
-        x=np.log10(all_results["times"]),
+        x=times,
         y=all_results["stability"],
         mode="lines+markers",
         hovertemplate=hovertemplate,
@@ -68,8 +117,8 @@ def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
     )
 
     mi = go.Scatter(
-        x=np.log10(all_results["times"]),
-        y=all_results["mutual_information"],
+        x=times,
+        y=mi_data,
         mode="lines+markers",
         hovertemplate=hovertemplate,
         text=text,
@@ -77,6 +126,7 @@ def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
         yaxis="y3",
         xaxis="x",
         marker_color="green",
+        opacity=mi_opacity,
     )
 
     layout = go.Layout(
@@ -87,20 +137,18 @@ def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
             domain=[0, 0.28],
         ),
         yaxis2=dict(
-            title="tprime",
+            title=tprime_title,
             titlefont=dict(color="black",),
             tickfont=dict(color="black",),
             domain=[0.32, 1],
             side="right",
-            range=[
-                np.log10(all_results["times"][0]),
-                np.log10(all_results["times"][-1]),
-            ],
+            range=[times[0], times[-1],],
         ),
         yaxis3=dict(
-            title="Mutual information",
+            title=mi_title,
             titlefont=dict(color="green",),
             tickfont=dict(color="green",),
+            showticklabels=mi_ticks,
             overlaying="y",
             side="right",
         ),
@@ -110,52 +158,18 @@ def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
             tickfont=dict(color="red",),
             overlaying="y2",
         ),
-        xaxis=dict(
-            range=[
-                np.log10(all_results["times"][0]),
-                np.log10(all_results["times"][-1]),
-            ],
-        ),
-        xaxis1=dict(
-            title="Time",
-            range=[
-                np.log10(all_results["times"][0]),
-                np.log10(all_results["times"][-1]),
-            ],
-        ),
-        xaxis2=dict(
-            range=[
-                np.log10(all_results["times"][0]),
-                np.log10(all_results["times"][-1]),
-            ],
-        ),
-        xaxis3=dict(
-            range=[
-                np.log10(all_results["times"][0]),
-                np.log10(all_results["times"][-1]),
-            ],
-        ),
+        xaxis=dict(range=[times[0], times[-1],],),
+        xaxis2=dict(range=[times[0], times[-1],],),
     )
-    data = [stab, ncom, mi, ttprime]
-    fig = go.Figure(data=data, layout=layout)
+
+    fig = go.Figure(data=[stab, ncom, mi, ttprime], layout=layout)
     fig.show()
 
 
 def plot_scan_plt(  # pylint: disable=too-many-branches,too-many-statements
     all_results, time_axis=True, figure_name="scan_results.svg"
 ):
-    """
-    Simple plot of a scan
-    """
-
-    # get the times paramters
-    n_t = len(all_results["times"])
-    if n_t == 1:
-        L.info(
-            "Cannot plot the results if only one time point, we display the result instead:"
-        )
-        L.info(all_results)
-        return
+    """Plot results of pygenstability with matplotlib"""
 
     if all_results["params"]["log_time"]:
         times = np.log10(all_results["times"])
@@ -164,13 +178,12 @@ def plot_scan_plt(  # pylint: disable=too-many-branches,too-many-statements
 
     plt.figure(figsize=(5, 5))
 
-    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])  # , width_ratios = [1,0.2] )
+    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
     gs.update(hspace=0)
 
-    # plot tt'
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[0, 0])
-        ttprime = np.zeros([n_t, n_t])
+        ttprime = np.zeros([len(times), len(times)])
         for i, tt in enumerate(all_results["ttprime"]):
             ttprime[i] = tt
 
@@ -184,53 +197,54 @@ def plot_scan_plt(  # pylint: disable=too-many-branches,too-many-statements
     else:
         ax1 = plt.subplot(gs[0, 0])
 
-    # plot the number of clusters
     if time_axis:
         ax1.plot(
-            times, all_results["number_of_communities"], c="C0", label="size", lw=2.0
+            times,
+            all_results["number_of_communities"],
+            ".-",
+            c="C3",
+            label="size",
+            lw=2.0,
         )
     else:
-        ax1.plot(all_results["number_of_communities"], c="C0", label="size", lw=2.0)
+        ax1.plot(
+            all_results["number_of_communities"], ".-", c="C3", label="size", lw=2.0
+        )
 
     ax1.tick_params("y", colors="C0")
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-    ax1.set_ylabel("Number of clusters", color="C0")
+    ax1.set_ylabel("Number of clusters", color="C3")
 
-    # make a subplot for stability and MI
     ax2 = plt.subplot(gs[1, 0])
 
-    # first plot the stability
     if "stability" in all_results:
         if time_axis:
-            ax2.plot(times, all_results["stability"], label=r"$Q$", c="C2")
+            ax2.plot(times, all_results["stability"], ".-", label=r"$Q$", c="C0")
         else:
-            ax2.plot(all_results["stability"], label=r"$Q$", c="C2")
+            ax2.plot(all_results["stability"], ".-", label=r"$Q$", c="C0")
 
-    # ax2.set_yscale('log')
     ax2.tick_params("y", colors="C2")
-    ax2.set_ylabel("Modularity", color="C2")
+    ax2.set_ylabel("Stability", color="C2")
     ax2.yaxis.set_label_position("left")
-    # ax2.legend(loc='center right')
     ax2.set_xlabel(r"$log_{10}(t)$")
 
-    # ax2.axis([0,n_t,0,self.stability_results.at[0,'number_of_communities']])
-
-    # plot the MMI
     if "mutual_information" in all_results:
         ax3 = ax2.twinx()
         if time_axis:
             ax3.plot(
                 times,
                 all_results["mutual_information"],
-                "-",
+                ".-",
                 lw=2.0,
-                c="C3",
+                c="C2",
                 label="MI",
             )
         else:
-            ax3.plot(all_results["mutual_information"], "-", lw=2.0, c="C3", label="MI")
+            ax3.plot(
+                all_results["mutual_information"], ".-", lw=2.0, c="C2", label="MI"
+            )
 
         ax3.yaxis.tick_right()
         ax3.tick_params("y", colors="C3")

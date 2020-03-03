@@ -4,11 +4,6 @@ import sys
 import setuptools
 import imp
 
-if sys.version_info < (2, 7):
-    sys.exit("Sorry, Python < 2.7 is not supported")
-
-__version__ = imp.load_source("", "pygenstability/version.py").__version__
-
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
@@ -107,7 +102,7 @@ class BuildExt(build_ext):
 
 setup(
     name="pygenstability",
-    version=__version__,
+    version='1.0.0',
     author="Alexis Arnaudon",
     author_email="alexis.arnaudon@epfl.ch",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
@@ -116,15 +111,19 @@ setup(
     ext_modules=ext_modules,
     packages=["pygenstability", "generalizedLouvain_API"],
     install_requires=[
-        "pybind11>=2.4",
-        "numpy",
-        "scipy",
-        "matplotlib",
+        "numpy>=1.18.1",
+        "scipy>=1.4.1",
+        "matplotlib>=3.1.3",
         "networkx>=2.4",
-        "sklearn",
-        "cmake",
+        "sklearn>=0.0",
+        "cmake>=3.16.3",
+        "pyyaml>=5.3",
+        "click>=7.0",
     ],
     setup_requires=["pybind11>=2.4"],
+    extras_require={
+        "plotly": ["plotly>=3.6.0"],
+    },
     cmdclass={"build_ext": BuildExt},
     zip_safe=False,
     entry_points={
