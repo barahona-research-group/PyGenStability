@@ -106,6 +106,9 @@ def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
 
     save(all_results)
 
+    if params["n_workers"] > 1:
+        pool.close()
+
     return all_results
 
 
