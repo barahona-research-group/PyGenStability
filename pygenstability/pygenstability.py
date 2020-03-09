@@ -16,6 +16,14 @@ from .constructors import _load_constructor
 L = logging.getLogger("pygenstability")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
+CUSTOM_CHUNKSIZE = True  # speedup of multiprocessing
+
+
+def _get_chunksize(n_comp, pool):
+    if CUSTOM_CHUNKSIZE:
+        return int(n_comp / pool._processes)  # pylint: disable=protected-access
+    return None
+
 
 def _graph_checks(graph):
     """do some checks and preprocessing of the graph"""
@@ -51,11 +59,7 @@ def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
         quality_matrices = []
         null_models = []
 
-    if params["n_workers"] == 1:
-        mapper = map
-    else:
-        pool = multiprocessing.Pool(params["n_workers"])
-        mapper = pool.map
+    pool = multiprocessing.Pool(params["n_workers"])
 
     all_results = {"times": []}
     all_results["params"] = params
@@ -72,36 +76,33 @@ def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
             null_models.append(null_model)
 
         louvain_results = run_several_louvains(
-            quality_matrix, null_model, params["n_runs"], mapper
+            quality_matrix, null_model, params["n_runs"], pool
         )
 
         process_louvain_run(time, np.array(louvain_results), all_results)
 
         if params["compute_mutual_information"]:
             compute_mutual_information(
-                louvain_results,
-                all_results,
-                mapper,
-                n_partitions=params["n_partitions"],
+                louvain_results, all_results, pool, n_partitions=params["n_partitions"],
             )
 
         save(all_results)
 
     if params["compute_ttprime"]:
-        compute_ttprime(all_results, mapper)
+        compute_ttprime(all_results, pool)
 
     if params["apply_postprocessing"]:
         if params["save_qualities"]:
             apply_postprocessing(
                 all_results,
-                mapper,
+                pool,
                 params,
                 quality_matrices=quality_matrices,
                 null_models=null_models,
             )
         else:
             apply_postprocessing(
-                all_results, mapper, params, graph=graph, constructor=constructor
+                all_results, pool, params, graph=graph, constructor=constructor
             )
 
     save(all_results)
@@ -138,7 +139,7 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
         all_results["mutual_information"].append(mutual_information)
 
 
-def compute_mutual_information(louvain_results, all_results, mapper, n_partitions=10):
+def compute_mutual_information(louvain_results, all_results, pool, n_partitions=10):
     """compute the mutual information between the top partitions"""
     if len(louvain_results[0]) == 2:
         top_run_ids = np.argsort(louvain_results[:, 0])[-n_partitions:]
@@ -152,7 +153,11 @@ def compute_mutual_information(louvain_results, all_results, mapper, n_partition
 
     if "mutual_information" not in all_results:
         all_results["mutual_information"] = []
-    all_results["mutual_information"].append(np.mean(list(mapper(worker, index_pairs))))
+
+    chunksize = _get_chunksize(len(index_pairs), pool)
+    all_results["mutual_information"].append(
+        np.mean(list(pool.map(worker, index_pairs, chunksize=chunksize)))
+    )
 
 
 class WorkerMI:
@@ -218,15 +223,17 @@ class WorkerQuality:
         return quality
 
 
-def run_several_louvains(quality_matrix, null_model, n_runs, mapper):
+def run_several_louvains(quality_matrix, null_model, n_runs, pool):
     """run several louvain on the current quality matrix"""
 
     quality_indices, quality_values = _to_indices(quality_matrix)
     worker = WorkerLouvain(quality_indices, quality_values, null_model)
-    return np.array(list(mapper(worker, range(n_runs))))
+
+    chunksize = _get_chunksize(n_runs, pool)
+    return np.array(list(pool.map(worker, range(n_runs), chunksize=chunksize)))
 
 
-def compute_ttprime(all_results, mapper):
+def compute_ttprime(all_results, pool):
     """compute ttprime from the stability results"""
     index_pairs = [
         [i, j]
@@ -235,7 +242,8 @@ def compute_ttprime(all_results, mapper):
     ]
 
     worker = WorkerMI(all_results["community_id"])
-    ttprime_list = list(mapper(worker, index_pairs))
+    chunksize = _get_chunksize(len(index_pairs), pool)
+    ttprime_list = list(pool.map(worker, index_pairs, chunksize=chunksize))
 
     all_results["ttprime"] = np.zeros(
         [len(all_results["times"]), len(all_results["times"])]
@@ -246,7 +254,7 @@ def compute_ttprime(all_results, mapper):
 
 def apply_postprocessing(  # pylint: disable=too-many-locals
     all_results,
-    mapper,
+    pool,
     params,
     graph=None,
     constructor=None,
@@ -272,9 +280,9 @@ def apply_postprocessing(  # pylint: disable=too-many-locals
 
         quality_indices, quality_values = _to_indices(quality_matrix)
         worker = WorkerQuality(quality_indices, quality_values, null_model)
-
+        chunksize = _get_chunksize(len(all_results_raw["community_id"]), pool)
         best_quality_id = np.argmax(
-            list(mapper(worker, all_results_raw["community_id"]))
+            list(pool.map(worker, all_results_raw["community_id"], chunksize=chunksize))
         )
 
         all_results["community_id"][i] = all_results_raw["community_id"][
