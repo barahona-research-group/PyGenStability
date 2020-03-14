@@ -1,7 +1,6 @@
 """main functions"""
 import multiprocessing
-import logging
-import os
+from tqdm import tqdm
 
 import numpy as np
 import scipy as sc
@@ -12,9 +11,6 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from generalizedLouvain_API import run_louvain, evaluate_quality
 from .io import save
 from .constructors import _load_constructor
-
-L = logging.getLogger("pygenstability")
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 CUSTOM_CHUNKSIZE = True  # speedup of multiprocessing
 
@@ -28,12 +24,12 @@ def _get_chunksize(n_comp, pool):
 def _graph_checks(graph):
     """do some checks and preprocessing of the graph"""
     if not nx.is_connected(graph):
-        L.warning("Graph not connected, so we will use the largest connected component")
+        print("Graph not connected, so we will use the largest connected component.")
         graph = nx.subgraph(graph, max(nx.connected_components(graph), key=len))
 
     if nx.is_directed(graph):
-        L.warning(
-            "given graph is directed, we convert it to undirected, as directed not implemented yet"
+        print(
+            "Graph is directed, we convert it to undirected, as directed is not implemented."
         )
         graph = graph.to_undirected()
 
@@ -59,16 +55,14 @@ def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
         quality_matrices = []
         null_models = []
 
+    if "tqdm_disable" not in params:
+        params["tqdm_disable"] = False
+
     pool = multiprocessing.Pool(params["n_workers"])
 
     all_results = {"times": []}
     all_results["params"] = params
-    for time in times:
-        if params["log_time"]:
-            L.info("Computing time 10^" + str(np.round(np.log10(time), 3)))
-        else:
-            L.info("Computing time " + str(np.round(time, 3)))
-
+    for time in tqdm(times, disable=params["tqdm_disable"]):
         quality_matrix, null_model = constructor(graph, time)
 
         if params["save_qualities"]:
@@ -265,14 +259,11 @@ def apply_postprocessing(  # pylint: disable=too-many-locals
 
     all_results_raw = all_results.copy()
 
-    for i, time in enumerate(all_results["times"]):
-        if params["log_time"]:
-            L.info(
-                "Postprocessing, computing time 10^" + str(np.round(np.log10(time), 3))
-            )
-        else:
-            L.info("Postprocessing, computing time " + str(np.round(time, 3)))
-
+    for i, time in tqdm(
+        enumerate(all_results["times"]),
+        total=len(all_results["times"]),
+        disable=params["tqdm_disable"],
+    ):
         if quality_matrices is None:
             quality_matrix, null_model = constructor(graph, time)
         else:
