@@ -1,8 +1,10 @@
 """plotting functions"""
 import os
 import logging
+from tqdm import tqdm
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import networkx as nx
@@ -265,7 +267,8 @@ def plot_communities(graph, all_results, folder="communities"):
 
     pos = [graph.nodes[u]["pos"] for u in graph]
 
-    for i in range(len(all_results["times"])):
+    matplotlib.use("Agg")
+    for i in tadm(range(len(all_results["times"]))):
         node_color = all_results["community_id"][i]
 
         plt.figure()
@@ -291,3 +294,4 @@ def plot_communities(graph, all_results, folder="communities"):
             os.path.join(folder, "time_" + str(i) + ".png"), bbox_inches="tight"
         )
         plt.close()
+    matplotlib.use("TkAgg")
