@@ -268,7 +268,7 @@ def plot_communities(graph, all_results, folder="communities"):
     pos = [graph.nodes[u]["pos"] for u in graph]
 
     matplotlib.use("Agg")
-    for i in tadm(range(len(all_results["times"]))):
+    for i in tqdm(range(len(all_results["times"]))):
         node_color = all_results["community_id"][i]
 
         plt.figure()
