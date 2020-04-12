@@ -12,7 +12,6 @@ constructor: 'continuous_combinatorial'  # quality constructor
 #constructor: 'continuous_normalized'  # quality constructor
 
 # additional parameters
-save_qualities: True 
 compute_mutual_information: True 
 n_partitions: 20  # number of louvian runs for MI computation
 compute_ttprime: True

@@ -1,5 +1,6 @@
 """main functions"""
 import multiprocessing
+from collections import defaultdict
 from tqdm import tqdm
 
 import numpy as np
@@ -10,64 +11,47 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 
 from generalizedLouvain_API import run_louvain, evaluate_quality
 from .io import save
-from .constructors import _load_constructor
-
-CUSTOM_CHUNKSIZE = True  # speedup of multiprocessing
+from .constructors import load_constructor
 
 
 def _get_chunksize(n_comp, pool):
-    if CUSTOM_CHUNKSIZE:
-        return int(n_comp / pool._processes)  # pylint: disable=protected-access
-    return None
+    """Split jobs accross workers for speedup."""
+    return int(n_comp / pool._processes)  # pylint: disable=protected-access
 
 
 def _graph_checks(graph):
-    """do some checks and preprocessing of the graph"""
+    """Do some checks and preprocessing of the graph."""
     if not nx.is_connected(graph):
         print("Graph not connected, so we will use the largest connected component.")
         graph = nx.subgraph(graph, max(nx.connected_components(graph), key=len))
 
     if nx.is_directed(graph):
-        print(
-            "Graph is directed, we convert it to undirected, as directed is not implemented."
-        )
-        graph = graph.to_undirected()
-
+        print("Warning, your graph is directed!")
     return graph
 
 
-def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
-    """main funtion to compute clustering at various time scales"""
-
-    graph = _graph_checks(graph)
-
-    if constructor is None:
-        constructor = _load_constructor(params["constructor"])
-    elif not callable(constructor):
-        raise Exception("Please pass a function as constructor")
-
+def _get_times(params):
+    """Get the time vectors from params."""
     if params["log_time"]:
-        times = np.logspace(params["min_time"], params["max_time"], params["n_time"])
-    else:
-        times = np.linspace(params["min_time"], params["max_time"], params["n_time"])
+        return np.logspace(params["min_time"], params["max_time"], params["n_time"])
+    return np.linspace(params["min_time"], params["max_time"], params["n_time"])
 
-    if params["save_qualities"]:
-        quality_matrices = []
-        null_models = []
 
-    if "tqdm_disable" not in params:
-        params["tqdm_disable"] = False
+def run(graph, params, constructor_custom=None, tqdm_disable=False):
+    """Main funtion to compute clustering at various time scales."""
+    graph = _graph_checks(graph)
+    times = _get_times(params)
+
+    constructor = load_constructor(
+        params["constructor"], constructor_custom=constructor_custom
+    )
 
     pool = multiprocessing.Pool(params["n_workers"])
 
-    all_results = {"times": []}
+    all_results = defaultdict(list)
     all_results["params"] = params
-    for time in tqdm(times, disable=params["tqdm_disable"]):
+    for time in tqdm(times, disable=tqdm_disable):
         quality_matrix, null_model = constructor(graph, time)
-
-        if params["save_qualities"]:
-            quality_matrices.append(quality_matrix)
-            null_models.append(null_model)
 
         louvain_results = run_several_louvains(
             quality_matrix, null_model, params["n_runs"], pool
@@ -86,39 +70,15 @@ def run(graph, params, constructor=None):  # pylint: disable=too-many-branches
         compute_ttprime(all_results, pool)
 
     if params["apply_postprocessing"]:
-        if params["save_qualities"]:
-            apply_postprocessing(
-                all_results,
-                pool,
-                params,
-                quality_matrices=quality_matrices,
-                null_models=null_models,
-            )
-        else:
-            apply_postprocessing(
-                all_results, pool, params, graph=graph, constructor=constructor
-            )
+        apply_postprocessing(all_results, pool, graph=graph, constructor=constructor)
 
-    save(all_results)
-
-    if params["n_workers"] > 1:
-        pool.close()
+    pool.close()
 
     return all_results
 
 
 def process_louvain_run(time, louvain_results, all_results, mutual_information=None):
     """convert the louvain outputs to useful data and save it"""
-
-    if "times" not in all_results:
-        all_results["times"] = []
-    if "number_of_communities" not in all_results:
-        all_results["number_of_communities"] = []
-    if "stability" not in all_results:
-        all_results["stability"] = []
-    if "community_id" not in all_results:
-        all_results["community_id"] = []
-
     best_run_id = np.argmax(louvain_results[:, 0])
     all_results["times"].append(time)
     all_results["number_of_communities"].append(
@@ -128,8 +88,6 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
     all_results["community_id"].append(louvain_results[best_run_id, 1])
 
     if mutual_information is not None:
-        if "mutual_information" not in all_results:
-            all_results["mutual_information"] = []
         all_results["mutual_information"].append(mutual_information)
 
 
@@ -144,9 +102,6 @@ def compute_mutual_information(louvain_results, all_results, pool, n_partitions=
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
 
     worker = WorkerMI(top_partitions)
-
-    if "mutual_information" not in all_results:
-        all_results["mutual_information"] = []
 
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["mutual_information"].append(
@@ -198,9 +153,9 @@ class WorkerLouvain:
 class WorkerQuality:
     """worker for Louvain runs"""
 
-    def __init__(self, quality_indices, quality_values, null_model):
-        self.quality_indices = quality_indices
-        self.quality_values = quality_values
+    def __init__(self, qualities_index, null_model):
+        self.quality_indices = qualities_index[0]
+        self.quality_values = qualities_index[1]
         self.null_model = null_model
 
     def __call__(self, partition_id):
@@ -246,15 +201,7 @@ def compute_ttprime(all_results, pool):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
 
 
-def apply_postprocessing(  # pylint: disable=too-many-locals
-    all_results,
-    pool,
-    params,
-    graph=None,
-    constructor=None,
-    quality_matrices=None,
-    null_models=None,
-):
+def apply_postprocessing(all_results, pool, graph, constructor, tqdm_disable=False):
     """apply postprocessing"""
 
     all_results_raw = all_results.copy()
@@ -262,18 +209,21 @@ def apply_postprocessing(  # pylint: disable=too-many-locals
     for i, time in tqdm(
         enumerate(all_results["times"]),
         total=len(all_results["times"]),
-        disable=params["tqdm_disable"],
+        disable=tqdm_disable,
     ):
-        if quality_matrices is None:
-            quality_matrix, null_model = constructor(graph, time)
-        else:
-            quality_matrix, null_model = quality_matrices[i], null_models[i]
+        quality_matrix, null_model = constructor(graph, time)
 
-        quality_indices, quality_values = _to_indices(quality_matrix)
-        worker = WorkerQuality(quality_indices, quality_values, null_model)
-        chunksize = _get_chunksize(len(all_results_raw["community_id"]), pool)
+        worker = WorkerQuality(_to_indices(quality_matrix), null_model)
         best_quality_id = np.argmax(
-            list(pool.map(worker, all_results_raw["community_id"], chunksize=chunksize))
+            list(
+                pool.map(
+                    worker,
+                    all_results_raw["community_id"],
+                    chunksize=_get_chunksize(
+                        len(all_results_raw["community_id"]), pool
+                    ),
+                )
+            )
         )
 
         all_results["community_id"][i] = all_results_raw["community_id"][

@@ -12,7 +12,7 @@ import networkx as nx
 L = logging.getLogger("pygenstability")
 
 
-def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
+def plot_scan(
     all_results, time_axis=True, figure_name="scan_results.svg", use_plotly=True
 ):
     """Plot results of pygenstability with matplotlib or plotly"""
@@ -168,7 +168,9 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     fig.show()
 
 
-def plot_communities(graph, all_results, folder="communities"):
+def plot_communities(
+    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5
+):
     """now plot the community structures at each time in a folder"""
 
     if not os.path.isdir(folder):
@@ -188,7 +190,7 @@ def plot_communities(graph, all_results, folder="communities"):
             node_size=100,
             cmap=plt.get_cmap("tab20"),
         )
-        nx.draw_networkx_edges(graph, pos=pos, width=0.5, edge_color="0.5")
+        nx.draw_networkx_edges(graph, pos=pos, width=edge_width, edge_color=edge_color)
 
         plt.axis("off")
         plt.title(
@@ -261,12 +263,6 @@ def plot_stability(all_results, ax, time_axis=True):
 
 def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
-
-    if all_results["params"]["log_time"]:
-        times = np.log10(all_results["times"])
-    else:
-        times = all_results["times"]
-
     plt.figure(figsize=(5, 5))
 
     gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])

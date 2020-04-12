@@ -1,17 +1,37 @@
 """quality matrix and null model constructor functions"""
 import sys
+from functools import lru_cache
 import numpy as np
 import scipy as sc
+
 import networkx as nx
 
-THRESHOLD = 1e-6
+THRESHOLD = 1e-6  # threshold quality matrix
+USE_CACHE = True  # cache quality matrices for postprocessing
 
 
-def _load_constructor(constructor_type):
-    try:
-        return getattr(sys.modules[__name__], "constructor_%s" % constructor_type)
-    except:
-        raise Exception("Could not load constructor %s" % constructor_type)
+def load_constructor(constructor_type, constructor_custom=None):
+    """Load constructor."""
+    if constructor_custom is None:
+        try:
+            constructor = getattr(
+                sys.modules[__name__], "constructor_%s" % constructor_type
+            )
+        except:
+            raise Exception("Could not load constructor %s" % constructor_type)
+    elif callable(constructor_custom):
+        constructor = constructor_custom
+    else:
+        raise Exception("Please pass a valid function as constructor.")
+
+    if not USE_CACHE:
+        return constructor
+
+    @lru_cache()
+    def cached_constructor(graph, time):
+        return constructor(graph, time)
+
+    return cached_constructor
 
 
 def _threshold_matrix(matrix):
