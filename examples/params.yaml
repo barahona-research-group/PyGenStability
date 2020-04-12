@@ -1,10 +1,10 @@
 # time parmaeters
 min_time: -2.0
 max_time: 0.5
-n_time: 20
+n_time: 10
 log_time: True
 
-n_runs: 100  # number of Louvain runs
+n_runs: 20  # number of Louvain runs
 n_workers: 2  # number of workers for parallel computing
 
 constructor: 'continuous_combinatorial'  # quality constructor

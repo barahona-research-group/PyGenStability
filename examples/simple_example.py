@@ -2,7 +2,7 @@
 import pygenstability as pgs
 from pygenstability import plotting
 from create_graph import create_sbm
-
+import matplotlib.pyplot as plt
 
 def simple_test():
     """run simple test"""
@@ -11,8 +11,9 @@ def simple_test():
 
     all_results = pgs.run(graph, params)
 
-    plotting.plot_scan(all_results)
-    plotting.plot_communities(graph, all_results)
+    plotting.plot_scan(all_results, use_plotly=False)
+    plt.show()
+    #plotting.plot_communities(graph, all_results)
 
 
 if __name__ == "__main__":
