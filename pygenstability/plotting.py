@@ -166,97 +166,6 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     fig.show()
 
 
-def plot_scan_plt(  # pylint: disable=too-many-branches,too-many-statements
-    all_results, time_axis=True, figure_name="scan_results.svg"
-):
-    """Plot results of pygenstability with matplotlib"""
-
-    if all_results["params"]["log_time"]:
-        times = np.log10(all_results["times"])
-    else:
-        times = all_results["times"]
-
-    plt.figure(figsize=(5, 5))
-
-    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
-    gs.update(hspace=0)
-
-    if "ttprime" in all_results:
-        ax0 = plt.subplot(gs[0, 0])
-        ttprime = np.zeros([len(times), len(times)])
-        for i, tt in enumerate(all_results["ttprime"]):
-            ttprime[i] = tt
-
-        ax0.contourf(times, times, ttprime, cmap="YlOrBr")
-        ax0.set_ylabel(r"$log_{10}(t^\prime)$")
-        ax0.yaxis.tick_left()
-        ax0.yaxis.set_label_position("left")
-        ax0.axis([times[0], times[-1], times[0], times[-1]])
-
-        ax1 = ax0.twinx()
-    else:
-        ax1 = plt.subplot(gs[0, 0])
-
-    if time_axis:
-        ax1.plot(
-            times,
-            all_results["number_of_communities"],
-            ".-",
-            c="C3",
-            label="size",
-            lw=2.0,
-        )
-    else:
-        ax1.plot(
-            all_results["number_of_communities"], ".-", c="C3", label="size", lw=2.0
-        )
-
-    ax1.tick_params("y", colors="C0")
-    if "ttprime" in all_results:
-        ax1.yaxis.tick_right()
-        ax1.yaxis.set_label_position("right")
-    ax1.set_ylabel("Number of clusters", color="C3")
-
-    ax2 = plt.subplot(gs[1, 0])
-
-    if "stability" in all_results:
-        if time_axis:
-            ax2.plot(times, all_results["stability"], ".-", label=r"$Q$", c="C0")
-        else:
-            ax2.plot(all_results["stability"], ".-", label=r"$Q$", c="C0")
-
-    ax2.tick_params("y", colors="C2")
-    ax2.set_ylabel("Stability", color="C2")
-    ax2.yaxis.set_label_position("left")
-    ax2.set_xlabel(r"$log_{10}(t)$")
-
-    if "mutual_information" in all_results:
-        ax3 = ax2.twinx()
-        if time_axis:
-            ax3.plot(
-                times,
-                all_results["mutual_information"],
-                ".-",
-                lw=2.0,
-                c="C2",
-                label="MI",
-            )
-        else:
-            ax3.plot(
-                all_results["mutual_information"], ".-", lw=2.0, c="C2", label="MI"
-            )
-
-        ax3.yaxis.tick_right()
-        ax3.tick_params("y", colors="C3")
-        ax3.set_ylabel(r"Mutual information", color="C3")
-        ax3.axhline(1, ls="--", lw=1.0, c="C3")
-        ax3.axis(
-            [times[0], times[-1], np.min(all_results["mutual_information"]) * 0.9, 1.1]
-        )
-
-    plt.savefig(figure_name, bbox_inches="tight")
-
-
 def plot_communities(graph, all_results, folder="communities"):
     """now plot the community structures at each time in a folder"""
 
@@ -291,3 +200,96 @@ def plot_communities(graph, all_results, folder="communities"):
             os.path.join(folder, "time_" + str(i) + ".png"), bbox_inches="tight"
         )
         plt.close()
+
+
+def _get_times(all_results, time_axis=True):
+    if all_results["params"]["log_time"]:
+        return np.log10(all_results["times"])
+    if time_axis:
+        return np.arange(len(all_results["times"]))
+    return all_results["times"]
+
+
+def plot_number_comm(all_results, ax, time_axis=True):
+    """Plot number of communities."""
+    times = _get_times(all_results, time_axis)
+
+    ax.plot(
+        times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0
+    )
+    ax.set_ylabel("Number of clusters", color="C3")
+    ax.tick_params("y", colors="C3")
+
+
+def plot_ttprime(all_results, ax):
+    """Plot ttprime."""
+    times = _get_times(all_results)
+
+    ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr")
+    ax.set_ylabel(r"$log_{10}(t^\prime)$")
+    ax.yaxis.tick_left()
+    ax.yaxis.set_label_position("left")
+    ax.axis([times[0], times[-1], times[0], times[-1]])
+
+
+def plot_mutual_information(all_results, ax, time_axis=True):
+    """Plot mutual information."""
+    times = _get_times(all_results, time_axis=time_axis)
+    ax.plot(times, all_results["mutual_information"], "-", lw=2.0, c="C2", label="MI")
+
+    ax.yaxis.tick_right()
+    ax.tick_params("y", colors="C2")
+    ax.set_ylabel(r"Mutual information", color="C2")
+    ax.axhline(1, ls="--", lw=1.0, c="C2")
+    ax.axis([times[0], times[-1], np.min(all_results["mutual_information"]) * 0.9, 1.1])
+
+
+def plot_stability(all_results, ax, time_axis=True):
+    """Plot stability."""
+    times = _get_times(all_results, time_axis=time_axis)
+    ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
+
+    ax.tick_params("y", colors="C0")
+    ax.set_ylabel("Stability", color="C0")
+    ax.yaxis.set_label_position("left")
+    ax.set_xlabel(r"$log_{10}(t)$")
+
+
+def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
+    """Plot results of pygenstability with matplotlib."""
+
+    if all_results["params"]["log_time"]:
+        times = np.log10(all_results["times"])
+    else:
+        times = all_results["times"]
+
+    plt.figure(figsize=(5, 5))
+
+    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
+    gs.update(hspace=0)
+
+    if "ttprime" in all_results:
+        ax0 = plt.subplot(gs[0, 0])
+        plot_ttprime(all_results, ax=ax0)
+        ax1 = ax0.twinx()
+    else:
+        ax1 = plt.subplot(gs[0, 0])
+
+    ax1.set_xticks([])
+
+    plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
+
+    if "ttprime" in all_results:
+        ax1.yaxis.tick_right()
+        ax1.yaxis.set_label_position("right")
+
+    ax2 = plt.subplot(gs[1, 0])
+
+    if "stability" in all_results:
+        plot_stability(all_results, ax=ax2, time_axis=time_axis)
+
+    if "mutual_information" in all_results:
+        ax3 = ax2.twinx()
+        plot_mutual_information(all_results, ax=ax3, time_axis=time_axis)
+
+    plt.savefig(figure_name, bbox_inches="tight")
