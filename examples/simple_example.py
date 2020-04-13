@@ -1,22 +1,27 @@
 """simple example"""
-import pygenstability as pgs
-from pygenstability import plotting
-from create_graph import create_sbm
+import pickle
 import matplotlib.pyplot as plt
+
+from pygenstability import run, load_params, plotting
+from create_graph import create_sbm
+
 
 def simple_test():
     """run simple test"""
-    params = pgs.load_params("params.yaml")
-    graph = pgs.load_graph("sbm_graph.gpickle")
+    params = load_params("params.yaml")
 
-    all_results = pgs.run(graph, params)
+    with open("sbm_graph.pkl", "rb") as pickle_file:
+        graph = pickle.load(pickle_file)
 
-    plotting.plot_scan(all_results, use_plotly=False)
-    plt.show()
-    #plotting.plot_communities(graph, all_results)
+    all_results = run(graph, params)
+
+    plotting.plot_scan(all_results, use_plotly=True)
+
+    with open("sbm_graph.gpickle", "rb") as pickle_file:
+        graph = pickle.load(pickle_file)
+    plotting.plot_communities(graph, all_results)
 
 
 if __name__ == "__main__":
-
     create_sbm()
     simple_test()

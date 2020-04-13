@@ -1,34 +1,39 @@
 """quality matrix and null model constructor functions"""
 import sys
-from functools import lru_cache
-import numpy as np
-import scipy as sc
+from functools import lru_cache, partial
 
-import networkx as nx
+import numpy as np
+import scipy.sparse as sp
 
 THRESHOLD = 1e-6  # threshold quality matrix
 USE_CACHE = True  # cache quality matrices for postprocessing
 
 
-def load_constructor(constructor_type, constructor_custom=None):
+def load_constructor(graph, params, constructor_custom=None):
     """Load constructor."""
-    if constructor_custom is None:
+    if constructor_custom is None and "constructor" in params:
         try:
             constructor = getattr(
-                sys.modules[__name__], "constructor_%s" % constructor_type
+                sys.modules[__name__], "constructor_%s" % params["constructor"]
             )
         except:
-            raise Exception("Could not load constructor %s" % constructor_type)
+            raise Exception("Could not load constructor %s" % params["constructor"])
+
+    elif constructor_custom is None and "constructor" not in params:
+        raise Exception(
+            "Please provide either a constructor function or one in params."
+        )
+
     elif callable(constructor_custom):
         constructor = constructor_custom
     else:
         raise Exception("Please pass a valid function as constructor.")
 
     if not USE_CACHE:
-        return constructor
+        return partial(constructor, graph)
 
     @lru_cache()
-    def cached_constructor(graph, time):
+    def cached_constructor(time):
         return constructor(graph, time)
 
     return cached_constructor
@@ -42,49 +47,48 @@ def _threshold_matrix(matrix):
 
 def constructor_continuous_linearized(graph, time):
     """constructor for continuous linearized"""
-    Warning("Not fully working, need a shift of quality, could we include it here?")
-    adjacency_matrix = nx.adjacency_matrix(graph, weight="weight").toarray()
+    print(
+        "WARNING: Not fully working, need a shift of quality, could we include it here?"
+    )
 
-    degrees = adjacency_matrix.sum(1)
+    degrees = graph.sum(1)
     if degrees.sum() < 1e-10:
         raise Exception("The total degree = 0, we cannot proceed further")
     pi = degrees / degrees.sum()
 
     null_model = np.array([pi, pi])
-    quality_matrix = time * adjacency_matrix / degrees.sum()
+    quality_matrix = time * graph / degrees.sum()
 
     return quality_matrix, null_model
 
 
 def constructor_continuous_combinatorial(graph, time):
     """constructor for continuous combinatorial"""
-    pi = np.ones(len(graph)) / len(graph)
+    laplacian = sp.csgraph.laplacian(graph).tocsc()
 
-    laplacian = 1.0 * nx.laplacian_matrix(graph).tocsc()
-
-    exp = sc.sparse.linalg.expm(-time * laplacian)
-
+    exp = sp.linalg.expm(-time * laplacian)
     _threshold_matrix(exp)
 
+    pi = np.ones(graph.shape[0]) / graph.shape[0]
+
+    quality_matrix = sp.diags(pi).dot(exp)
     null_model = np.array([pi, pi])
-    quality_matrix = sc.sparse.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
 
 def constructor_continuous_normalized(graph, time):
     """constructor for continuous normalized"""
-    degrees = np.array([graph.degree[i] for i in graph.nodes])
-    pi = degrees / degrees.sum()
+    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True)
+    normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian).tocsc()
 
-    laplacian = sc.sparse.diags(1.0 / degrees).dot(nx.laplacian_matrix(graph)).tocsc()
-
-    exp = sc.sparse.linalg.expm(-time * laplacian)
-
+    exp = sp.linalg.expm(-time * normed_laplacian)
     _threshold_matrix(exp)
 
+    pi = degrees / degrees.sum()
+
+    quality_matrix = sp.diags(pi).dot(exp)
     null_model = np.array([pi, pi])
-    quality_matrix = sc.sparse.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
@@ -92,14 +96,13 @@ def constructor_continuous_normalized(graph, time):
 def constructor_signed_modularity(graph, time):
     """constructor of signed mofularitye (Gomes, Jensen, Arenas, PRE 2009)
     the time only multiplies the quality matrix (this many not mean anything, use with care!)"""
-    adjacency_matrix = nx.adjacency_matrix(graph, weight="weight").toarray()
-    if np.min(adjacency_matrix) >= 0:
+    if np.min(graph) >= 0:
         return constructor_continuous_linearized(graph, time)
 
-    adj_pos = adjacency_matrix.copy()
-    adj_pos[adjacency_matrix < 0] = 0.0
-    adj_neg = -adjacency_matrix.copy()
-    adj_neg[adjacency_matrix > 0] = 0.0
+    adj_pos = graph.copy()
+    adj_pos[graph < 0] = 0.0
+    adj_neg = -graph.copy()
+    adj_neg[graph > 0] = 0.0
 
     deg_plus = adj_pos.sum(1)
     deg_neg = adj_neg.sum(1)
@@ -114,6 +117,6 @@ def constructor_signed_modularity(graph, time):
             deg_neg / deg_norm,
         ]
     )
-    quality_matrix = time * adjacency_matrix / deg_norm
+    quality_matrix = time * graph / deg_norm
 
     return quality_matrix, null_model

@@ -1,17 +1,16 @@
 """main functions"""
 import multiprocessing
 from collections import defaultdict
-from tqdm import tqdm
 
 import numpy as np
-import scipy as sc
-import networkx as nx
-
+import scipy.sparse as sp
 from sklearn.metrics.cluster import normalized_mutual_info_score
+from tqdm import tqdm
 
-from generalizedLouvain_API import run_louvain, evaluate_quality
-from .io import save
+from generalizedLouvain_API import evaluate_quality, run_louvain
+
 from .constructors import load_constructor
+from .io import save_results
 
 
 def _get_chunksize(n_comp, pool):
@@ -21,11 +20,11 @@ def _get_chunksize(n_comp, pool):
 
 def _graph_checks(graph):
     """Do some checks and preprocessing of the graph."""
-    if not nx.is_connected(graph):
-        print("Graph not connected, so we will use the largest connected component.")
-        graph = nx.subgraph(graph, max(nx.connected_components(graph), key=len))
 
-    if nx.is_directed(graph):
+    if sp.csgraph.connected_components(graph)[0] > 1:
+        raise Exception("Graph not connected, so we stop you here.")
+
+    if sp.linalg.norm(graph - graph.T) > 0:
         print("Warning, your graph is directed!")
     return graph
 
@@ -37,21 +36,25 @@ def _get_times(params):
     return np.linspace(params["min_time"], params["max_time"], params["n_time"])
 
 
-def run(graph, params, constructor_custom=None, tqdm_disable=False):
+def run(
+    graph,
+    params,
+    constructor_custom=None,
+    tqdm_disable=False,
+    result_file="results.pkl",
+):
     """Main funtion to compute clustering at various time scales."""
     graph = _graph_checks(graph)
     times = _get_times(params)
 
-    constructor = load_constructor(
-        params["constructor"], constructor_custom=constructor_custom
-    )
+    constructor = load_constructor(graph, params, constructor_custom=constructor_custom)
 
     pool = multiprocessing.Pool(params["n_workers"])
 
     all_results = defaultdict(list)
     all_results["params"] = params
     for time in tqdm(times, disable=tqdm_disable):
-        quality_matrix, null_model = constructor(graph, time)
+        quality_matrix, null_model = constructor(time)
 
         louvain_results = run_several_louvains(
             quality_matrix, null_model, params["n_runs"], pool
@@ -64,14 +67,15 @@ def run(graph, params, constructor_custom=None, tqdm_disable=False):
                 louvain_results, all_results, pool, n_partitions=params["n_partitions"],
             )
 
-        save(all_results)
+        save_results(all_results, filename=result_file)
 
     if params["compute_ttprime"]:
         compute_ttprime(all_results, pool)
 
     if params["apply_postprocessing"]:
-        apply_postprocessing(all_results, pool, graph=graph, constructor=constructor)
+        apply_postprocessing(all_results, pool, constructor=constructor)
 
+    save_results(all_results, filename=result_file)
     pool.close()
 
     return all_results
@@ -125,7 +129,7 @@ class WorkerMI:
 
 def _to_indices(matrix):
     """convert a sparse matrix to indices and values"""
-    rows, cols, values = sc.sparse.find(sc.sparse.tril(matrix))
+    rows, cols, values = sp.find(sp.tril(matrix))
     return (rows, cols), values
 
 
@@ -201,7 +205,7 @@ def compute_ttprime(all_results, pool):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
 
 
-def apply_postprocessing(all_results, pool, graph, constructor, tqdm_disable=False):
+def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
     """apply postprocessing"""
 
     all_results_raw = all_results.copy()
@@ -211,7 +215,7 @@ def apply_postprocessing(all_results, pool, graph, constructor, tqdm_disable=Fal
         total=len(all_results["times"]),
         disable=tqdm_disable,
     ):
-        quality_matrix, null_model = constructor(graph, time)
+        quality_matrix, null_model = constructor(time)
 
         worker = WorkerQuality(_to_indices(quality_matrix), null_model)
         best_quality_id = np.argmax(
