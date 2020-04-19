@@ -5,11 +5,8 @@ from functools import lru_cache, partial
 import numpy as np
 import scipy.sparse as sp
 
-THRESHOLD = 1e-6  # threshold quality matrix
-USE_CACHE = True  # cache quality matrices for postprocessing
 
-
-def load_constructor(graph, params, constructor_custom=None):
+def load_constructor(graph, params, constructor_custom=None, use_cache=True):
     """Load constructor."""
     if constructor_custom is None and "constructor" in params:
         try:
@@ -29,7 +26,7 @@ def load_constructor(graph, params, constructor_custom=None):
     else:
         raise Exception("Please pass a valid function as constructor.")
 
-    if not USE_CACHE:
+    if not use_cache:
         return partial(constructor, graph)
 
     @lru_cache()
@@ -39,40 +36,37 @@ def load_constructor(graph, params, constructor_custom=None):
     return cached_constructor
 
 
-def _threshold_matrix(matrix):
-    mask = np.abs(matrix.data) < THRESHOLD * np.max(matrix)
+def threshold_matrix(matrix, threshold=1e-6):
+    """Threshold a matrix to remove small numbers for Louvain speed up."""
+    mask = np.abs(matrix.data) < threshold * np.max(matrix)
     matrix.data[mask] = 0
     matrix.eliminate_zeros()
 
 
 def constructor_continuous_linearized(graph, time):
     """constructor for continuous linearized"""
-    print(
-        "WARNING: Not fully working, need a shift of quality, could we include it here?"
-    )
-
     degrees = graph.sum(1)
     if degrees.sum() < 1e-10:
         raise Exception("The total degree = 0, we cannot proceed further")
-    pi = degrees / degrees.sum()
 
+    pi = degrees / degrees.sum()
     null_model = np.array([pi, pi])
+
     quality_matrix = time * graph / degrees.sum()
 
-    return quality_matrix, null_model
+    return quality_matrix, null_model, 1 - time
 
 
 def constructor_continuous_combinatorial(graph, time):
     """constructor for continuous combinatorial"""
     laplacian = sp.csgraph.laplacian(graph).tocsc()
 
-    exp = sp.linalg.expm(-time * laplacian)
-    _threshold_matrix(exp)
-
     pi = np.ones(graph.shape[0]) / graph.shape[0]
-
-    quality_matrix = sp.diags(pi).dot(exp)
     null_model = np.array([pi, pi])
+
+    exp = sp.linalg.expm(-time * laplacian)
+    threshold_matrix(exp)
+    quality_matrix = sp.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
@@ -82,13 +76,12 @@ def constructor_continuous_normalized(graph, time):
     laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True)
     normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian).tocsc()
 
-    exp = sp.linalg.expm(-time * normed_laplacian)
-    _threshold_matrix(exp)
-
     pi = degrees / degrees.sum()
-
-    quality_matrix = sp.diags(pi).dot(exp)
     null_model = np.array([pi, pi])
+
+    exp = sp.linalg.expm(-time * normed_laplacian)
+    threshold_matrix(exp)
+    quality_matrix = sp.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
@@ -117,6 +110,7 @@ def constructor_signed_modularity(graph, time):
             deg_neg / deg_norm,
         ]
     )
+
     quality_matrix = time * graph / deg_norm
 
     return quality_matrix, null_model

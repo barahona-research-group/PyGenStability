@@ -36,6 +36,17 @@ def _get_times(params):
     return np.linspace(params["min_time"], params["max_time"], params["n_time"])
 
 
+def _get_constructor_data(constructor, time):
+    """Extract data from constructor."""
+    data = constructor(time)
+    quality_matrix, null_model = data[0], data[1]
+    if len(data) == 3:
+        global_shift = data[2]
+    else:
+        global_shift = None
+    return quality_matrix, null_model, global_shift
+
+
 def run(
     graph,
     params,
@@ -54,10 +65,11 @@ def run(
     all_results = defaultdict(list)
     all_results["params"] = params
     for time in tqdm(times, disable=tqdm_disable):
-        quality_matrix, null_model = constructor(time)
-
+        quality_matrix, null_model, global_shift = _get_constructor_data(
+            constructor, time
+        )
         louvain_results = run_several_louvains(
-            quality_matrix, null_model, params["n_runs"], pool
+            quality_matrix, null_model, global_shift, params["n_runs"], pool
         )
 
         process_louvain_run(time, np.array(louvain_results), all_results)
@@ -136,10 +148,11 @@ def _to_indices(matrix):
 class WorkerLouvain:
     """worker for Louvain runs"""
 
-    def __init__(self, quality_indices, quality_values, null_model):
+    def __init__(self, quality_indices, quality_values, null_model, global_shift):
         self.quality_indices = quality_indices
         self.quality_values = quality_values
         self.null_model = null_model
+        self.global_shift = global_shift
 
     def __call__(self, i):
         stability, community_id = run_louvain(
@@ -151,16 +164,19 @@ class WorkerLouvain:
             np.shape(self.null_model)[0],
             1.0,
         )
+        if self.global_shift is not None:
+            return stability + self.global_shift, community_id
         return stability, community_id
 
 
 class WorkerQuality:
     """worker for Louvain runs"""
 
-    def __init__(self, qualities_index, null_model):
+    def __init__(self, qualities_index, null_model, global_shift):
         self.quality_indices = qualities_index[0]
         self.quality_values = qualities_index[1]
         self.null_model = null_model
+        self.global_shift = global_shift
 
     def __call__(self, partition_id):
         quality = evaluate_quality(
@@ -173,14 +189,16 @@ class WorkerQuality:
             1.0,
             partition_id,
         )
+        if self.global_shift is not None:
+            return quality + self.global_shift
         return quality
 
 
-def run_several_louvains(quality_matrix, null_model, n_runs, pool):
+def run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool):
     """run several louvain on the current quality matrix"""
 
     quality_indices, quality_values = _to_indices(quality_matrix)
-    worker = WorkerLouvain(quality_indices, quality_values, null_model)
+    worker = WorkerLouvain(quality_indices, quality_values, null_model, global_shift)
 
     chunksize = _get_chunksize(n_runs, pool)
     return np.array(list(pool.map(worker, range(n_runs), chunksize=chunksize)))
@@ -215,9 +233,10 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         total=len(all_results["times"]),
         disable=tqdm_disable,
     ):
-        quality_matrix, null_model = constructor(time)
-
-        worker = WorkerQuality(_to_indices(quality_matrix), null_model)
+        quality_matrix, null_model, global_shift = _get_constructor_data(
+            constructor, time
+        )
+        worker = WorkerQuality(_to_indices(quality_matrix), null_model, global_shift)
         best_quality_id = np.argmax(
             list(
                 pool.map(
