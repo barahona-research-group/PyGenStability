@@ -64,6 +64,7 @@ def run(
 
     all_results = defaultdict(list)
     all_results["params"] = params
+    print("Start loop over times...")
     for time in tqdm(times, disable=tqdm_disable):
         quality_matrix, null_model, global_shift = _get_constructor_data(
             constructor, time
@@ -82,9 +83,11 @@ def run(
         save_results(all_results, filename=result_file)
 
     if params["compute_ttprime"]:
+        print("Start computing ttprimes...")
         compute_ttprime(all_results, pool)
 
     if params["apply_postprocessing"]:
+        print("Apply postprocessing...")
         apply_postprocessing(all_results, pool, constructor=constructor)
 
     save_results(all_results, filename=result_file)
