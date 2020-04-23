@@ -119,6 +119,7 @@ setup(
         "cmake>=3.16.3",
         "pyyaml>=5.3",
         "click>=7.0",
+        "tqdm>=4.45.0",
     ],
     setup_requires=["pybind11>=2.4"],
     extras_require={
