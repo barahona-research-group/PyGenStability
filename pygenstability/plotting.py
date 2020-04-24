@@ -178,6 +178,7 @@ def plot_communities(
 
     pos = [graph.nodes[u]["pos"] for u in graph]
 
+    mpl_backend = matplotlib.get_backend()
     matplotlib.use("Agg")
     for i in tqdm(range(len(all_results["times"]))):
         node_color = all_results["community_id"][i]
@@ -205,7 +206,7 @@ def plot_communities(
             os.path.join(folder, "time_" + str(i) + ".png"), bbox_inches="tight"
         )
         plt.close()
-    matplotlib.use("TkAgg")
+    matplotlib.use(mpl_backend)
 
 
 def _get_times(all_results, time_axis=True):
