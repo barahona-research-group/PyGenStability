@@ -13,7 +13,7 @@ L = logging.getLogger("pygenstability")
 
 
 def plot_scan(
-    all_results, time_axis=True, figure_name="scan_results.svg", use_plotly=True
+    all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True
 ):
     """Plot results of pygenstability with matplotlib or plotly"""
 
@@ -168,6 +168,32 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     fig.show()
 
 
+def plot_single_community(graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100):
+    """Plot the community structures for a given time"""
+
+    pos = [graph.nodes[u]["pos"] for u in graph]
+
+    node_color = all_results["community_id"][time_id]
+
+    nx.draw_networkx_nodes(
+        graph,
+        pos=pos,
+        node_color=node_color,
+        node_size=node_size,
+        cmap=plt.get_cmap("tab20"),
+    )
+    nx.draw_networkx_edges(graph, pos=pos, width=edge_width, edge_color=edge_color)
+
+    plt.axis("off")
+    plt.title(
+        str(r"$log_{10}(time) =$ ")
+        + str(np.round(np.log10(all_results["times"][time_id]), 2))
+        + ", with "
+        + str(all_results["number_of_communities"][time_id])
+        + " communities"
+    )
+
+
 def plot_communities(
     graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5
 ):
@@ -180,30 +206,11 @@ def plot_communities(
 
     mpl_backend = matplotlib.get_backend()
     matplotlib.use("Agg")
-    for i in tqdm(range(len(all_results["times"]))):
-        node_color = all_results["community_id"][i]
-
+    for time_id in tqdm(range(len(all_results["times"]))):
         plt.figure()
-        nx.draw_networkx_nodes(
-            graph,
-            pos=pos,
-            node_color=node_color,
-            node_size=100,
-            cmap=plt.get_cmap("tab20"),
-        )
-        nx.draw_networkx_edges(graph, pos=pos, width=edge_width, edge_color=edge_color)
-
-        plt.axis("off")
-        plt.title(
-            str(r"$log_{10}(time) =$ ")
-            + str(np.round(np.log10(all_results["times"][i]), 2))
-            + ", with "
-            + str(all_results["number_of_communities"][i])
-            + " communities"
-        )
-
+        plot_single_community(graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width)
         plt.savefig(
-            os.path.join(folder, "time_" + str(i) + ".png"), bbox_inches="tight"
+            os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight"
         )
         plt.close()
     matplotlib.use(mpl_backend)

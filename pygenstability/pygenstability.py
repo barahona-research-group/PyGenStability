@@ -15,7 +15,7 @@ from .io import save_results
 
 def _get_chunksize(n_comp, pool):
     """Split jobs accross workers for speedup."""
-    return int(n_comp / pool._processes)  # pylint: disable=protected-access
+    return max(1, int(n_comp / pool._processes))  # pylint: disable=protected-access
 
 
 def _graph_checks(graph):
@@ -26,6 +26,10 @@ def _graph_checks(graph):
 
     if sp.linalg.norm(graph - graph.T) > 0:
         print("Warning, your graph is directed!")
+
+    if np.min(graph) <= 0:
+        print('Warning, you have negative weights, consider using signed constructor.')
+
     return graph
 
 
@@ -124,7 +128,7 @@ def compute_mutual_information(louvain_results, all_results, pool, n_partitions=
 
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["mutual_information"].append(
-        np.mean(list(pool.map(worker, index_pairs, chunksize=chunksize)))
+        np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
     )
 
 
@@ -204,7 +208,7 @@ def run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool)
     worker = WorkerLouvain(quality_indices, quality_values, null_model, global_shift)
 
     chunksize = _get_chunksize(n_runs, pool)
-    return np.array(list(pool.map(worker, range(n_runs), chunksize=chunksize)))
+    return np.array(list(pool.imap_unordered(worker, range(n_runs), chunksize=chunksize)))
 
 
 def compute_ttprime(all_results, pool):
@@ -217,7 +221,7 @@ def compute_ttprime(all_results, pool):
 
     worker = WorkerMI(all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
-    ttprime_list = list(pool.map(worker, index_pairs, chunksize=chunksize))
+    ttprime_list = list(tqdm(pool.imap(worker, index_pairs, chunksize=chunksize), total=len(index_pairs)))
 
     all_results["ttprime"] = np.zeros(
         [len(all_results["times"]), len(all_results["times"])]

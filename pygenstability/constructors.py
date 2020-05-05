@@ -45,7 +45,7 @@ def threshold_matrix(matrix, threshold=1e-6):
 
 def constructor_continuous_linearized(graph, time):
     """constructor for continuous linearized"""
-    degrees = graph.sum(1)
+    degrees = graph.sum(1).flatten()
     if degrees.sum() < 1e-10:
         raise Exception("The total degree = 0, we cannot proceed further")
 
@@ -97,11 +97,10 @@ def constructor_signed_modularity(graph, time):
     adj_neg = -graph.copy()
     adj_neg[graph > 0] = 0.0
 
-    deg_plus = adj_pos.sum(1)
-    deg_neg = adj_neg.sum(1)
+    deg_plus = adj_pos.sum(1).flatten()
+    deg_neg = adj_neg.sum(1).flatten()
 
     deg_norm = deg_plus.sum() + deg_neg.sum()
-
     null_model = np.array(
         [
             deg_plus / deg_norm,
@@ -110,7 +109,5 @@ def constructor_signed_modularity(graph, time):
             deg_neg / deg_norm,
         ]
     )
-
     quality_matrix = time * graph / deg_norm
-
     return quality_matrix, null_model
