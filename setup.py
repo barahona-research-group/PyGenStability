@@ -1,63 +1,60 @@
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
-import imp
+
+__version__ = "0.0.1"
 
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
-
     The purpose of this class is to postpone importing pybind11
     until it is actually installed, so that the ``get_include()``
     method can be invoked. """
 
-    def __init__(self, user=False):
-        self.user = user
-
     def __str__(self):
         import pybind11
 
-        return pybind11.get_include(self.user)
+        return pybind11.get_include()
 
 
 ext_modules = [
     Extension(
-        "generalizedLouvain_API",
-        ["generalizedLouvain_API/cpp_to_python.cpp"],
-        include_dirs=[
-            # Path to pybind11 headers
-            get_pybind_include(),
-            get_pybind_include(user=True),
-            "generalizedLouvain_API/lemon_include",  # path to lemon library
-        ],
+        "pygenstability.generalized_louvain",
+        ["pygenstability/generalized_louvain/generalized_louvain.cpp"],
+        include_dirs=[get_pybind_include(), "extra",],  # path to lemon library
         language="c++",
     ),
 ]
 
-# As of Python 3.6, CCompiler has a `has_flag` method.
-# cf http://bugs.python.org/issue26689
+
 def has_flag(compiler, flagname):
     """Return a boolean indicating whether a flag name is supported on
     the specified compiler.
     """
     import tempfile
+    import os
 
-    with tempfile.NamedTemporaryFile("w", suffix=".cpp") as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".cpp", delete=False) as f:
         f.write("int main (int argc, char **argv) { return 0; }")
+        fname = f.name
+    try:
+        compiler.compile([fname], extra_postargs=[flagname])
+    except setuptools.distutils.errors.CompileError:
+        return False
+    finally:
         try:
-            compiler.compile([f.name], extra_postargs=[flagname])
-        except setuptools.distutils.errors.CompileError:
-            return False
+            os.remove(fname)
+        except OSError:
+            pass
     return True
 
 
 def cpp_flag(compiler):
     """Return the -std=c++[11/14/17] compiler flag.
-
     The newer version is prefered over c++11 (when it is available).
     """
-    flags = ["-std=c++14", "-std=c++11"]  #'-std=c++17',
+    flags = ["-std=c++14", "-std=c++11"]  # c++17 does nomt work with generalizedLouvain
 
     for flag in flags:
         if has_flag(compiler, flag):
@@ -88,13 +85,14 @@ class BuildExt(build_ext):
         opts = self.c_opts.get(ct, [])
         link_opts = self.l_opts.get(ct, [])
         if ct == "unix":
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, "-fvisibility=hidden"):
                 opts.append("-fvisibility=hidden")
-        elif ct == "msvc":
-            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+
         for ext in self.extensions:
+            ext.define_macros = [
+                ("VERSION_INFO", '"{}"'.format(self.distribution.get_version()))
+            ]
             ext.extra_compile_args = opts
             ext.extra_link_args = link_opts
         build_ext.build_extensions(self)
@@ -102,14 +100,15 @@ class BuildExt(build_ext):
 
 setup(
     name="pygenstability",
-    version='1.0.0',
+    version=__version__,
     author="Alexis Arnaudon",
     author_email="alexis.arnaudon@epfl.ch",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
     description="Python binding of generalised Markov Stability",
     long_description="",
     ext_modules=ext_modules,
-    packages=["pygenstability", "generalizedLouvain_API"],
+    setup_requires=["pybind11>=2.5.0"],
+    cmdclass={"build_ext": BuildExt},
     install_requires=[
         "numpy>=1.18.1",
         "scipy>=1.4.1",
@@ -121,13 +120,6 @@ setup(
         "click>=7.0",
         "tqdm>=4.45.0",
     ],
-    setup_requires=["pybind11>=2.4"],
-    extras_require={
-        "plotly": ["plotly>=3.6.0"],
-    },
-    cmdclass={"build_ext": BuildExt},
-    zip_safe=False,
-    entry_points={
-        'console_scripts': ['pygenstability=pygenstability.app:cli'],
-    }
+    extras_require={"plotly": ["plotly>=3.6.0"],},
+    entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"],},
 )

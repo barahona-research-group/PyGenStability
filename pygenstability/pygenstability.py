@@ -4,10 +4,10 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
-from generalizedLouvain_API import evaluate_quality, run_louvain
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from tqdm import tqdm
 
+from . import generalized_louvain
 from .constructors import load_constructor
 from .io import save_results
 
@@ -201,7 +201,7 @@ class WorkerLouvain:
         self.global_shift = global_shift
 
     def __call__(self, i):
-        stability, community_id = run_louvain(
+        stability, community_id = generalized_louvain.run_louvain(
             self.quality_indices[0],
             self.quality_indices[1],
             self.quality_values,
@@ -225,7 +225,7 @@ class WorkerQuality:
         self.global_shift = global_shift
 
     def __call__(self, partition_id):
-        quality = evaluate_quality(
+        quality = generalized_louvain.evaluate_quality(
             self.quality_indices[0],
             self.quality_indices[1],
             self.quality_values,
