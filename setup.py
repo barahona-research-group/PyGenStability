@@ -20,7 +20,7 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        "pygetnstability.generalized_louvain",
+        "pygenstability.generalized_louvain",
         ["pygenstability/generalized_louvain/generalized_louvain.cpp"],
         include_dirs=[get_pybind_include(), "extra",],  # path to lemon library
         language="c++",

@@ -216,7 +216,7 @@ run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
   return output;
 }
 
-PYBIND11_MODULE(pygenstability, m) {
+PYBIND11_MODULE(generalized_louvain, m) {
   m.doc() = R"pbdoc(
         Pybind11 binding of Generalized Louvain
         -----------------------------------------
