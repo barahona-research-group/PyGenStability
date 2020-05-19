@@ -43,7 +43,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
     import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
 
-    if all_results["params"]["log_time"]:
+    if all_results["run_params"]["log_time"]:
         times = np.log10(all_results["times"])
     else:
         times = all_results["times"]
@@ -168,7 +168,9 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     fig.show()
 
 
-def plot_single_community(graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100):
+def plot_single_community(
+    graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100
+):
     """Plot the community structures for a given time"""
 
     pos = [graph.nodes[u]["pos"] for u in graph]
@@ -202,13 +204,13 @@ def plot_communities(
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
-    pos = [graph.nodes[u]["pos"] for u in graph]
-
     mpl_backend = matplotlib.get_backend()
     matplotlib.use("Agg")
     for time_id in tqdm(range(len(all_results["times"]))):
         plt.figure()
-        plot_single_community(graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width)
+        plot_single_community(
+            graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width
+        )
         plt.savefig(
             os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight"
         )
@@ -217,7 +219,8 @@ def plot_communities(
 
 
 def _get_times(all_results, time_axis=True):
-    if all_results["params"]["log_time"]:
+    """Get the time vector."""
+    if all_results["run_params"]["log_time"]:
         return np.log10(all_results["times"])
     if time_axis:
         return np.arange(len(all_results["times"]))
@@ -271,8 +274,6 @@ def plot_stability(all_results, ax, time_axis=True):
 
 def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
-    plt.figure(figsize=(5, 5))
-
     gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
     gs.update(hspace=0)
 

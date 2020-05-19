@@ -1,15 +1,5 @@
 """i/o functions"""
 import pickle
-import yaml
-
-
-def load_params(params_path):
-    """load params fro yaml file"""
-    with open(params_path, "r") as params_file:
-        try:
-            return yaml.safe_load(params_file)
-        except yaml.YAMLError:
-            raise Exception("Could not read yaml params file {}".format(params_path))
 
 
 def save_results(all_results, filename="results.pkl"):
