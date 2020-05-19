@@ -4,16 +4,17 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
-from generalizedLouvain_API import evaluate_quality, run_louvain
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from tqdm import tqdm
 
+from pygenstability.generalized_louvain import evaluate_quality, run_louvain
 from .constructors import load_constructor
 from .io import save_results
 
 
 def _get_chunksize(n_comp, pool):
     """Split jobs accross workers for speedup."""
+    print(dir(pgs))
     return max(1, int(n_comp / pool._processes))  # pylint: disable=protected-access
 
 
