@@ -2,18 +2,16 @@
 import pickle
 import matplotlib.pyplot as plt
 
-from pygenstability import run, load_params, plotting
+from pygenstability import run, plotting
 from create_graph import create_sbm
 
 
 def simple_test():
     """run simple test"""
-    params = load_params("params.yaml")
-
     with open("sbm_graph.pkl", "rb") as pickle_file:
         graph = pickle.load(pickle_file)
 
-    all_results = run(graph, params)
+    all_results = run(graph)
 
     plotting.plot_scan(all_results, use_plotly=True)
 

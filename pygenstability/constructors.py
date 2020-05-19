@@ -5,26 +5,16 @@ from functools import lru_cache, partial
 import numpy as np
 import scipy.sparse as sp
 
+_USE_CACHE = True
 
-def load_constructor(graph, params, constructor_custom=None, use_cache=True):
+
+def load_constructor(graph, constructor, use_cache=_USE_CACHE):
     """Load constructor."""
-    if constructor_custom is None and "constructor" in params:
+    if isinstance(constructor, str):
         try:
-            constructor = getattr(
-                sys.modules[__name__], "constructor_%s" % params["constructor"]
-            )
+            constructor = getattr(sys.modules[__name__], "constructor_%s" % constructor)
         except:
-            raise Exception("Could not load constructor %s" % params["constructor"])
-
-    elif constructor_custom is None and "constructor" not in params:
-        raise Exception(
-            "Please provide either a constructor function or one in params."
-        )
-
-    elif callable(constructor_custom):
-        constructor = constructor_custom
-    else:
-        raise Exception("Please pass a valid function as constructor.")
+            raise Exception("Could not load constructor %s" % constructor)
 
     if not use_cache:
         return partial(constructor, graph)
@@ -43,7 +33,7 @@ def threshold_matrix(matrix, threshold=1e-6):
     matrix.eliminate_zeros()
 
 
-def constructor_continuous_linearized(graph, time):
+def constructor_linearized(graph, time):
     """constructor for continuous linearized"""
     degrees = graph.sum(1).flatten()
     if degrees.sum() < 1e-10:
@@ -90,7 +80,7 @@ def constructor_signed_modularity(graph, time):
     """constructor of signed mofularitye (Gomes, Jensen, Arenas, PRE 2009)
     the time only multiplies the quality matrix (this many not mean anything, use with care!)"""
     if np.min(graph) >= 0:
-        return constructor_continuous_linearized(graph, time)
+        return constructor_linearized(graph, time)
 
     adj_pos = graph.copy()
     adj_pos[graph < 0] = 0.0
