@@ -4,7 +4,8 @@ import pickle
 import click
 
 from .io import load_results
-from .plotting import plot_communities, plot_scan
+
+# pylint: disable=import-outside-toplevel
 
 
 @click.group()
@@ -116,16 +117,20 @@ def run(
 
 @cli.command("plot_scan")
 @click.argument("results_file", type=click.Path(exists=True))
-def plot(results_file):
+def plot_scan(results_file):
     """Plot results in scan plot."""
+    from .plotting import plot_scan
+
     plot_scan(load_results(results_file))
 
 
 @cli.command("plot_communities")
 @click.argument("graph_file", type=click.Path(exists=True))
 @click.argument("results_file", type=click.Path(exists=True))
-def plot(results_file, graph_file):
+def plot_communities(results_file, graph_file):
     """Plot communities on networkx graph."""
+    from .plotting import plot_communities
+
     with open(graph_file, "rb") as pickle_file:
         graph = pickle.load(pickle_file)
     plot_communities(graph, load_results(results_file))

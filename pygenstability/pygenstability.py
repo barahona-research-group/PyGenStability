@@ -4,10 +4,9 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
+from generalizedLouvain_API import evaluate_quality, run_louvain
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from tqdm import tqdm
-
-from generalizedLouvain_API import evaluate_quality, run_louvain
 
 from .constructors import load_constructor
 from .io import save_results
@@ -79,10 +78,10 @@ def run(
     tqdm_disable=False,
 ):
     """Main funtion to compute clustering at various time scales.
-    
+
     Args:
         graph (scipy.csgraph): graph to cluster
-        constructor (str/function): name of the quality constructor, 
+        constructor (str/function): name of the quality constructor,
             or custom constructor function. It must have two arguments, graph and time.
         min_time (float): minimum Markov time
         max_time (float): maximum Markov time
@@ -100,7 +99,13 @@ def run(
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
-    times = _get_times(min_time=min_time, max_time=max_time, n_time=n_time, times=times)
+    times = _get_times(
+        min_time=min_time,
+        max_time=max_time,
+        n_time=n_time,
+        log_time=log_time,
+        times=times,
+    )
     constructor = load_constructor(graph, constructor)
     pool = multiprocessing.Pool(n_workers)
 

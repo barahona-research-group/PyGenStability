@@ -204,8 +204,6 @@ def plot_communities(
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
-    pos = [graph.nodes[u]["pos"] for u in graph]
-
     mpl_backend = matplotlib.get_backend()
     matplotlib.use("Agg")
     for time_id in tqdm(range(len(all_results["times"]))):

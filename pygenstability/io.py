@@ -1,8 +1,6 @@
 """i/o functions"""
 import pickle
 
-import yaml
-
 
 def save_results(all_results, filename="results.pkl"):
     """save results in a pickle"""
