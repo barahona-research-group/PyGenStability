@@ -221,7 +221,7 @@ def plot_communities(
 
 def _get_times(all_results, time_axis=True):
     """Get the time vector."""
-    if time_axis:
+    if not time_axis:
         return np.arange(len(all_results["times"]))
     if all_results["run_params"]["log_time"]:
         return np.log10(all_results["times"])
