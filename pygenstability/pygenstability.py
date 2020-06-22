@@ -21,7 +21,11 @@ def _graph_checks(graph):
     """Do some checks and preprocessing of the graph."""
 
     if sp.csgraph.connected_components(graph)[0] > 1:
-        raise Exception("Graph not connected, so we stop you here.")
+        raise Exception(
+            "Graph not connected, with {} components".format(
+                sp.csgraph.connected_components(graph)[0]
+            )
+        )
 
     if sp.linalg.norm(graph - graph.T) > 0:
         print("Warning, your graph is directed!")
@@ -262,11 +266,7 @@ def compute_ttprime(all_results, pool):
 
     worker = WorkerMI(all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
-    ttprime_list = list(
-        tqdm(
-            pool.imap(worker, index_pairs, chunksize=chunksize), total=len(index_pairs)
-        )
-    )
+    ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
     all_results["ttprime"] = np.zeros(
         [len(all_results["times"]), len(all_results["times"])]

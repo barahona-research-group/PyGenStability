@@ -4,6 +4,7 @@ import os
 
 import matplotlib
 import matplotlib.gridspec as gridspec
+from matplotlib import patches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -220,10 +221,10 @@ def plot_communities(
 
 def _get_times(all_results, time_axis=True):
     """Get the time vector."""
-    if all_results["run_params"]["log_time"]:
-        return np.log10(all_results["times"])
     if time_axis:
         return np.arange(len(all_results["times"]))
+    if all_results["run_params"]["log_time"]:
+        return np.log10(all_results["times"])
     return all_results["times"]
 
 
@@ -276,7 +277,6 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
     gs.update(hspace=0)
-
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[0, 0])
         plot_ttprime(all_results, ax=ax0)
@@ -300,5 +300,73 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     if "mutual_information" in all_results:
         ax3 = ax2.twinx()
         plot_mutual_information(all_results, ax=ax3, time_axis=time_axis)
+
+    plt.savefig(figure_name, bbox_inches="tight")
+
+
+def plot_clustered_adjacency(
+    adjacency,
+    all_results,
+    time,
+    labels=None,
+    figsize=(12, 10),
+    cmap="Blues",
+    figure_name="clustered_adjacency.png",
+):
+    """Plot the clustered adjacency matrix of the graph at a given time.
+
+    Args:
+        adjacency (ndarray): adjacency matrix to plot
+        all_results (dict): results of PyGenStability
+        time (int): time index for clustering
+        labels (list): node labels, or None
+        figsize (tubple): figure size
+        cmap (str): colormap for matrix elements
+        figure_name (str): filename of the figure with extension
+    """
+    comms, counts = np.unique(all_results["community_id"][time], return_counts=True)
+
+    node_ids = []
+    for comm in comms:
+        node_ids += list(np.where(all_results["community_id"][time] == comm)[0])
+
+    adjacency = adjacency[np.ix_(node_ids, node_ids)]
+    adjacency[adjacency == 0] = np.nan
+
+    plt.figure(figsize=figsize)
+    plt.imshow(adjacency, aspect="auto", origin="auto", cmap=cmap)
+
+    ax = plt.gca()
+
+    pos = 0
+    for comm, count in zip(comms, counts):
+        rect = patches.Rectangle(
+            (pos - 0.5, pos - 0.5),
+            count,
+            count,
+            linewidth=5,
+            facecolor="none",
+            edgecolor="g",
+        )
+        ax.add_patch(rect)
+        pos += count
+
+    ax.set_xticks(np.arange(len(adjacency)))
+    ax.set_yticks(np.arange(len(adjacency)))
+
+    if labels is not None:
+        labels_plot = [labels[i] for i in node_ids]
+        ax.set_xticklabels(labels_plot)
+        ax.set_yticklabels(labels_plot)
+
+    plt.colorbar()
+    plt.xticks(rotation=90)
+    plt.axis([-0.5, len(adjacency) - 0.5, -0.5, len(adjacency) - 0.5])
+    plt.suptitle(
+        "log10(time) = "
+        + str(np.round(np.log10(all_results["times"][time]), 2))
+        + ",  number_of_communities="
+        + str(all_results["number_of_communities"][time])
+    )
 
     plt.savefig(figure_name, bbox_inches="tight")

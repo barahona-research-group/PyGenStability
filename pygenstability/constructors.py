@@ -69,7 +69,7 @@ def constructor_continuous_normalized(graph, time):
     pi = degrees / degrees.sum()
     null_model = np.array([pi, pi])
 
-    exp = sp.linalg.expm(-time * normed_laplacian.toarray())
+    exp = sp.csr_matrix(sp.linalg.expm(-time * normed_laplacian.toarray()))
     threshold_matrix(exp)
     quality_matrix = sp.diags(pi).dot(exp)
 
