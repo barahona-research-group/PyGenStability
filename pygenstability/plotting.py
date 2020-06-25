@@ -174,7 +174,7 @@ def plot_single_community(
 ):
     """Plot the community structures for a given time"""
 
-    pos = [graph.nodes[u]["pos"] for u in graph]
+    pos = {u: graph.nodes[u]["pos"] for u in graph}
 
     node_color = all_results["community_id"][time_id]
 
