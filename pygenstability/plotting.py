@@ -239,9 +239,9 @@ def plot_number_comm(all_results, ax, time_axis=True):
     ax.tick_params("y", colors="C3")
 
 
-def plot_ttprime(all_results, ax):
+def plot_ttprime(all_results, ax, time_axis):
     """Plot ttprime."""
-    times = _get_times(all_results)
+    times = _get_times(all_results, time_axis)
 
     ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
@@ -279,7 +279,7 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     gs.update(hspace=0)
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[0, 0])
-        plot_ttprime(all_results, ax=ax0)
+        plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
         ax1 = ax0.twinx()
     else:
         ax1 = plt.subplot(gs[0, 0])

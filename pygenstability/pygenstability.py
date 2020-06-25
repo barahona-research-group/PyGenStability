@@ -33,7 +33,8 @@ def _graph_checks(graph):
     if np.min(graph) < 0:
         print("Warning, you have negative weights, consider using signed constructor.")
 
-    return graph.eliminate_zeros()
+    graph.eliminate_zeros()
+    return graph
 
 
 def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None):
