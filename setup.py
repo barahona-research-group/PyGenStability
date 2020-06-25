@@ -8,35 +8,35 @@ __version__ = "0.0.1"
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
+
     The purpose of this class is to postpone importing pybind11
     until it is actually installed, so that the ``get_include()``
     method can be invoked. """
 
     def __str__(self):
         import pybind11
-
         return pybind11.get_include()
 
 
 ext_modules = [
     Extension(
         "pygenstability.generalized_louvain",
-        ["pygenstability/generalized_louvain/generalized_louvain.cpp"],
-        include_dirs=[get_pybind_include(), "extra",],  # path to lemon library
+        sorted(["pygenstability/generalized_louvain/generalized_louvain.cpp",]),
+        include_dirs=[get_pybind_include(), "extra/lemon",],  # path to lemon library
         language="c++",
     ),
 ]
 
 
+# cf http://bugs.python.org/issue26689
 def has_flag(compiler, flagname):
     """Return a boolean indicating whether a flag name is supported on
     the specified compiler.
     """
     import tempfile
     import os
-
-    with tempfile.NamedTemporaryFile("w", suffix=".cpp", delete=False) as f:
-        f.write("int main (int argc, char **argv) { return 0; }")
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp', delete=False) as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
         fname = f.name
     try:
         compiler.compile([fname], extra_postargs=[flagname])
@@ -52,15 +52,17 @@ def has_flag(compiler, flagname):
 
 def cpp_flag(compiler):
     """Return the -std=c++[11/14/17] compiler flag.
+
     The newer version is prefered over c++11 (when it is available).
     """
-    flags = ["-std=c++14", "-std=c++11"]  # c++17 does nomt work with generalizedLouvain
+    flags = ['-std=c++17', '-std=c++14', '-std=c++11']
 
     for flag in flags:
         if has_flag(compiler, flag):
             return flag
 
-    raise RuntimeError("Unsupported compiler -- at least C++11 support " "is needed!")
+    raise RuntimeError('Unsupported compiler -- at least C++11 support '
+                       'is needed!')
 
 
 class BuildExt(build_ext):
@@ -109,6 +111,7 @@ setup(
     ext_modules=ext_modules,
     setup_requires=["pybind11>=2.5.0"],
     cmdclass={"build_ext": BuildExt},
+    zip_safe=False,
     install_requires=[
         "numpy>=1.18.1",
         "scipy>=1.4.1",

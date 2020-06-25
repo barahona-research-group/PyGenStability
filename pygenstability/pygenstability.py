@@ -30,10 +30,10 @@ def _graph_checks(graph):
     if sp.linalg.norm(graph - graph.T) > 0:
         print("Warning, your graph is directed!")
 
-    if np.min(graph) <= 0:
+    if np.min(graph) < 0:
         print("Warning, you have negative weights, consider using signed constructor.")
 
-    return graph
+    return graph.eliminate_zeros()
 
 
 def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None):
