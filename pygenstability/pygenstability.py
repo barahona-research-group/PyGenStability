@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics import adjusted_rand_score as normalized_mutual_info_score
 from tqdm import tqdm
 
 from . import generalized_louvain
@@ -186,7 +186,7 @@ class WorkerMI:
         return normalized_mutual_info_score(
             self.top_partitions[index_pair[0]],
             self.top_partitions[index_pair[1]],
-            average_method="arithmetic",
+            #average_method="arithmetic",
         )
 
 

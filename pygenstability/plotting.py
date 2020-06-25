@@ -135,34 +135,34 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     layout = go.Layout(
         yaxis=dict(
             title="Stability",
-            titlefont=dict(color="blue",),
-            tickfont=dict(color="blue",),
+            titlefont=dict(color="blue"),
+            tickfont=dict(color="blue"),
             domain=[0, 0.28],
         ),
         yaxis2=dict(
             title=tprime_title,
-            titlefont=dict(color="black",),
-            tickfont=dict(color="black",),
+            titlefont=dict(color="black"),
+            tickfont=dict(color="black"),
             domain=[0.32, 1],
             side="right",
-            range=[times[0], times[-1],],
+            range=[times[0], times[-1]],
         ),
         yaxis3=dict(
             title=mi_title,
-            titlefont=dict(color="green",),
-            tickfont=dict(color="green",),
+            titlefont=dict(color="green"),
+            tickfont=dict(color="green"),
             showticklabels=mi_ticks,
             overlaying="y",
             side="right",
         ),
         yaxis4=dict(
             title="Number of communities",
-            titlefont=dict(color="red",),
-            tickfont=dict(color="red",),
+            titlefont=dict(color="red"),
+            tickfont=dict(color="red"),
             overlaying="y2",
         ),
-        xaxis=dict(range=[times[0], times[-1],],),
-        xaxis2=dict(range=[times[0], times[-1],],),
+        xaxis=dict(range=[times[0], times[-1]],),
+        xaxis2=dict(range=[times[0], times[-1]]),
     )
 
     fig = go.Figure(data=[stab, ncom, mi, ttprime], layout=layout)
@@ -370,3 +370,55 @@ def plot_clustered_adjacency(
     )
 
     plt.savefig(figure_name, bbox_inches="tight")
+
+
+def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
+    """Plot Sankey diagram of communities accros time.
+
+    Args:
+        all_results (dict): results from run function
+        live (bool): if True, interactive figure will appear in browser
+        filename (str): filename to save the plot
+    """
+    import plotly.graph_objects as go
+
+    sources = []
+    targets = []
+    values = []
+    shift = 0
+    for i in range(len(all_results['community_id']) - 1):
+        community_source = np.array(all_results['community_id'][i])
+        community_target = np.array(all_results['community_id'][i + 1])
+        source_ids = set(community_source)
+        target_ids = set(community_target)
+        for source in source_ids:
+            for target in target_ids:
+                value = sum(community_target[community_source == source] == target)
+                if value > 0:
+                    values.append(value)
+                    sources.append(source + shift)
+                    targets.append(target + len(source_ids) + shift)
+        shift += len(source_ids)
+
+    layout = go.Layout(autosize=True)
+    fig = go.Figure(
+        data=[
+            go.Sankey(
+                node=dict(
+                    pad=1,
+                    thickness=1,
+                    line=dict(color="black", width=0.0),
+                ),
+                link=dict(source=sources, target=targets, value=values),
+            )
+        ],
+        layout=layout,
+    )
+
+    try:
+        fig.write_image(filename)
+    except:
+        print("Plotly figure cannot be saved, please install the relevant packages.")
+
+    if live:
+        fig.show()

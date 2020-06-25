@@ -1,6 +1,5 @@
 """simple example"""
 import pickle
-import matplotlib.pyplot as plt
 
 from pygenstability import run, plotting
 from create_graph import create_sbm
@@ -18,6 +17,8 @@ def simple_test():
     with open("sbm_graph.gpickle", "rb") as pickle_file:
         graph = pickle.load(pickle_file)
     plotting.plot_communities(graph, all_results)
+
+    plotting.plot_sankey(all_results)
 
 
 if __name__ == "__main__":
