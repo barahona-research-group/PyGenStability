@@ -13,7 +13,7 @@ def load_constructor(graph, constructor, use_cache=_USE_CACHE):
     if isinstance(constructor, str):
         try:
             constructor = getattr(sys.modules[__name__], "constructor_%s" % constructor)
-        except:
+        except AttributeError:
             raise Exception("Could not load constructor %s" % constructor)
 
     if not use_cache:
@@ -76,8 +76,6 @@ def constructor_continuous_normalized(graph, time):
     return quality_matrix, null_model
 
 
-
-
 def constructor_signed_modularity(graph, time):
     """constructor of signed mofularitye (Gomes, Jensen, Arenas, PRE 2009)
     the time only multiplies the quality matrix (this many not mean anything, use with care!)"""
@@ -104,26 +102,23 @@ def constructor_signed_modularity(graph, time):
     quality_matrix = time * graph / deg_norm
     return quality_matrix, null_model
 
-def constructor_directed_normalized(graph,time):
-    adjacency = nx.to_numpy_array(graph)
 
-    dout = np.sum(adjacency, axis=1)
-    Dout = np.diag(dout)
+def constructor_directed_normalized(graph, time, walk_type=None, alpha=0.95):
+    """Constructor of directed normalized laplacian (using networkx)."""
+    import networkx as nx
 
-    M = np.dot(np.linalg.inv(Dout), adjacency) #may be better to use linear solve here
-    u,v = np.linalg.eig(M.T) #must be M_transpose if originally defined as M_ij : i --> j
+    graph = sp.triu(graph)
+    nx_graph = nx.DiGraph(graph)
 
-    lambda_ = np.max(u)
-    pi_norm = v[:, u == np.max(u)] #extract column corresponding to eigenvalue = 1
-    pi_norm = np.abs(pi_norm) #make sure all values are positive
+    laplacian = nx.directed_laplacian_matrix(nx_graph, walk_type=walk_type, alpha=alpha)
+    exp = sp.linalg.expm(-time * laplacian)
 
-    pi = pi_norm/np.sum(pi_norm)
-    
-    laplacian = sc.sparse.csc_matrix(1.0 * nx.directed_laplacian_matrix(g))
-    exp = sc.sparse.linalg.expm(-time * laplacian)
-    _threshold_matrix(exp)
-    
+    pi = abs(sp.linalg.eigs(laplacian, which='SM', k=1)[1][:, 0])
+    pi /= pi.sum()
+
+    threshold_matrix(exp)
+    quality_matrix = sp.diags(pi).dot(exp)
+
     null_model = np.array([pi, pi])
-    quality_matrix = sc.sparse.diags(pi.reshape(-1)).dot(exp)
-        
+
     return quality_matrix, null_model
