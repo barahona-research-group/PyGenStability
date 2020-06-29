@@ -9,8 +9,8 @@ def simple_test():
     """run simple test"""
     with open("sbm_graph.pkl", "rb") as pickle_file:
         graph = pickle.load(pickle_file)
-    graph = sp.triu(graph)
-    all_results = run(graph, constructor='directed_normalized' )
+
+    all_results = run(graph)
 
     plotting.plot_scan(all_results, use_plotly=True)
 
