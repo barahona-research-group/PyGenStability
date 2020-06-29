@@ -3,14 +3,14 @@ import pickle
 
 from pygenstability import run, plotting
 from create_graph import create_sbm
-
+import scipy.sparse as sp
 
 def simple_test():
     """run simple test"""
     with open("sbm_graph.pkl", "rb") as pickle_file:
         graph = pickle.load(pickle_file)
-
-    all_results = run(graph)
+    graph = sp.triu(graph)
+    all_results = run(graph, constructor='directed_normalized' )
 
     plotting.plot_scan(all_results, use_plotly=True)
 

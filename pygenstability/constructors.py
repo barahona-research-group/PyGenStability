@@ -111,14 +111,13 @@ def constructor_directed_normalized(graph, time, walk_type=None, alpha=0.95):
     nx_graph = nx.DiGraph(graph)
 
     laplacian = nx.directed_laplacian_matrix(nx_graph, walk_type=walk_type, alpha=alpha)
-    exp = sp.linalg.expm(-time * laplacian)
+    exp = sp.csr_matrix(sp.linalg.expm(-time * laplacian))
 
     pi = abs(sp.linalg.eigs(laplacian, which='SM', k=1)[1][:, 0])
     pi /= pi.sum()
 
     threshold_matrix(exp)
     quality_matrix = sp.diags(pi).dot(exp)
-
     null_model = np.array([pi, pi])
 
     return quality_matrix, null_model
