@@ -4,19 +4,20 @@ max_time: 0.5
 n_time: 20
 log_time: True
 
-n_runs: 50  # number of Louvain runs
-n_workers: 4  # number of workers for parallel computing
+n_runs: 100  # number of Louvain runs
+n_workers: 2  # number of workers for parallel computing
 
-constructor: 'continuous_combinatorial'  # quality constructor
-#constructor: 'continuous_linearized'  # quality constructor
-#constructor: 'continuous_normalized'  # quality constructor
+# quality constructor
+#constructor: 'continuous_combinatorial'
+constructor: 'continuous_linearized'
+#constructor: 'continuous_normalized'
+#constructor: 'signed_modularity'
 
 # additional parameters
-save_qualities: True
-compute_mutual_information: True
-n_partitions: 10  # number of louvian runs for MI computation
+compute_mutual_information: True 
+n_partitions: 20  # number of louvian runs for MI computation
 compute_ttprime: True
-apply_postprocessing: True
+apply_postprocessing: False #True
 
 
 

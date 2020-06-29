@@ -1,5 +1,6 @@
 """create graph for simple example"""
 import matplotlib.pyplot as plt
+import pickle
 import networkx as nx
 
 
@@ -28,6 +29,10 @@ def create_sbm():
     nx.draw(graph, pos=pos, node_color=community_labels)
     plt.title("Ground truth communities")
     plt.savefig("ground_truth.png", bbox_inches="tight")
+
+    with open("sbm_graph.pkl", "wb") as pickle_file:
+        pickle.dump(nx.adjacency_matrix(graph, weight="weight"), pickle_file)
+
     nx.write_gpickle(graph, "sbm_graph.gpickle")
 
 
