@@ -21,8 +21,8 @@ class get_pybind_include(object):
 ext_modules = [
     Extension(
         "pygenstability.generalized_louvain",
-        sorted(["pygenstability/generalized_louvain/generalized_louvain.cpp",]),
-        include_dirs=[get_pybind_include(), "extra/lemon",],  # path to lemon library
+        sorted(["pygenstability/generalized_louvain/generalized_louvain.cpp"]),
+        include_dirs=[get_pybind_include(), "extra"],  # path to lemon library
         language="c++",
     ),
 ]
@@ -55,7 +55,8 @@ def cpp_flag(compiler):
 
     The newer version is prefered over c++11 (when it is available).
     """
-    flags = ['-std=c++17', '-std=c++14', '-std=c++11']
+    # the c++17 flag does not work with std::random_shuffle
+    flags = ['-std=c++14', '-std=c++11']
 
     for flag in flags:
         if has_flag(compiler, flag):
@@ -123,6 +124,6 @@ setup(
         "click>=7.0",
         "tqdm>=4.45.0",
     ],
-    extras_require={"plotly": ["plotly>=3.6.0"],},
-    entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"],},
+    extras_require={"plotly": ["plotly>=3.6.0"]},
+    entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
 )
