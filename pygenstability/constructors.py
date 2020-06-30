@@ -1,68 +1,77 @@
 """quality matrix and null model constructor functions"""
 import sys
+from functools import lru_cache, partial
+
 import numpy as np
-import scipy as sc
-import networkx as nx
+import scipy.sparse as sp
 
-THRESHOLD = 1e-6
-
-
-def _load_constructor(constructor_type):
-    try:
-        return getattr(sys.modules[__name__], "constructor_%s" % constructor_type)
-    except:
-        raise Exception("Could not load constructor %s" % constructor_type)
+_USE_CACHE = True
 
 
-def _threshold_matrix(matrix):
-    mask = np.abs(matrix.data) < THRESHOLD * np.max(matrix)
+def load_constructor(graph, constructor, use_cache=_USE_CACHE):
+    """Load constructor."""
+    if isinstance(constructor, str):
+        try:
+            constructor = getattr(sys.modules[__name__], "constructor_%s" % constructor)
+        except:
+            raise Exception("Could not load constructor %s" % constructor)
+
+    if not use_cache:
+        return partial(constructor, graph)
+
+    @lru_cache()
+    def cached_constructor(time):
+        return constructor(graph, time)
+
+    return cached_constructor
+
+
+def threshold_matrix(matrix, threshold=1e-6):
+    """Threshold a matrix to remove small numbers for Louvain speed up."""
+    mask = np.abs(matrix.data) < threshold * np.max(matrix)
     matrix.data[mask] = 0
     matrix.eliminate_zeros()
 
 
-def constructor_continuous_linearized(graph, time):
+def constructor_linearized(graph, time):
     """constructor for continuous linearized"""
-    Warning("Not fully working, need a shift of quality, could we include it here?")
-    degrees = np.array([graph.degree[i] for i in graph.nodes])
+    degrees = graph.sum(1).flatten()
+    if degrees.sum() < 1e-10:
+        raise Exception("The total degree = 0, we cannot proceed further")
+
     pi = degrees / degrees.sum()
-
-    adjacency_matrix = nx.adjacency_matrix(graph, weight="weight").toarray()
-
     null_model = np.array([pi, pi])
-    quality_matrix = time * adjacency_matrix / degrees.sum()
 
-    return quality_matrix, null_model
+    quality_matrix = time * graph / degrees.sum()
+
+    return quality_matrix, null_model, 1 - time
 
 
 def constructor_continuous_combinatorial(graph, time):
     """constructor for continuous combinatorial"""
-    pi = np.ones(len(graph)) / len(graph)
+    laplacian = sp.csgraph.laplacian(graph).tocsc()
 
-    laplacian = 1.0 * nx.laplacian_matrix(graph).tocsc()
-
-    exp = sc.sparse.linalg.expm(-time * laplacian)
-
-    _threshold_matrix(exp)
-
+    pi = np.ones(graph.shape[0]) / graph.shape[0]
     null_model = np.array([pi, pi])
-    quality_matrix = sc.sparse.diags(pi).dot(exp)
+
+    exp = sp.csr_matrix(sp.linalg.expm(-time * laplacian.toarray()))
+    threshold_matrix(exp)
+    quality_matrix = sp.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
 
 def constructor_continuous_normalized(graph, time):
     """constructor for continuous normalized"""
-    degrees = np.array([graph.degree[i] for i in graph.nodes])
+    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True)
+    normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian).tocsc()
+
     pi = degrees / degrees.sum()
-
-    laplacian = sc.sparse.diags(1.0 / degrees).dot(nx.laplacian_matrix(graph)).tocsc()
-
-    exp = sc.sparse.linalg.expm(-time * laplacian)
-
-    _threshold_matrix(exp)
-
     null_model = np.array([pi, pi])
-    quality_matrix = sc.sparse.diags(pi).dot(exp)
+
+    exp = sp.csr_matrix(sp.linalg.expm(-time * normed_laplacian.toarray()))
+    threshold_matrix(exp)
+    quality_matrix = sp.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
@@ -72,32 +81,27 @@ def constructor_continuous_normalized(graph, time):
 def constructor_signed_modularity(graph, time):
     """constructor of signed mofularitye (Gomes, Jensen, Arenas, PRE 2009)
     the time only multiplies the quality matrix (this many not mean anything, use with care!)"""
-    adjacency_matrix = nx.adjacency_matrix(graph, weight="weight").toarray()
+    if np.min(graph) >= 0:
+        return constructor_linearized(graph, time)
 
-    adj_pos = adjacency_matrix.copy()
-    adj_pos[adjacency_matrix < 0] = 0.0
-    adj_neg = adjacency_matrix.copy()
-    adj_neg[adjacency_matrix > 0] = 0.0
+    adj_pos = graph.copy()
+    adj_pos[graph < 0] = 0.0
+    adj_neg = -graph.copy()
+    adj_neg[graph > 0] = 0.0
 
-    deg_plus = adj_pos.sum(1)
-    deg_neg = adj_neg.sum(1)
+    deg_plus = adj_pos.sum(1).flatten()
+    deg_neg = adj_neg.sum(1).flatten()
+
     deg_norm = deg_plus.sum() + deg_neg.sum()
-
-    if deg_neg.sum() < 1e-10:
-        deg_neg_norm = np.zeros(len(graph))
-        deg_neg = np.zeros(len(graph))
-    else:
-        deg_neg_norm = deg_neg / deg_neg.sum()
-
-    if deg_plus.sum() < 1e-10:
-        deg_plus_norm = np.zeros(len(graph))
-        deg_plus = np.zeros(len(graph))
-    else:
-        deg_plus_norm = deg_plus / deg_plus.sum()
-
-    null_model = np.array([deg_plus, deg_plus_norm, deg_neg, -deg_neg_norm]) / deg_norm
-    quality_matrix = time * adjacency_matrix / deg_norm
-
+    null_model = np.array(
+        [
+            deg_plus / deg_norm,
+            deg_plus / deg_plus.sum(),
+            -deg_neg / deg_neg.sum(),
+            deg_neg / deg_norm,
+        ]
+    )
+    quality_matrix = time * graph / deg_norm
     return quality_matrix, null_model
 
 def constructor_directed_normalized(graph,time):

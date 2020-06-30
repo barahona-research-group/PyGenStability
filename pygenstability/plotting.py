@@ -1,148 +1,424 @@
 """plotting functions"""
-import os
 import logging
+import os
 
-import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
 import matplotlib.gridspec as gridspec
+from matplotlib import patches
+import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
+from tqdm import tqdm
 
 L = logging.getLogger("pygenstability")
 
 
-def plot_scan(  # pylint: disable=too-many-branches,too-many-statements
-    all_results, time_axis=True, figure_name="scan_results.svg"
+def plot_scan(
+    all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True
 ):
-    """
-    Simple plot of a scan
-    """
+    """Plot results of pygenstability with matplotlib or plotly"""
 
-    # get the times paramters
-    n_t = len(all_results["times"])
-    if n_t == 1:
+    if len(all_results["times"]) == 1:
         L.info(
             "Cannot plot the results if only one time point, we display the result instead:"
         )
         L.info(all_results)
         return
 
-    if all_results["params"]["log_time"]:
+    if use_plotly:
+        try:
+            plot_scan_plotly(all_results)
+        except ImportError:
+            L.warning(
+                "Plotly is not installed, please install package with \
+                 pip install pygenstabiliy[plotly], using matplotlib instead."
+            )
+
+    plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+
+
+def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+    all_results,
+):
+    """Plot results of pygenstability with plotly"""
+    from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
+    import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
+
+    if all_results["run_params"]["log_time"]:
         times = np.log10(all_results["times"])
     else:
         times = all_results["times"]
 
-    plt.figure(figsize=(5, 5))
+    hovertemplate = str(
+        "<b>Time</b>: %{x:.2f}"
+        + "<br><i>Number of communities</i>: %{y}"
+        + "<br>%{text}<extra></extra>"
+    )
 
-    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])  # , width_ratios = [1,0.2] )
-    gs.update(hspace=0)
-
-    # plot tt'
-    if "ttprime" in all_results:
-        ax0 = plt.subplot(gs[0, 0])
-        ttprime = np.zeros([n_t, n_t])
-        for i, tt in enumerate(all_results["ttprime"]):
-            ttprime[i] = tt
-
-        ax0.contourf(times, times, ttprime, cmap="YlOrBr")
-        ax0.set_ylabel(r"$log_{10}(t^\prime)$")
-        ax0.yaxis.tick_left()
-        ax0.yaxis.set_label_position("left")
-        ax0.axis([times[0], times[-1], times[0], times[-1]])
-
-        ax1 = ax0.twinx()
-    else:
-        ax1 = plt.subplot(gs[0, 0])
-
-    # plot the number of clusters
-    if time_axis:
-        ax1.plot(
-            times, all_results["number_of_communities"], c="C0", label="size", lw=2.0
-        )
-    else:
-        ax1.plot(all_results["number_of_communities"], c="C0", label="size", lw=2.0)
-
-    ax1.tick_params("y", colors="C0")
-    if "ttprime" in all_results:
-        ax1.yaxis.tick_right()
-        ax1.yaxis.set_label_position("right")
-    ax1.set_ylabel("Number of clusters", color="C0")
-
-    # make a subplot for stability and MI
-    ax2 = plt.subplot(gs[1, 0])
-
-    # first plot the stability
-    if "stability" in all_results:
-        if time_axis:
-            ax2.plot(times, all_results["stability"], label=r"$Q$", c="C2")
-        else:
-            ax2.plot(all_results["stability"], label=r"$Q$", c="C2")
-
-    # ax2.set_yscale('log')
-    ax2.tick_params("y", colors="C2")
-    ax2.set_ylabel("Modularity", color="C2")
-    ax2.yaxis.set_label_position("left")
-    # ax2.legend(loc='center right')
-    ax2.set_xlabel(r"$log_{10}(t)$")
-
-    # ax2.axis([0,n_t,0,self.stability_results.at[0,'number_of_communities']])
-
-    # plot the MMI
     if "mutual_information" in all_results:
-        ax3 = ax2.twinx()
-        if time_axis:
-            ax3.plot(
-                times,
-                all_results["mutual_information"],
-                "-",
-                lw=2.0,
-                c="C3",
-                label="MI",
-            )
-        else:
-            ax3.plot(all_results["mutual_information"], "-", lw=2.0, c="C3", label="MI")
+        mi_data = all_results["mutual_information"]
+        mi_opacity = 1.0
+        mi_title = "Mutual information"
+        mi_ticks = True
+    else:
+        mi_data = np.zeros(len(times))
+        mi_opacity = 0.0
+        mi_title = None
+        mi_ticks = False
 
-        ax3.yaxis.tick_right()
-        ax3.tick_params("y", colors="C3")
-        ax3.set_ylabel(r"Mutual information", color="C3")
-        ax3.axhline(1, ls="--", lw=1.0, c="C3")
-        ax3.axis(
-            [times[0], times[-1], np.min(all_results["mutual_information"]) * 0.9, 1.1]
+    text = [
+        "Stability: {0:.3f}, <br> Mutual Information: {1:.3f}, <br> Index: {2}".format(
+            s, mi, i
         )
+        for s, mi, i in zip(
+            all_results["stability"], mi_data, np.arange(0, len(times)),
+        )
+    ]
 
-    plt.savefig(figure_name, bbox_inches="tight")
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
+    ncom = go.Scatter(
+        x=times,
+        y=all_results["number_of_communities"],
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        name="Number of communities",
+        xaxis="x2",
+        yaxis="y4",
+        text=text,
+        marker_color="red",
+    )
+
+    if "ttprime" in all_results:
+        z = all_results["ttprime"]
+        showscale = True
+        tprime_title = "tprime"
+    else:
+        z = np.nan + np.zeros([len(times), len(times)])
+        showscale = False
+        tprime_title = None
+
+    ttprime = go.Heatmap(
+        z=z,
+        x=times,
+        y=times,
+        colorscale="YlOrBr",
+        yaxis="y2",
+        xaxis="x2",
+        hoverinfo="skip",
+        colorbar=dict(title="ttprime MI", len=0.2, yanchor="middle", y=0.5,),
+        showscale=showscale,
+    )
+
+    stab = go.Scatter(
+        x=times,
+        y=all_results["stability"],
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        text=text,
+        name="Stability",
+        marker_color="blue",
+    )
+
+    mi = go.Scatter(
+        x=times,
+        y=mi_data,
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        text=text,
+        name="Mutual information",
+        yaxis="y3",
+        xaxis="x",
+        marker_color="green",
+        opacity=mi_opacity,
+    )
+
+    layout = go.Layout(
+        yaxis=dict(
+            title="Stability",
+            titlefont=dict(color="blue"),
+            tickfont=dict(color="blue"),
+            domain=[0, 0.28],
+        ),
+        yaxis2=dict(
+            title=tprime_title,
+            titlefont=dict(color="black"),
+            tickfont=dict(color="black"),
+            domain=[0.32, 1],
+            side="right",
+            range=[times[0], times[-1]],
+        ),
+        yaxis3=dict(
+            title=mi_title,
+            titlefont=dict(color="green"),
+            tickfont=dict(color="green"),
+            showticklabels=mi_ticks,
+            overlaying="y",
+            side="right",
+        ),
+        yaxis4=dict(
+            title="Number of communities",
+            titlefont=dict(color="red"),
+            tickfont=dict(color="red"),
+            overlaying="y2",
+        ),
+        xaxis=dict(range=[times[0], times[-1]],),
+        xaxis2=dict(range=[times[0], times[-1]]),
+    )
+
+    fig = go.Figure(data=[stab, ncom, mi, ttprime], layout=layout)
+    fig.show()
 
 
-def plot_communities(graph, all_results, folder="communities"):
+def plot_single_community(
+    graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100
+):
+    """Plot the community structures for a given time"""
+
+    pos = {u: graph.nodes[u]["pos"] for u in graph}
+
+    node_color = all_results["community_id"][time_id]
+
+    nx.draw_networkx_nodes(
+        graph,
+        pos=pos,
+        node_color=node_color,
+        node_size=node_size,
+        cmap=plt.get_cmap("tab20"),
+    )
+    nx.draw_networkx_edges(graph, pos=pos, width=edge_width, edge_color=edge_color)
+
+    plt.axis("off")
+    plt.title(
+        str(r"$log_{10}(time) =$ ")
+        + str(np.round(np.log10(all_results["times"][time_id]), 2))
+        + ", with "
+        + str(all_results["number_of_communities"][time_id])
+        + " communities"
+    )
+
+
+def plot_communities(
+    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5
+):
     """now plot the community structures at each time in a folder"""
 
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
-    pos = [graph.nodes[u]["pos"] for u in graph]
-
-    for i in range(len(all_results["times"])):
-        node_color = all_results["community_id"][i]
-
+    mpl_backend = matplotlib.get_backend()
+    matplotlib.use("Agg")
+    for time_id in tqdm(range(len(all_results["times"]))):
         plt.figure()
-        nx.draw_networkx_nodes(
-            graph,
-            pos=pos,
-            node_color=node_color,
-            node_size=100,
-            cmap=plt.get_cmap("tab20"),
+        plot_single_community(
+            graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width
         )
-        nx.draw_networkx_edges(graph, pos=pos, width=0.5, edge_color="0.5")
-
-        plt.axis("off")
-        plt.title(
-            str(r"$log_{10}(time) =$ ")
-            + str(np.round(np.log10(all_results["times"][i]), 2))
-            + ", with "
-            + str(all_results["number_of_communities"][i])
-            + " communities"
-        )
-
         plt.savefig(
-            os.path.join(folder, "time_" + str(i) + ".png"), bbox_inches="tight"
+            os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight"
         )
         plt.close()
+    matplotlib.use(mpl_backend)
+
+
+def _get_times(all_results, time_axis=True):
+    """Get the time vector."""
+    if not time_axis:
+        return np.arange(len(all_results["times"]))
+    if all_results["run_params"]["log_time"]:
+        return np.log10(all_results["times"])
+    return all_results["times"]
+
+
+def plot_number_comm(all_results, ax, time_axis=True):
+    """Plot number of communities."""
+    times = _get_times(all_results, time_axis)
+
+    ax.plot(
+        times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0
+    )
+    ax.set_ylabel("Number of clusters", color="C3")
+    ax.tick_params("y", colors="C3")
+
+
+def plot_ttprime(all_results, ax, time_axis):
+    """Plot ttprime."""
+    times = _get_times(all_results, time_axis)
+
+    ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr")
+    ax.set_ylabel(r"$log_{10}(t^\prime)$")
+    ax.yaxis.tick_left()
+    ax.yaxis.set_label_position("left")
+    ax.axis([times[0], times[-1], times[0], times[-1]])
+
+
+def plot_mutual_information(all_results, ax, time_axis=True):
+    """Plot mutual information."""
+    times = _get_times(all_results, time_axis=time_axis)
+    ax.plot(times, all_results["mutual_information"], "-", lw=2.0, c="C2", label="MI")
+
+    ax.yaxis.tick_right()
+    ax.tick_params("y", colors="C2")
+    ax.set_ylabel(r"Mutual information", color="C2")
+    ax.axhline(1, ls="--", lw=1.0, c="C2")
+    ax.axis([times[0], times[-1], np.min(all_results["mutual_information"]) * 0.9, 1.1])
+
+
+def plot_stability(all_results, ax, time_axis=True):
+    """Plot stability."""
+    times = _get_times(all_results, time_axis=time_axis)
+    ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
+
+    ax.tick_params("y", colors="C0")
+    ax.set_ylabel("Stability", color="C0")
+    ax.yaxis.set_label_position("left")
+    ax.set_xlabel(r"$log_{10}(t)$")
+
+
+def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
+    """Plot results of pygenstability with matplotlib."""
+    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
+    gs.update(hspace=0)
+    if "ttprime" in all_results:
+        ax0 = plt.subplot(gs[0, 0])
+        plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
+        ax1 = ax0.twinx()
+    else:
+        ax1 = plt.subplot(gs[0, 0])
+
+    ax1.set_xticks([])
+
+    plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
+
+    if "ttprime" in all_results:
+        ax1.yaxis.tick_right()
+        ax1.yaxis.set_label_position("right")
+
+    ax2 = plt.subplot(gs[1, 0])
+
+    if "stability" in all_results:
+        plot_stability(all_results, ax=ax2, time_axis=time_axis)
+
+    if "mutual_information" in all_results:
+        ax3 = ax2.twinx()
+        plot_mutual_information(all_results, ax=ax3, time_axis=time_axis)
+
+    plt.savefig(figure_name, bbox_inches="tight")
+
+
+def plot_clustered_adjacency(
+    adjacency,
+    all_results,
+    time,
+    labels=None,
+    figsize=(12, 10),
+    cmap="Blues",
+    figure_name="clustered_adjacency.png",
+):
+    """Plot the clustered adjacency matrix of the graph at a given time.
+
+    Args:
+        adjacency (ndarray): adjacency matrix to plot
+        all_results (dict): results of PyGenStability
+        time (int): time index for clustering
+        labels (list): node labels, or None
+        figsize (tubple): figure size
+        cmap (str): colormap for matrix elements
+        figure_name (str): filename of the figure with extension
+    """
+    comms, counts = np.unique(all_results["community_id"][time], return_counts=True)
+
+    node_ids = []
+    for comm in comms:
+        node_ids += list(np.where(all_results["community_id"][time] == comm)[0])
+
+    adjacency = adjacency[np.ix_(node_ids, node_ids)]
+    adjacency[adjacency == 0] = np.nan
+
+    plt.figure(figsize=figsize)
+    plt.imshow(adjacency, aspect="auto", origin="auto", cmap=cmap)
+
+    ax = plt.gca()
+
+    pos = 0
+    for comm, count in zip(comms, counts):
+        rect = patches.Rectangle(
+            (pos - 0.5, pos - 0.5),
+            count,
+            count,
+            linewidth=5,
+            facecolor="none",
+            edgecolor="g",
+        )
+        ax.add_patch(rect)
+        pos += count
+
+    ax.set_xticks(np.arange(len(adjacency)))
+    ax.set_yticks(np.arange(len(adjacency)))
+
+    if labels is not None:
+        labels_plot = [labels[i] for i in node_ids]
+        ax.set_xticklabels(labels_plot)
+        ax.set_yticklabels(labels_plot)
+
+    plt.colorbar()
+    plt.xticks(rotation=90)
+    plt.axis([-0.5, len(adjacency) - 0.5, -0.5, len(adjacency) - 0.5])
+    plt.suptitle(
+        "log10(time) = "
+        + str(np.round(np.log10(all_results["times"][time]), 2))
+        + ",  number_of_communities="
+        + str(all_results["number_of_communities"][time])
+    )
+
+    plt.savefig(figure_name, bbox_inches="tight")
+
+
+def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
+    """Plot Sankey diagram of communities accros time.
+
+    Args:
+        all_results (dict): results from run function
+        live (bool): if True, interactive figure will appear in browser
+        filename (str): filename to save the plot
+    """
+    import plotly.graph_objects as go
+
+    sources = []
+    targets = []
+    values = []
+    shift = 0
+    for i in range(len(all_results['community_id']) - 1):
+        community_source = np.array(all_results['community_id'][i])
+        community_target = np.array(all_results['community_id'][i + 1])
+        source_ids = set(community_source)
+        target_ids = set(community_target)
+        for source in source_ids:
+            for target in target_ids:
+                value = sum(community_target[community_source == source] == target)
+                if value > 0:
+                    values.append(value)
+                    sources.append(source + shift)
+                    targets.append(target + len(source_ids) + shift)
+        shift += len(source_ids)
+
+    layout = go.Layout(autosize=True)
+    fig = go.Figure(
+        data=[
+            go.Sankey(
+                node=dict(
+                    pad=1,
+                    thickness=1,
+                    line=dict(color="black", width=0.0),
+                ),
+                link=dict(source=sources, target=targets, value=values),
+            )
+        ],
+        layout=layout,
+    )
+
+    try:
+        fig.write_image(filename)
+    except:
+        print("Plotly figure cannot be saved, please install the relevant packages.")
+
+    if live:
+        fig.show()
