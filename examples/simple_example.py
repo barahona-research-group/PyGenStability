@@ -3,7 +3,7 @@ import pickle
 
 from pygenstability import run, plotting
 from create_graph import create_sbm
-import scipy.sparse as sp
+
 
 def simple_test():
     """run simple test"""

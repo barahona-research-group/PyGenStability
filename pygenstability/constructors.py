@@ -103,11 +103,10 @@ def constructor_signed_modularity(graph, time):
     return quality_matrix, null_model
 
 
-def constructor_directed_normalized(graph, time, walk_type=None, alpha=0.95):
+def constructor_directed_normalized(graph, time, walk_type='pagerank', alpha=0.8):
     """Constructor of directed normalized laplacian (using networkx)."""
     import networkx as nx
 
-    graph = sp.triu(graph)
     nx_graph = nx.DiGraph(graph)
 
     laplacian = nx.directed_laplacian_matrix(nx_graph, walk_type=walk_type, alpha=alpha)
