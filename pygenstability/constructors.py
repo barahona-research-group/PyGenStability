@@ -120,3 +120,28 @@ def constructor_directed_normalized(graph, time, walk_type='pagerank', alpha=0.8
     null_model = np.array([pi, pi])
 
     return quality_matrix, null_model
+
+
+def constructor_directed(graph,time, alpha=0.85):
+    
+    dinv = np.asarray(np.divide(1,A.sum(axis=1),where=A.sum(axis=1)!=0))
+    Dinv = np.diag(dinv.reshape(-1))
+    ind_d = sp.csr_matrix([dinv==0][0].reshape(-1)*1)
+
+    ones = sp.csr_matrix(np.ones(A.shape[0]))
+    M = alpha*Dinv*A + ((1-alpha)*ones + alpha*ind_d).T*ones / n_nodes
+    M = sp.csr_matrix(M)
+
+    I = sp.eye(M.shape[0])
+    P = M - I
+    
+    exp = sp.csr_matrix(sp.linalg.expm(time * P)) 
+    pi = abs(sp.linalg.eigs(P, which='SM', k=1)[1][:, 0])
+    pi /= pi.sum() 
+
+    threshold_matrix(exp)
+    quality_matrix = sp.diags(pi).dot(exp)
+    null_model = np.array([pi, pi]) 
+    
+    return quality_matrix, null_model
+
