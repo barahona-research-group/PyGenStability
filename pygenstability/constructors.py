@@ -103,40 +103,23 @@ def constructor_signed_modularity(graph, time):
     return quality_matrix, null_model
 
 
-def constructor_directed_normalized(graph, time, walk_type='pagerank', alpha=0.8):
-    """Constructor of directed normalized laplacian (using networkx)."""
-    import networkx as nx
-
-    nx_graph = nx.DiGraph(graph)
-
-    laplacian = nx.directed_laplacian_matrix(nx_graph, walk_type=walk_type, alpha=alpha)
-    exp = sp.csr_matrix(sp.linalg.expm(-time * laplacian))
-
-    pi = abs(sp.linalg.eigs(laplacian, which='SM', k=1)[1][:, 0])
-    pi /= pi.sum()
-
-    threshold_matrix(exp)
-    quality_matrix = sp.diags(pi).dot(exp)
-    null_model = np.array([pi, pi])
-
-    return quality_matrix, null_model
 
 
 def constructor_directed(graph,time, alpha=0.85):
     
-    dinv = np.asarray(np.divide(1,A.sum(axis=1),where=A.sum(axis=1)!=0))
+    dinv = np.asarray(np.divide(1,graph.sum(axis=1),where=graph.sum(axis=1)!=0))
     Dinv = np.diag(dinv.reshape(-1))
     ind_d = sp.csr_matrix([dinv==0][0].reshape(-1)*1)
 
-    ones = sp.csr_matrix(np.ones(A.shape[0]))
-    M = alpha*Dinv*A + ((1-alpha)*ones + alpha*ind_d).T*ones / n_nodes
+    ones = sp.csr_matrix(np.ones(graph.shape[0]))
+    M = alpha*Dinv*graph + ((1-alpha)*ones + alpha*ind_d).T*ones / graph.shape[0]
     M = sp.csr_matrix(M)
 
     I = sp.eye(M.shape[0])
-    P = M - I
+    Q = sp.csc_matrix(M - I)
     
-    exp = sp.csr_matrix(sp.linalg.expm(time * P)) 
-    pi = abs(sp.linalg.eigs(P, which='SM', k=1)[1][:, 0])
+    exp = sp.csr_matrix(sp.linalg.expm(time * Q)) 
+    pi = abs(sp.linalg.eigs(Q.transpose(), which='SM', k=1)[1][:, 0])
     pi /= pi.sum() 
 
     threshold_matrix(exp)

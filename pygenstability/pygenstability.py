@@ -6,6 +6,7 @@ import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import adjusted_rand_score as normalized_mutual_info_score
 from tqdm import tqdm
+import itertools
 
 from . import generalized_louvain
 from .constructors import load_constructor
@@ -74,8 +75,9 @@ def run(
     log_time=True,
     times=None,
     n_louvain=100,
-    with_MI=True,
-    n_louvain_MI=20,
+    with_IT=True,
+    information_measure='VI',
+    n_louvain_I=20,
     with_postprocessing=True,
     with_ttprime=True,
     result_file="results.pkl",
@@ -94,8 +96,9 @@ def run(
         log_time (bool): use linear or log scales for times
         times (array): cutom time vector, if provided, it will overrid the other time arguments
         n_louvain (int): number of Louvain evaluations
-        with_MI (bool): compute the mutual information between Louvain runs
-        n_louvain_MI (int): number of randomly chosen Louvain run to estimate MI
+        with_IT (bool): compute the information theory measure between Louvain runs
+        information_measure (str): 'VI' for variation of information or 'MI' for normalized mutual information
+        n_louvain_I (int): number of randomly chosen Louvain run to estimate MI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         results_file (str): path to the result file
@@ -103,7 +106,7 @@ def run(
         tqdm_disbale (bool): disable progress bars
     """
     run_params = _get_params(locals())
-    graph = _graph_checks(graph)
+    #graph = _graph_checks(graph)
     times = _get_times(
         min_time=min_time,
         max_time=max_time,
@@ -127,12 +130,13 @@ def run(
 
         process_louvain_run(time, np.array(louvain_results), all_results)
 
-        if with_MI:
-            compute_mutual_information(
+        if with_IT:
+            compute_information_measure(
                 louvain_results,
                 all_results,
                 pool,
-                n_partitions=min(n_louvain_MI, n_louvain),
+                information_measure,
+                n_partitions=min(n_louvain_I, n_louvain),
             )
 
         save_results(all_results, filename=result_file)
@@ -165,10 +169,15 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
         all_results["mutual_information"].append(mutual_information)
 
 
-def compute_mutual_information(louvain_results, all_results, pool, n_partitions=10):
-    """Compute the mutual information between the first n_partitions"""
+def compute_information_measure(louvain_results, all_results, pool, information_measure , n_partitions=10):
+    """Compute an information measure between the first n_partitions"""
     selected_partitions = louvain_results[:n_partitions, 1]
-    worker = WorkerMI(selected_partitions)
+    
+    if information_measure=='VI':
+        worker = WorkerVI(selected_partitions)
+    else:
+        worker = WorkerMI(selected_partitions)
+        
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["mutual_information"].append(
@@ -189,6 +198,24 @@ class WorkerMI:
             #average_method="arithmetic",
         )
 
+
+class WorkerVI:
+    """worker for Louvain runs"""
+
+    def __init__(self, top_partitions):
+        self.top_partitions = top_partitions
+
+    def __call__(self, index_pair):
+        JE = joint_entropy(
+            self.top_partitions[index_pair[0]],
+            self.top_partitions[index_pair[1]],            
+        )
+        MI = normalized_mutual_info_score(
+            self.top_partitions[index_pair[0]],
+            self.top_partitions[index_pair[1]],
+        )
+
+        return (JE - MI) / JE
 
 def _to_indices(matrix):
     """convert a sparse matrix to indices and values"""
@@ -309,3 +336,25 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         all_results["number_of_communities"][i] = all_results_raw[
             "number_of_communities"
         ][best_quality_id]
+
+
+
+def joint_entropy(x,y):
+    """
+    Calculate the entropy of a variable, or joint entropy of several variables.
+    Parameters
+    ----------
+    x : array or list
+    y : array or list
+
+    """
+    n_instances = len(x)
+    H = 0
+    X = [np.array(x),np.array(y)]
+    for classes in itertools.product(*[set(x) for x in X]):
+        v = np.array([True] * n_instances)
+        for predictions, c in zip(X, classes):
+            v = np.logical_and(v, predictions == c)
+        p = np.mean(v)
+        H += -p * np.log2(p) if p > 0 else 0
+    return H
