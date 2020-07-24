@@ -5,6 +5,7 @@ from collections import defaultdict
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import adjusted_rand_score as normalized_mutual_info_score
+from sklearn.metrics import mutual_info_score
 from tqdm import tqdm
 import itertools
 
@@ -210,7 +211,7 @@ class WorkerVI:
             self.top_partitions[index_pair[0]],
             self.top_partitions[index_pair[1]],            
         )
-        MI = normalized_mutual_info_score(
+        MI = mutual_info_score(
             self.top_partitions[index_pair[0]],
             self.top_partitions[index_pair[1]],
         )
