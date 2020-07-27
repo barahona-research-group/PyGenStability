@@ -76,9 +76,8 @@ def run(
     log_time=True,
     times=None,
     n_louvain=100,
-    with_IT=True,
-    information_measure='VI',
-    n_louvain_I=20,
+    with_VI=True,
+    n_louvain_VI=20,
     with_postprocessing=True,
     with_ttprime=True,
     result_file="results.pkl",
@@ -97,9 +96,8 @@ def run(
         log_time (bool): use linear or log scales for times
         times (array): cutom time vector, if provided, it will overrid the other time arguments
         n_louvain (int): number of Louvain evaluations
-        with_IT (bool): compute the information theory measure between Louvain runs
-        information_measure (str): 'VI' for variation of information or 'MI' for normalized mutual information
-        n_louvain_I (int): number of randomly chosen Louvain run to estimate MI
+        with_VI (bool): compute the variation of information between Louvain runs
+        n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         results_file (str): path to the result file
@@ -107,7 +105,7 @@ def run(
         tqdm_disbale (bool): disable progress bars
     """
     run_params = _get_params(locals())
-    #graph = _graph_checks(graph)
+    graph = _graph_checks(graph)
     times = _get_times(
         min_time=min_time,
         max_time=max_time,
@@ -131,13 +129,12 @@ def run(
 
         process_louvain_run(time, np.array(louvain_results), all_results)
 
-        if with_IT:
-            compute_information_measure(
+        if with_VI:
+            compute_variation_information(
                 louvain_results,
                 all_results,
-                pool,
-                information_measure,
-                n_partitions=min(n_louvain_I, n_louvain),
+                pool,                
+                n_partitions=min(n_louvain_VI, n_louvain),
             )
 
         save_results(all_results, filename=result_file)
@@ -156,7 +153,7 @@ def run(
     return all_results
 
 
-def process_louvain_run(time, louvain_results, all_results, mutual_information=None):
+def process_louvain_run(time, louvain_results, all_results, variation_information=None):
     """convert the louvain outputs to useful data and save it"""
     best_run_id = np.argmax(louvain_results[:, 0])
     all_results["times"].append(time)
@@ -166,22 +163,18 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
     all_results["stability"].append(louvain_results[best_run_id, 0])
     all_results["community_id"].append(louvain_results[best_run_id, 1])
 
-    if mutual_information is not None:
-        all_results["mutual_information"].append(mutual_information)
+    if variation_information is not None:
+        all_results["variation_information"].append(variation_information)
 
 
-def compute_information_measure(louvain_results, all_results, pool, information_measure , n_partitions=10):
+def compute_variation_information(louvain_results, all_results, pool , n_partitions=10):
     """Compute an information measure between the first n_partitions"""
     selected_partitions = louvain_results[:n_partitions, 1]
     
-    if information_measure=='VI':
-        worker = WorkerVI(selected_partitions)
-    else:
-        worker = WorkerMI(selected_partitions)
-        
+    worker = WorkerVI(selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["mutual_information"].append(
+    all_results["variation_information"].append(
         np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
     )
 
@@ -293,7 +286,7 @@ def compute_ttprime(all_results, pool):
         for j in range(len(all_results["times"]))
     ]
 
-    worker = WorkerMI(all_results["community_id"])
+    worker = WorkerVI(all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 

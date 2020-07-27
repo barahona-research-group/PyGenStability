@@ -55,10 +55,10 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         + "<br>%{text}<extra></extra>"
     )
 
-    if "mutual_information" in all_results:
-        mi_data = all_results["mutual_information"]
+    if "variation_information" in all_results:
+        mi_data = all_results["variation_information"]
         mi_opacity = 1.0
-        mi_title = "Mutual information"
+        mi_title = "Variation of information"
         mi_ticks = True
     else:
         mi_data = np.zeros(len(times))
@@ -67,7 +67,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         mi_ticks = False
 
     text = [
-        "Stability: {0:.3f}, <br> Mutual Information: {1:.3f}, <br> Index: {2}".format(
+        "Stability: {0:.3f}, <br> Variation Information: {1:.3f}, <br> Index: {2}".format(
             s, mi, i
         )
         for s, mi, i in zip(
@@ -125,7 +125,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         mode="lines+markers",
         hovertemplate=hovertemplate,
         text=text,
-        name="Mutual information",
+        name="Variation information",
         yaxis="y3",
         xaxis="x",
         marker_color="green",
@@ -250,16 +250,16 @@ def plot_ttprime(all_results, ax, time_axis):
     ax.axis([times[0], times[-1], times[0], times[-1]])
 
 
-def plot_mutual_information(all_results, ax, time_axis=True):
-    """Plot mutual information."""
+def plot_variation_information(all_results, ax, time_axis=True):
+    """Plot variation information."""
     times = _get_times(all_results, time_axis=time_axis)
-    ax.plot(times, all_results["mutual_information"], "-", lw=2.0, c="C2", label="MI")
+    ax.plot(times, all_results["variation_information"], "-", lw=2.0, c="C2", label="MI")
 
     ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
-    ax.set_ylabel(r"Mutual information", color="C2")
+    ax.set_ylabel(r"Variation information", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis([times[0], times[-1], np.min(all_results["mutual_information"]) * 0.9, 1.1])
+    ax.axis([times[0], times[-1], np.min(all_results["variation_information"]) * 0.9, 1.1])
 
 
 def plot_stability(all_results, ax, time_axis=True):
@@ -297,9 +297,9 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     if "stability" in all_results:
         plot_stability(all_results, ax=ax2, time_axis=time_axis)
 
-    if "mutual_information" in all_results:
+    if "variation_information" in all_results:
         ax3 = ax2.twinx()
-        plot_mutual_information(all_results, ax=ax3, time_axis=time_axis)
+        plot_variation_information(all_results, ax=ax3, time_axis=time_axis)
 
     plt.savefig(figure_name, bbox_inches="tight")
 
