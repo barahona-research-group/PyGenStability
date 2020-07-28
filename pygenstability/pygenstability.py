@@ -8,6 +8,7 @@ from sklearn.metrics import adjusted_rand_score as normalized_mutual_info_score
 from sklearn.metrics import mutual_info_score
 from tqdm import tqdm
 import itertools
+from math import log
 
 from . import generalized_louvain
 from .constructors import load_constructor
@@ -105,7 +106,7 @@ def run(
         tqdm_disbale (bool): disable progress bars
     """
     run_params = _get_params(locals())
-    graph = _graph_checks(graph)
+    #graph = _graph_checks(graph)
     times = _get_times(
         min_time=min_time,
         max_time=max_time,
@@ -193,6 +194,25 @@ class WorkerMI:
         )
 
 
+# class WorkerVI:
+#     """worker for Louvain runs"""
+
+#     def __init__(self, top_partitions):
+#         self.top_partitions = top_partitions
+
+#     def __call__(self, index_pair):
+#         JE = joint_entropy(
+#             self.top_partitions[index_pair[0]],
+#             self.top_partitions[index_pair[1]],            
+#         )
+#         MI = mutual_info_score(
+#             self.top_partitions[index_pair[0]],
+#             self.top_partitions[index_pair[1]],
+#         )
+
+#         return (JE - MI) / JE
+
+
 class WorkerVI:
     """worker for Louvain runs"""
 
@@ -200,14 +220,14 @@ class WorkerVI:
         self.top_partitions = top_partitions
 
     def __call__(self, index_pair):
-        JE = joint_entropy(
-            self.top_partitions[index_pair[0]],
-            self.top_partitions[index_pair[1]],            
-        )
+
         MI = mutual_info_score(
             self.top_partitions[index_pair[0]],
             self.top_partitions[index_pair[1]],
         )
+        Ex = entropy(self.top_partitions[index_pair[0]])
+        Ey = entropy(self.top_partitions[index_pair[1]])
+        JE = Ex + Ey - MI
 
         return (JE - MI) / JE
 
@@ -352,3 +372,23 @@ def joint_entropy(x,y):
         p = np.mean(v)
         H += -p * np.log2(p) if p > 0 else 0
     return H
+
+def entropy(labels):
+    """Calculates the entropy for a labeling.
+    Parameters
+    ----------
+    labels : int array, shape = [n_samples]
+        The labels
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+    """
+    if len(labels) == 0:
+        return 1.0
+    label_idx = np.unique(labels, return_inverse=True)[1]
+    pi = np.bincount(label_idx).astype(np.float64)
+    pi = pi[pi > 0]
+    pi_sum = np.sum(pi)
+    # log(a / b) should be calculated as log(a) - log(b) for
+    # possible loss of precision
+    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
