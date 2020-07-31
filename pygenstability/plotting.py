@@ -372,7 +372,7 @@ def plot_clustered_adjacency(
     plt.savefig(figure_name, bbox_inches="tight")
 
 
-def plot_sankey(all_results, live=False, filename="communities_sankey.svg", min_t_idx=0, max_t_idx=-1):
+def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time_index=None):
     """Plot Sankey diagram of communities accros time.
 
     Args:
@@ -387,13 +387,16 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg", min_
     values = []
     shift = 0
     
-    if max_t_idx==-1:
-        max_t_idx=len(all_results['community_id'])
+    if not time_index:
+        all_results['community_id_reduced'] = all_results['community_id']
+    else:
+        all_results['community_id_reduced']  = [all_results['community_id'][i] for i in time_index] 
+        
     
     #for i in range(len(all_results['community_id']) - 1):
-    for i in range(min_t_idx, max_t_idx - 1):
-        community_source = np.array(all_results['community_id'][i])
-        community_target = np.array(all_results['community_id'][i + 1])
+    for i in range(len(all_results['community_id_reduced']) - 1):
+        community_source = np.array(all_results['community_id_reduced'][i])
+        community_target = np.array(all_results['community_id_reduced'][i + 1])
         source_ids = set(community_source)
         target_ids = set(community_target)
         for source in source_ids:
