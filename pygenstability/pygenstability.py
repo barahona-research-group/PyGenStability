@@ -195,7 +195,8 @@ class WorkerVI:
         Ex = entropy(self.top_partitions[index_pair[0]])
         Ey = entropy(self.top_partitions[index_pair[1]])
         JE = Ex + Ey - MI
-
+        if abs(JE) < 1e-8:
+            return 0.0
         return (JE - MI) / JE
 
 
