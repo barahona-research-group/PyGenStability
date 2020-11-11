@@ -55,23 +55,23 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         + "<br>%{text}<extra></extra>"
     )
 
-    if "mutual_information" in all_results:
-        mi_data = all_results["mutual_information"]
-        mi_opacity = 1.0
-        mi_title = "Mutual information"
-        mi_ticks = True
+    if "variation_information" in all_results:
+        vi_data = all_results["variation_information"]
+        vi_opacity = 1.0
+        vi_title = "Variation of information"
+        vi_ticks = True
     else:
-        mi_data = np.zeros(len(times))
-        mi_opacity = 0.0
-        mi_title = None
-        mi_ticks = False
+        vi_data = np.zeros(len(times))
+        vi_opacity = 0.0
+        vi_title = None
+        vi_ticks = False
 
     text = [
-        "Stability: {0:.3f}, <br> Mutual Information: {1:.3f}, <br> Index: {2}".format(
-            s, mi, i
+        "Stability: {0:.3f}, <br> Variation Information: {1:.3f}, <br> Index: {2}".format(
+            s, vi, i
         )
-        for s, mi, i in zip(
-            all_results["stability"], mi_data, np.arange(0, len(times)),
+        for s, vi, i in zip(
+            all_results["stability"], vi_data, np.arange(0, len(times)),
         )
     ]
 
@@ -105,7 +105,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y2",
         xaxis="x2",
         hoverinfo="skip",
-        colorbar=dict(title="ttprime MI", len=0.2, yanchor="middle", y=0.5,),
+        colorbar=dict(title="ttprime VI", len=0.2, yanchor="middle", y=0.5,),
         showscale=showscale,
     )
 
@@ -119,17 +119,17 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         marker_color="blue",
     )
 
-    mi = go.Scatter(
+    vi = go.Scatter(
         x=times,
-        y=mi_data,
+        y=vi_data,
         mode="lines+markers",
         hovertemplate=hovertemplate,
         text=text,
-        name="Mutual information",
+        name="Variation information",
         yaxis="y3",
         xaxis="x",
         marker_color="green",
-        opacity=mi_opacity,
+        opacity=vi_opacity,
     )
 
     layout = go.Layout(
@@ -148,10 +148,10 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             range=[times[0], times[-1]],
         ),
         yaxis3=dict(
-            title=mi_title,
+            title=vi_title,
             titlefont=dict(color="green"),
             tickfont=dict(color="green"),
-            showticklabels=mi_ticks,
+            showticklabels=vi_ticks,
             overlaying="y",
             side="right",
         ),
@@ -165,7 +165,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         xaxis2=dict(range=[times[0], times[-1]]),
     )
 
-    fig = go.Figure(data=[stab, ncom, mi, ttprime], layout=layout)
+    fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
     fig.show()
 
 
@@ -250,16 +250,20 @@ def plot_ttprime(all_results, ax, time_axis):
     ax.axis([times[0], times[-1], times[0], times[-1]])
 
 
-def plot_mutual_information(all_results, ax, time_axis=True):
-    """Plot mutual information."""
+def plot_variation_information(all_results, ax, time_axis=True):
+    """Plot variation information."""
     times = _get_times(all_results, time_axis=time_axis)
-    ax.plot(times, all_results["mutual_information"], "-", lw=2.0, c="C2", label="MI")
+    ax.plot(
+        times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI"
+    )
 
     ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
-    ax.set_ylabel(r"Mutual information", color="C2")
+    ax.set_ylabel(r"Variation information", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis([times[0], times[-1], np.min(all_results["mutual_information"]) * 0.9, 1.1])
+    ax.axis(
+        [times[0], times[-1], np.min(all_results["variation_information"]) * 0.9, 1.1]
+    )
 
 
 def plot_stability(all_results, ax, time_axis=True):
@@ -297,9 +301,9 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     if "stability" in all_results:
         plot_stability(all_results, ax=ax2, time_axis=time_axis)
 
-    if "mutual_information" in all_results:
+    if "variation_information" in all_results:
         ax3 = ax2.twinx()
-        plot_mutual_information(all_results, ax=ax3, time_axis=time_axis)
+        plot_variation_information(all_results, ax=ax3, time_axis=time_axis)
 
     plt.savefig(figure_name, bbox_inches="tight")
 
@@ -372,7 +376,9 @@ def plot_clustered_adjacency(
     plt.savefig(figure_name, bbox_inches="tight")
 
 
-def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
+def plot_sankey(
+    all_results, live=False, filename="communities_sankey.svg", time_index=None
+):
     """Plot Sankey diagram of communities accros time.
 
     Args:
@@ -386,9 +392,17 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
     targets = []
     values = []
     shift = 0
-    for i in range(len(all_results["community_id"]) - 1):
-        community_source = np.array(all_results["community_id"][i])
-        community_target = np.array(all_results["community_id"][i + 1])
+
+    if not time_index:
+        all_results["community_id_reduced"] = all_results["community_id"]
+    else:
+        all_results["community_id_reduced"] = [
+            all_results["community_id"][i] for i in time_index
+        ]
+
+    for i in range(len(all_results["community_id_reduced"]) - 1):
+        community_source = np.array(all_results["community_id_reduced"][i])
+        community_target = np.array(all_results["community_id_reduced"][i + 1])
         source_ids = set(community_source)
         target_ids = set(community_target)
         for source in source_ids:

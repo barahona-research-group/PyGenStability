@@ -4,8 +4,10 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.metrics import adjusted_rand_score as normalized_mutual_info_score
+from sklearn.metrics import mutual_info_score
 from tqdm import tqdm
+import itertools
+from math import log
 
 from . import generalized_louvain
 from .constructors import load_constructor
@@ -74,8 +76,8 @@ def run(
     log_time=True,
     times=None,
     n_louvain=100,
-    with_MI=True,
-    n_louvain_MI=20,
+    with_VI=True,
+    n_louvain_VI=20,
     with_postprocessing=True,
     with_ttprime=True,
     result_file="results.pkl",
@@ -94,8 +96,8 @@ def run(
         log_time (bool): use linear or log scales for times
         times (array): cutom time vector, if provided, it will overrid the other time arguments
         n_louvain (int): number of Louvain evaluations
-        with_MI (bool): compute the mutual information between Louvain runs
-        n_louvain_MI (int): number of randomly chosen Louvain run to estimate MI
+        with_VI (bool): compute the variation of information between Louvain runs
+        n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         results_file (str): path to the result file
@@ -126,12 +128,12 @@ def run(
         )
         _, communities = process_louvain_run(time, louvain_results, all_results)
 
-        if with_MI:
-            compute_mutual_information(
-                communities,
+        if with_VI:
+            compute_variation_information(
+                louvain_results,
                 all_results,
                 pool,
-                n_partitions=min(n_louvain_MI, n_louvain),
+                n_partitions=min(n_louvain_VI, n_louvain),
             )
 
         save_results(all_results, filename=result_file)
@@ -150,7 +152,7 @@ def run(
     return all_results
 
 
-def process_louvain_run(time, louvain_results, all_results, mutual_information=None):
+def process_louvain_run(time, louvain_results, all_results, variation_information=None):
     """convert the louvain outputs to useful data and save it"""
     stabilities = np.array([res[0] for res in louvain_results])
     communities = np.array([res[1] for res in louvain_results])
@@ -161,34 +163,38 @@ def process_louvain_run(time, louvain_results, all_results, mutual_information=N
     all_results["stability"].append(stabilities[best_run_id])
     all_results["community_id"].append(communities[best_run_id])
 
-    if mutual_information is not None:
-        all_results["mutual_information"].append(mutual_information)
-    return stabilities, communities
+    if variation_information is not None:
+        all_results["variation_information"].append(variation_information)
 
 
-def compute_mutual_information(communities, all_results, pool, n_partitions=10):
-    """Compute the mutual information between the first n_partitions"""
-    selected_partitions = communities[:n_partitions]
-    worker = WorkerMI(selected_partitions)
+def compute_variation_information(louvain_results, all_results, pool, n_partitions=10):
+    """Compute an information measure between the first n_partitions"""
+    selected_partitions = louvain_results[:n_partitions, 1]
+
+    worker = WorkerVI(selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["mutual_information"].append(
+    all_results["variation_information"].append(
         np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
     )
 
 
-class WorkerMI:
-    """worker for Louvain runs"""
+class WorkerVI:
+    """worker for VI evaluations"""
 
     def __init__(self, top_partitions):
         self.top_partitions = top_partitions
 
     def __call__(self, index_pair):
-        return normalized_mutual_info_score(
-            self.top_partitions[index_pair[0]],
-            self.top_partitions[index_pair[1]],
-            # average_method="arithmetic",
+
+        MI = mutual_info_score(
+            self.top_partitions[index_pair[0]], self.top_partitions[index_pair[1]],
         )
+        Ex = entropy(self.top_partitions[index_pair[0]])
+        Ey = entropy(self.top_partitions[index_pair[1]])
+        JE = Ex + Ey - MI
+
+        return (JE - MI) / JE
 
 
 def _to_indices(matrix):
@@ -264,7 +270,7 @@ def compute_ttprime(all_results, pool):
         for j in range(len(all_results["times"]))
     ]
 
-    worker = WorkerMI(all_results["community_id"])
+    worker = WorkerVI(all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
@@ -308,3 +314,45 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         all_results["number_of_communities"][i] = all_results_raw[
             "number_of_communities"
         ][best_quality_id]
+
+
+def joint_entropy(x, y):
+    """
+    Calculate the entropy of a variable, or joint entropy of several variables.
+    Parameters
+    ----------
+    x : array or list
+    y : array or list
+
+    """
+    n_instances = len(x)
+    H = 0
+    X = [np.array(x), np.array(y)]
+    for classes in itertools.product(*[set(x) for x in X]):
+        v = np.array([True] * n_instances)
+        for predictions, c in zip(X, classes):
+            v = np.logical_and(v, predictions == c)
+        p = np.mean(v)
+        H += -p * np.log2(p) if p > 0 else 0
+    return H
+
+
+def entropy(labels):
+    """Calculates the entropy for a labeling.
+    Parameters
+    ----------
+    labels : int array, shape = [n_samples]
+        The labels
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+    """
+    if len(labels) == 0:
+        return 1.0
+    label_idx = np.unique(labels, return_inverse=True)[1]
+    pi = np.bincount(label_idx).astype(np.float64)
+    pi = pi[pi > 0]
+    pi_sum = np.sum(pi)
+    # log(a / b) should be calculated as log(a) - log(b) for
+    # possible loss of precision
+    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))

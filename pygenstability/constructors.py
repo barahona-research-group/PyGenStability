@@ -103,17 +103,24 @@ def constructor_signed_modularity(graph, time):
     return quality_matrix, null_model
 
 
-def constructor_directed_normalized(graph, time, walk_type=None, alpha=0.95):
-    """Constructor of directed normalized laplacian (using networkx)."""
-    import networkx as nx
+def constructor_directed(graph, time, alpha=0.85):
 
-    graph = sp.triu(graph)
-    nx_graph = nx.DiGraph(graph)
+    dinv = np.asarray(np.divide(1, graph.sum(axis=1), where=graph.sum(axis=1) != 0))
+    Dinv = np.diag(dinv.reshape(-1))
+    ind_d = sp.csr_matrix([dinv == 0][0].reshape(-1) * 1)
 
-    laplacian = nx.directed_laplacian_matrix(nx_graph, walk_type=walk_type, alpha=alpha)
-    exp = sp.csr_matrix(sp.linalg.expm(-time * laplacian))
+    ones = sp.csr_matrix(np.ones(graph.shape[0]))
+    M = (
+        alpha * Dinv * graph
+        + ((1 - alpha) * ones + alpha * ind_d).T * ones / graph.shape[0]
+    )
+    M = sp.csr_matrix(M)
 
-    pi = abs(sp.linalg.eigs(laplacian, which="SM", k=1)[1][:, 0])
+    I = sp.eye(M.shape[0])
+    Q = sp.csc_matrix(M - I)
+
+    exp = sp.csr_matrix(sp.linalg.expm(time * Q))
+    pi = abs(sp.linalg.eigs(Q.transpose(), which="SM", k=1)[1][:, 0])
     pi /= pi.sum()
 
     threshold_matrix(exp)
