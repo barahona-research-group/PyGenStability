@@ -126,11 +126,11 @@ def run(
         louvain_results = run_several_louvains(
             quality_matrix, null_model, global_shift, n_louvain, pool
         )
-        _, communities = process_louvain_run(time, louvain_results, all_results)
+        communities = process_louvain_run(time, louvain_results, all_results)
 
         if with_VI:
             compute_variation_information(
-                louvain_results,
+                communities,
                 all_results,
                 pool,
                 n_partitions=min(n_louvain_VI, n_louvain),
@@ -166,10 +166,12 @@ def process_louvain_run(time, louvain_results, all_results, variation_informatio
     if variation_information is not None:
         all_results["variation_information"].append(variation_information)
 
+    return communities
 
-def compute_variation_information(louvain_results, all_results, pool, n_partitions=10):
+
+def compute_variation_information(communities, all_results, pool, n_partitions=10):
     """Compute an information measure between the first n_partitions"""
-    selected_partitions = louvain_results[:n_partitions, 1]
+    selected_partitions = communities[:n_partitions]
 
     worker = WorkerVI(selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
