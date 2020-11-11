@@ -124,12 +124,11 @@ def run(
         louvain_results = run_several_louvains(
             quality_matrix, null_model, global_shift, n_louvain, pool
         )
-
-        process_louvain_run(time, np.array(louvain_results), all_results)
+        _, communities = process_louvain_run(time, louvain_results, all_results)
 
         if with_MI:
             compute_mutual_information(
-                louvain_results,
+                communities,
                 all_results,
                 pool,
                 n_partitions=min(n_louvain_MI, n_louvain),
@@ -153,21 +152,23 @@ def run(
 
 def process_louvain_run(time, louvain_results, all_results, mutual_information=None):
     """convert the louvain outputs to useful data and save it"""
-    best_run_id = np.argmax(louvain_results[:, 0])
+    stabilities = np.array([res[0] for res in louvain_results])
+    communities = np.array([res[1] for res in louvain_results])
+
+    best_run_id = np.argmax(stabilities)
     all_results["times"].append(time)
-    all_results["number_of_communities"].append(
-        np.max(louvain_results[best_run_id, 1]) + 1
-    )
-    all_results["stability"].append(louvain_results[best_run_id, 0])
-    all_results["community_id"].append(louvain_results[best_run_id, 1])
+    all_results["number_of_communities"].append(np.max(communities[best_run_id]) + 1)
+    all_results["stability"].append(stabilities[best_run_id])
+    all_results["community_id"].append(communities[best_run_id])
 
     if mutual_information is not None:
         all_results["mutual_information"].append(mutual_information)
+    return stabilities, communities
 
 
-def compute_mutual_information(louvain_results, all_results, pool, n_partitions=10):
+def compute_mutual_information(communities, all_results, pool, n_partitions=10):
     """Compute the mutual information between the first n_partitions"""
-    selected_partitions = louvain_results[:n_partitions, 1]
+    selected_partitions = communities[:n_partitions]
     worker = WorkerMI(selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
@@ -186,7 +187,7 @@ class WorkerMI:
         return normalized_mutual_info_score(
             self.top_partitions[index_pair[0]],
             self.top_partitions[index_pair[1]],
-            #average_method="arithmetic",
+            # average_method="arithmetic",
         )
 
 
@@ -252,9 +253,7 @@ def run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool)
     worker = WorkerLouvain(quality_indices, quality_values, null_model, global_shift)
 
     chunksize = _get_chunksize(n_runs, pool)
-    return np.array(
-        list(pool.imap_unordered(worker, range(n_runs), chunksize=chunksize))
-    )
+    return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
 def compute_ttprime(all_results, pool):

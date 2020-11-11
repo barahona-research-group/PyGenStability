@@ -386,9 +386,9 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
     targets = []
     values = []
     shift = 0
-    for i in range(len(all_results['community_id']) - 1):
-        community_source = np.array(all_results['community_id'][i])
-        community_target = np.array(all_results['community_id'][i + 1])
+    for i in range(len(all_results["community_id"]) - 1):
+        community_source = np.array(all_results["community_id"][i])
+        community_target = np.array(all_results["community_id"][i + 1])
         source_ids = set(community_source)
         target_ids = set(community_target)
         for source in source_ids:
@@ -404,11 +404,7 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
     fig = go.Figure(
         data=[
             go.Sankey(
-                node=dict(
-                    pad=1,
-                    thickness=1,
-                    line=dict(color="black", width=0.0),
-                ),
+                node=dict(pad=1, thickness=1, line=dict(color="black", width=0.0),),
                 link=dict(source=sources, target=targets, value=values),
             )
         ],
