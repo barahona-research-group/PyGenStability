@@ -243,7 +243,7 @@ def plot_ttprime(all_results, ax, time_axis):
     """Plot ttprime."""
     times = _get_times(all_results, time_axis)
 
-    ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr")
+    ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr_r")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
@@ -262,7 +262,7 @@ def plot_variation_information(all_results, ax, time_axis=True):
     ax.set_ylabel(r"Variation information", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
     ax.axis(
-        [times[0], times[-1], np.min(all_results["variation_information"]) * 0.9, 1.1]
+        [times[0], times[-1], 0.0, np.max(all_results["variation_information"]) * 1.1]
     )
 
 
@@ -270,7 +270,6 @@ def plot_stability(all_results, ax, time_axis=True):
     """Plot stability."""
     times = _get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
-
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
