@@ -1,14 +1,18 @@
 """quality matrix and null model constructor functions"""
 import sys
+import logging
 from functools import lru_cache, partial
 
 import numpy as np
 import scipy.sparse as sp
 
+L = logging.getLogger(__name__)
 _USE_CACHE = True
+THRESHOLD = 1e-12
+DTYPE = "float128"
 
 
-def load_constructor(graph, constructor, use_cache=_USE_CACHE):
+def load_constructor(graph, constructor, with_spectral_gap=True, use_cache=_USE_CACHE):
     """Load constructor."""
     if isinstance(constructor, str):
         try:
@@ -17,68 +21,99 @@ def load_constructor(graph, constructor, use_cache=_USE_CACHE):
             raise Exception("Could not load constructor %s" % constructor)
 
     if not use_cache:
+        if hasattr(constructor, "with_spectral_gap"):
+            return partial(constructor, graph, with_spectral_gap=with_spectral_gap)
         return partial(constructor, graph)
 
     @lru_cache()
     def cached_constructor(time):
+        if hasattr(constructor, "with_spectral_gap"):
+            return partial(constructor, graph, with_spectral_gap=with_spectral_gap)
         return constructor(graph, time)
 
     return cached_constructor
 
 
-def threshold_matrix(matrix, threshold=1e-6):
+def threshold_matrix(matrix, threshold=THRESHOLD):
     """Threshold a matrix to remove small numbers for Louvain speed up."""
-    mask = np.abs(matrix.data) < threshold * np.max(matrix)
-    matrix.data[mask] = 0
+    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0
     matrix.eliminate_zeros()
 
 
-def constructor_linearized(graph, time):
-    """constructor for continuous linearized"""
-    degrees = graph.sum(1).flatten()
+def apply_expm(matrix):
+    """Apply matrix exponential.
+
+    TODO: implement other variants
+    """
+    exp = sp.csr_matrix(sp.linalg.expm(matrix.toarray().astype(DTYPE)))
+    threshold_matrix(exp)
+    return exp
+
+
+def _check_tot_degree(degrees):
+    """Ensures the sum(degree) > 0."""
     if degrees.sum() < 1e-10:
         raise Exception("The total degree = 0, we cannot proceed further")
+
+
+def get_spectral_gap(laplacian):
+    """Compute spectral gap."""
+    spectral_gap = abs(sp.linalg.eigs(laplacian, which="SM", k=2)[0][1])
+    L.info("Spectral gap = 10^{:.1f}".format(np.log10(spectral_gap)))
+    return spectral_gap
+
+
+def constructor_linearized(graph, time):
+    """Constructor for continuous linearized Markov Stability."""
+    degrees = _check_tot_degree(graph.sum(1).flatten())
 
     pi = degrees / degrees.sum()
     null_model = np.array([pi, pi])
 
-    quality_matrix = time * graph / degrees.sum()
+    quality_matrix = time * (graph / degrees.sum()).astype(DTYPE)
 
     return quality_matrix, null_model, 1 - time
 
 
-def constructor_continuous_combinatorial(graph, time):
-    """constructor for continuous combinatorial"""
-    laplacian = sp.csgraph.laplacian(graph).tocsc()
-
+def constructor_continuous_combinatorial(graph, time, with_spectral_gap=True):
+    """Constructor for continuous combinatorial Markov Stability."""
+    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True, normed=False)
+    _check_tot_degree(degrees)
+    laplacian /= degrees.mean()
     pi = np.ones(graph.shape[0]) / graph.shape[0]
-    null_model = np.array([pi, pi])
+    null_model = np.array([pi, pi], dtype=DTYPE)
 
-    exp = sp.csr_matrix(sp.linalg.expm(-time * laplacian.toarray()))
-    threshold_matrix(exp)
+    if with_spectral_gap:
+        time /= get_spectral_gap(laplacian)
+
+    exp = apply_expm(-time * laplacian)
     quality_matrix = sp.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
 
-def constructor_continuous_normalized(graph, time):
-    """constructor for continuous normalized"""
-    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True)
-    normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian).tocsc()
+def constructor_continuous_normalized(graph, time, with_spectral_gap=True):
+    """Constructor for continuous normalized Markov Stability."""
+    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True, normed=False)
+    _check_tot_degree(degrees)
+    normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
     pi = degrees / degrees.sum()
-    null_model = np.array([pi, pi])
+    null_model = np.array([pi, pi], dtype=DTYPE)
 
-    exp = sp.csr_matrix(sp.linalg.expm(-time * normed_laplacian.toarray()))
-    threshold_matrix(exp)
+    if with_spectral_gap:
+        time /= get_spectral_gap(normed_laplacian)
+
+    exp = apply_expm(-time * normed_laplacian)
     quality_matrix = sp.diags(pi).dot(exp)
 
     return quality_matrix, null_model
 
 
 def constructor_signed_modularity(graph, time):
-    """constructor of signed mofularitye (Gomes, Jensen, Arenas, PRE 2009)
-    the time only multiplies the quality matrix (this many not mean anything, use with care!)"""
+    """Constructor of signed modularity (Gomes, Jensen, Arenas, PRE 2009)
+
+    The time only multiplies the quality matrix (this many not mean anything, use with care!)"""
     if np.min(graph) >= 0:
         return constructor_linearized(graph, time)
 
@@ -104,7 +139,9 @@ def constructor_signed_modularity(graph, time):
 
 
 def constructor_directed(graph, time, alpha=0.85):
+    """Constructor for directed Markov stability.
 
+    WIP"""
     dinv = np.asarray(np.divide(1, graph.sum(axis=1), where=graph.sum(axis=1) != 0))
     Dinv = np.diag(dinv.reshape(-1))
     ind_d = sp.csr_matrix([dinv == 0][0].reshape(-1) * 1)
@@ -115,11 +152,9 @@ def constructor_directed(graph, time, alpha=0.85):
         + ((1 - alpha) * ones + alpha * ind_d).T * ones / graph.shape[0]
     )
     M = sp.csr_matrix(M)
+    Q = sp.csc_matrix(M - sp.eye(M.shape[0]))
 
-    I = sp.eye(M.shape[0])
-    Q = sp.csc_matrix(M - I)
-
-    exp = sp.csr_matrix(sp.linalg.expm(time * Q))
+    exp = apply_expm(time * Q)
     pi = abs(sp.linalg.eigs(Q.transpose(), which="SM", k=1)[1][:, 0])
     pi /= pi.sum()
 

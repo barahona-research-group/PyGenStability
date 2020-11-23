@@ -1,4 +1,5 @@
-"""main functions"""
+"""PyGenStability module"""
+import logging
 import multiprocessing
 from collections import defaultdict
 
@@ -12,6 +13,8 @@ from math import log
 from . import generalized_louvain
 from .constructors import load_constructor
 from .io import save_results
+
+L = logging.getLogger(__name__)
 
 
 def _get_chunksize(n_comp, pool):
@@ -30,10 +33,10 @@ def _graph_checks(graph):
         )
 
     if sp.linalg.norm(graph - graph.T) > 0:
-        print("Warning, your graph is directed!")
+        L.warning("Your graph is directed!")
 
     if np.min(graph) < 0:
-        print("Warning, you have negative weights, consider using signed constructor.")
+        L.warning("You have negative weights, consider using signed constructor.")
 
     graph.eliminate_zeros()
     return graph
@@ -80,6 +83,7 @@ def run(
     n_louvain_VI=20,
     with_postprocessing=True,
     with_ttprime=True,
+    with_spectral_gap=True,
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
@@ -100,9 +104,10 @@ def run(
         n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
+        with_spectral_gap (bool): normalise time by spectral gap
         results_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
-        tqdm_disbale (bool): disable progress bars
+        tqdm_disable (bool): disable progress bars
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -113,10 +118,12 @@ def run(
         log_time=log_time,
         times=times,
     )
-    constructor = load_constructor(graph, constructor)
+    constructor = load_constructor(
+        graph, constructor, with_spectral_gap=with_spectral_gap
+    )
     pool = multiprocessing.Pool(n_workers)
 
-    print("Start loop over times...")
+    L.info("Start loop over times...")
     all_results = defaultdict(list)
     all_results["run_params"] = run_params
     for time in tqdm(times, disable=tqdm_disable):
@@ -139,11 +146,11 @@ def run(
         save_results(all_results, filename=result_file)
 
     if with_ttprime:
-        print("Start computing ttprimes...")
+        L.info("Start computing ttprimes...")
         compute_ttprime(all_results, pool)
 
     if with_postprocessing:
-        print("Apply postprocessing...")
+        L.info("Apply postprocessing...")
         apply_postprocessing(all_results, pool, constructor=constructor)
 
     save_results(all_results, filename=result_file)

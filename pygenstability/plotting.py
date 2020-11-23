@@ -270,6 +270,7 @@ def plot_stability(all_results, ax, time_axis=True):
     """Plot stability."""
     times = _get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
+    ax.set_ylim(0.8, 1.1)
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
