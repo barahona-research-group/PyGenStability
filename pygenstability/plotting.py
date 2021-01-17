@@ -13,15 +13,11 @@ from tqdm import tqdm
 L = logging.getLogger("pygenstability")
 
 
-def plot_scan(
-    all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True
-):
+def plot_scan(all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True):
     """Plot results of pygenstability with matplotlib or plotly"""
 
     if len(all_results["times"]) == 1:
-        L.info(
-            "Cannot plot the results if only one time point, we display the result instead:"
-        )
+        L.info("Cannot plot the results if only one time point, we display the result instead:")
         L.info(all_results)
         return
 
@@ -67,11 +63,11 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         vi_ticks = False
 
     text = [
-        "Stability: {0:.3f}, <br> Variation Information: {1:.3f}, <br> Index: {2}".format(
-            s, vi, i
-        )
+        "Stability: {0:.3f}, <br> Variation Information: {1:.3f}, <br> Index: {2}".format(s, vi, i)
         for s, vi, i in zip(
-            all_results["stability"], vi_data, np.arange(0, len(times)),
+            all_results["stability"],
+            vi_data,
+            np.arange(0, len(times)),
         )
     ]
 
@@ -105,7 +101,12 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y2",
         xaxis="x2",
         hoverinfo="skip",
-        colorbar=dict(title="ttprime VI", len=0.2, yanchor="middle", y=0.5,),
+        colorbar=dict(
+            title="ttprime VI",
+            len=0.2,
+            yanchor="middle",
+            y=0.5,
+        ),
         showscale=showscale,
     )
 
@@ -161,7 +162,9 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             tickfont=dict(color="red"),
             overlaying="y2",
         ),
-        xaxis=dict(range=[times[0], times[-1]],),
+        xaxis=dict(
+            range=[times[0], times[-1]],
+        ),
         xaxis2=dict(range=[times[0], times[-1]]),
     )
 
@@ -197,9 +200,7 @@ def plot_single_community(
     )
 
 
-def plot_communities(
-    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5
-):
+def plot_communities(graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5):
     """now plot the community structures at each time in a folder"""
 
     if not os.path.isdir(folder):
@@ -212,9 +213,7 @@ def plot_communities(
         plot_single_community(
             graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(
-            os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight"
-        )
+        plt.savefig(os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight")
         plt.close()
     matplotlib.use(mpl_backend)
 
@@ -232,9 +231,7 @@ def plot_number_comm(all_results, ax, time_axis=True):
     """Plot number of communities."""
     times = _get_times(all_results, time_axis)
 
-    ax.plot(
-        times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0
-    )
+    ax.plot(times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
     ax.set_ylabel("Number of clusters", color="C3")
     ax.tick_params("y", colors="C3")
 
@@ -253,17 +250,13 @@ def plot_ttprime(all_results, ax, time_axis):
 def plot_variation_information(all_results, ax, time_axis=True):
     """Plot variation information."""
     times = _get_times(all_results, time_axis=time_axis)
-    ax.plot(
-        times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI"
-    )
+    ax.plot(times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI")
 
     ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
     ax.set_ylabel(r"Variation information", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis(
-        [times[0], times[-1], 0.0, np.max(all_results["variation_information"]) * 1.1]
-    )
+    ax.axis([times[0], times[-1], 0.0, np.max(all_results["variation_information"]) * 1.1])
 
 
 def plot_stability(all_results, ax, time_axis=True):
@@ -376,9 +369,7 @@ def plot_clustered_adjacency(
     plt.savefig(figure_name, bbox_inches="tight")
 
 
-def plot_sankey(
-    all_results, live=False, filename="communities_sankey.svg", time_index=None
-):
+def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time_index=None):
     """Plot Sankey diagram of communities accros time.
 
     Args:
@@ -396,9 +387,7 @@ def plot_sankey(
     if not time_index:
         all_results["community_id_reduced"] = all_results["community_id"]
     else:
-        all_results["community_id_reduced"] = [
-            all_results["community_id"][i] for i in time_index
-        ]
+        all_results["community_id_reduced"] = [all_results["community_id"][i] for i in time_index]
 
     for i in range(len(all_results["community_id_reduced"]) - 1):
         community_source = np.array(all_results["community_id_reduced"][i])
@@ -418,7 +407,11 @@ def plot_sankey(
     fig = go.Figure(
         data=[
             go.Sankey(
-                node=dict(pad=1, thickness=1, line=dict(color="black", width=0.0),),
+                node=dict(
+                    pad=1,
+                    thickness=1,
+                    line=dict(color="black", width=0.0),
+                ),
                 link=dict(source=sources, target=targets, value=values),
             )
         ],

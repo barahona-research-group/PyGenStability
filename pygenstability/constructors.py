@@ -142,15 +142,12 @@ def constructor_signed_modularity(graph, time):
 def constructor_directed(graph, time, alpha=0.85):
     """Constructor for directed Markov stability."""
     out_degrees = graph.toarray().sum(axis=1).flatten()
-    dinv = np.divide(1, out_degrees, where = _d != 0)
+    dinv = np.divide(1, out_degrees, where=out_degrees != 0)
     N = graph.shape[0]
     ones = np.ones((N, N)) / N
-    M = (
-        alpha * np.diag(dinv).dot(graph.toarray()) + (
-            (1 - alpha) * np.diag(np.ones(N))
-            + np.diag(alpha * (dinv == 0.0))
-        ).dot(ones)
-    )
+    M = alpha * np.diag(dinv).dot(graph.toarray()) + (
+        (1 - alpha) * np.diag(np.ones(N)) + np.diag(alpha * (dinv == 0.0))
+    ).dot(ones)
     Q = sp.csr_matrix(M - np.eye(N))
 
     exp = apply_expm(time * Q)

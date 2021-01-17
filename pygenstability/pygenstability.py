@@ -10,9 +10,9 @@ from tqdm import tqdm
 import itertools
 from math import log
 
-from . import generalized_louvain
-from .constructors import load_constructor
-from .io import save_results
+from pygenstability import generalized_louvain
+from pygenstability.constructors import load_constructor
+from pygenstability.io import save_results
 
 L = logging.getLogger(__name__)
 
@@ -118,18 +118,14 @@ def run(
         log_time=log_time,
         times=times,
     )
-    constructor = load_constructor(
-        graph, constructor, with_spectral_gap=with_spectral_gap
-    )
+    constructor = load_constructor(graph, constructor, with_spectral_gap=with_spectral_gap)
     pool = multiprocessing.Pool(n_workers)
 
     L.info("Start loop over times...")
     all_results = defaultdict(list)
     all_results["run_params"] = run_params
     for time in tqdm(times, disable=tqdm_disable):
-        quality_matrix, null_model, global_shift = _get_constructor_data(
-            constructor, time
-        )
+        quality_matrix, null_model, global_shift = _get_constructor_data(constructor, time)
         louvain_results = run_several_louvains(
             quality_matrix, null_model, global_shift, n_louvain, pool
         )
@@ -197,7 +193,8 @@ class WorkerVI:
     def __call__(self, index_pair):
 
         MI = mutual_info_score(
-            self.top_partitions[index_pair[0]], self.top_partitions[index_pair[1]],
+            self.top_partitions[index_pair[0]],
+            self.top_partitions[index_pair[1]],
         )
         Ex = entropy(self.top_partitions[index_pair[0]])
         Ey = entropy(self.top_partitions[index_pair[1]])
@@ -275,18 +272,14 @@ def run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool)
 def compute_ttprime(all_results, pool):
     """compute ttprime from the stability results"""
     index_pairs = [
-        [i, j]
-        for i in range(len(all_results["times"]))
-        for j in range(len(all_results["times"]))
+        [i, j] for i in range(len(all_results["times"])) for j in range(len(all_results["times"]))
     ]
 
     worker = WorkerVI(all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
-    all_results["ttprime"] = np.zeros(
-        [len(all_results["times"]), len(all_results["times"])]
-    )
+    all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
 
@@ -301,29 +294,23 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         total=len(all_results["times"]),
         disable=tqdm_disable,
     ):
-        quality_matrix, null_model, global_shift = _get_constructor_data(
-            constructor, time
-        )
+        quality_matrix, null_model, global_shift = _get_constructor_data(constructor, time)
         worker = WorkerQuality(_to_indices(quality_matrix), null_model, global_shift)
         best_quality_id = np.argmax(
             list(
                 pool.map(
                     worker,
                     all_results_raw["community_id"],
-                    chunksize=_get_chunksize(
-                        len(all_results_raw["community_id"]), pool
-                    ),
+                    chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
                 )
             )
         )
 
-        all_results["community_id"][i] = all_results_raw["community_id"][
+        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
+        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
             best_quality_id
         ]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
-        all_results["number_of_communities"][i] = all_results_raw[
-            "number_of_communities"
-        ][best_quality_id]
 
 
 def joint_entropy(x, y):
