@@ -10,7 +10,7 @@ def simple_test():
     with open("sbm_graph.pkl", "rb") as pickle_file:
         graph = pickle.load(pickle_file)
 
-    all_results = run(graph)
+    all_results = run(graph, constructor='directed')
 
     plotting.plot_scan(all_results, use_plotly=True)
 

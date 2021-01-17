@@ -50,7 +50,7 @@ def apply_expm(matrix):
     return exp
 
 
-def _check_tot_degree(degrees):
+def _check_total_degree(degrees):
     """Ensures the sum(degree) > 0."""
     if degrees.sum() < 1e-10:
         raise Exception("The total degree = 0, we cannot proceed further")
@@ -65,7 +65,7 @@ def get_spectral_gap(laplacian):
 
 def constructor_linearized(graph, time):
     """Constructor for continuous linearized Markov Stability."""
-    degrees = _check_tot_degree(graph.sum(1).flatten())
+    degrees = _check_total_degree(graph.sum(1).flatten())
 
     pi = degrees / degrees.sum()
     null_model = np.array([pi, pi])
@@ -78,7 +78,7 @@ def constructor_linearized(graph, time):
 def constructor_continuous_combinatorial(graph, time, with_spectral_gap=True):
     """Constructor for continuous combinatorial Markov Stability."""
     laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True, normed=False)
-    _check_tot_degree(degrees)
+    _check_total_degree(degrees)
     laplacian /= degrees.mean()
     pi = np.ones(graph.shape[0]) / graph.shape[0]
     null_model = np.array([pi, pi], dtype=DTYPE)
@@ -95,7 +95,7 @@ def constructor_continuous_combinatorial(graph, time, with_spectral_gap=True):
 def constructor_continuous_normalized(graph, time, with_spectral_gap=True):
     """Constructor for continuous normalized Markov Stability."""
     laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True, normed=False)
-    _check_tot_degree(degrees)
+    _check_total_degree(degrees)
     normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
     pi = degrees / degrees.sum()
@@ -139,26 +139,23 @@ def constructor_signed_modularity(graph, time):
 
 
 def constructor_directed(graph, time, alpha=0.85):
-    """Constructor for directed Markov stability.
-
-    WIP"""
-    dinv = np.asarray(np.divide(1, graph.sum(axis=1), where=graph.sum(axis=1) != 0))
-    Dinv = np.diag(dinv.reshape(-1))
-    ind_d = sp.csr_matrix([dinv == 0][0].reshape(-1) * 1)
-
-    ones = sp.csr_matrix(np.ones(graph.shape[0]))
+    """Constructor for directed Markov stability."""
+    out_degrees = graph.toarray().sum(axis=1).flatten()
+    dinv = np.divide(1, out_degrees, where = _d != 0)
+    N = graph.shape[0]
+    ones = np.ones((N, N)) / N
     M = (
-        alpha * Dinv * graph
-        + ((1 - alpha) * ones + alpha * ind_d).T * ones / graph.shape[0]
+        alpha * np.diag(dinv).dot(graph.toarray()) + (
+            (1 - alpha) * np.diag(np.ones(N))
+            + np.diag(alpha * (dinv == 0.0))
+        ).dot(ones)
     )
-    M = sp.csr_matrix(M)
-    Q = sp.csc_matrix(M - sp.eye(M.shape[0]))
+    Q = sp.csr_matrix(M - np.eye(N))
 
     exp = apply_expm(time * Q)
     pi = abs(sp.linalg.eigs(Q.transpose(), which="SM", k=1)[1][:, 0])
     pi /= pi.sum()
 
-    threshold_matrix(exp)
     quality_matrix = sp.diags(pi).dot(exp)
     null_model = np.array([pi, pi])
 
