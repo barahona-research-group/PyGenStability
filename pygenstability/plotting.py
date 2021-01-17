@@ -417,7 +417,7 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg"):
 
     try:
         fig.write_image(filename)
-    except:
+    except Exception as e:  # pylint: disable=broad_except
         print("Plotly figure cannot be saved, please install the relevant packages.")
 
     if live:
