@@ -1,3 +1,3 @@
 """import main function"""
-from .io import load_results, save_results
-from .pygenstability import run
+from pygenstabiliy.io import load_results, save_results
+from pygenstability.pygenstability import run
