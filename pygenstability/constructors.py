@@ -65,7 +65,8 @@ def get_spectral_gap(laplacian):
 
 def constructor_linearized(graph, time):
     """Constructor for continuous linearized Markov Stability."""
-    degrees = _check_total_degree(graph.sum(1).flatten())
+    degrees = np.array(graph.sum(1)).flatten()
+    _check_total_degree(degrees)
 
     pi = degrees / degrees.sum()
     null_model = np.array([pi, pi])
