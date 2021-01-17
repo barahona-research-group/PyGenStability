@@ -3,15 +3,13 @@ from pybind11.setup_helpers import Pybind11Extension
 
 __version__ = "0.0.1"
 
-
 ext_modules = [
-    PyBind11Extension(
+    Pybind11Extension(
         "pygenstability.generalized_louvain",
         ["pygenstability/generalized_louvain/generalized_louvain.cpp"],
         include_dirs=["extra"],
     ),
 ]
-
 
 setup(
     name="pygenstability",
@@ -20,9 +18,8 @@ setup(
     author_email="alexis.arnaudon@epfl.ch",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
     description="Python binding of generalised Markov Stability",
-    long_description="",
     ext_modules=ext_modules,
-    setup_requires=["pybind11>=2.5.0"],
+    setup_requires=["pybind11>=2.6.0"],
     install_requires=[
         "numpy>=1.18.1",
         "scipy>=1.4.1",
