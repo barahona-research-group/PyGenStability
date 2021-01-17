@@ -1,7 +1,7 @@
 name: Run all tox python3
 
 on:
-   push:
+  push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
