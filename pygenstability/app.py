@@ -22,10 +22,16 @@ def cli():
     help="name of the quality constructor",
 )
 @click.option(
-    "--min-time", default=-2.0, show_default=True, help="minimum Markov time",
+    "--min-time",
+    default=-2.0,
+    show_default=True,
+    help="minimum Markov time",
 )
 @click.option(
-    "--max-time", default=0.5, show_default=True, help="maximum Markov time",
+    "--max-time",
+    default=0.5,
+    show_default=True,
+    help="maximum Markov time",
 )
 @click.option("--n-time", default=20, show_default=True, help="number of time steps")
 @click.option(
@@ -35,7 +41,10 @@ def cli():
     help="use linear or log scales for times",
 )
 @click.option(
-    "--n-louvain", default=100, show_default=True, help="number of Louvain evaluations",
+    "--n-louvain",
+    default=100,
+    show_default=True,
+    help="number of Louvain evaluations",
 )
 @click.option(
     "--MI/--no-MI",
@@ -73,9 +82,7 @@ def cli():
     show_default=True,
     help="number of workers for multiprocessing",
 )
-@click.option(
-    "--tqdm-disable", default=False, show_default=True, help="disable progress bars"
-)
+@click.option("--tqdm-disable", default=False, show_default=True, help="disable progress bars")
 def run(
     graph_file,
     constructor,
