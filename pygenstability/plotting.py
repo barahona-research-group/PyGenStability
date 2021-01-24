@@ -1,4 +1,4 @@
-"""plotting functions"""
+"""Plotting functions."""
 import logging
 import os
 
@@ -14,8 +14,7 @@ L = logging.getLogger("pygenstability")
 
 
 def plot_scan(all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True):
-    """Plot results of pygenstability with matplotlib or plotly"""
-
+    """Plot results of pygenstability with matplotlib or plotly."""
     if len(all_results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
         L.info(all_results)
@@ -36,7 +35,7 @@ def plot_scan(all_results, time_axis=True, figure_name="scan_results.png", use_p
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     all_results,
 ):
-    """Plot results of pygenstability with plotly"""
+    """Plot results of pygenstability with plotly."""
     from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
     import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
 
@@ -175,8 +174,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
 def plot_single_community(
     graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100
 ):
-    """Plot the community structures for a given time"""
-
+    """Plot the community structures for a given time."""
     pos = {u: graph.nodes[u]["pos"] for u in graph}
 
     node_color = all_results["community_id"][time_id]
@@ -201,8 +199,7 @@ def plot_single_community(
 
 
 def plot_communities(graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5):
-    """now plot the community structures at each time in a folder"""
-
+    """Plot the community structures at each time in a folder."""
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
@@ -376,6 +373,7 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time
         all_results (dict): results from run function
         live (bool): if True, interactive figure will appear in browser
         filename (str): filename to save the plot
+        time_index (bool): plot time of indices
     """
     import plotly.graph_objects as go
 

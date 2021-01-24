@@ -1,4 +1,4 @@
-"""quality matrix and null model constructor functions"""
+"""Quality matrix and null model constructor functions."""
 import logging
 import sys
 from functools import lru_cache, partial
@@ -112,9 +112,11 @@ def constructor_continuous_normalized(graph, time, with_spectral_gap=True):
 
 
 def constructor_signed_modularity(graph, time):
-    """Constructor of signed modularity (Gomes, Jensen, Arenas, PRE 2009)
+    """Constructor of signed modularity.
 
-    The time only multiplies the quality matrix (this many not mean anything, use with care!)"""
+    Based on (Gomes, Jensen, Arenas, PRE 2009).
+    The time only multiplies the quality matrix (this many not mean anything, use with care!).
+    """
     if np.min(graph) >= 0:
         return constructor_linearized(graph, time)
 

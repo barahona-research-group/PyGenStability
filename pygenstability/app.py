@@ -1,4 +1,4 @@
-"""click app"""
+"""Command line interface."""
 import pickle
 
 import click
@@ -10,7 +10,7 @@ from .io import load_results
 
 @click.group()
 def cli():
-    """App initialisation"""
+    """App initialisation."""
 
 
 @cli.command("run")
@@ -99,7 +99,7 @@ def run(
     n_workers,
     tqdm_disable,
 ):
-    """ Run pygenstability."""
+    """Run pygenstability."""
     from .pygenstability import run
 
     with open(graph_file, "rb") as pickle_file:
