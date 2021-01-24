@@ -1,14 +1,14 @@
 """PyGenStability module"""
+import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
+from math import log
 
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
 from tqdm import tqdm
-import itertools
-from math import log
 
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor

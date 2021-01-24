@@ -1,6 +1,6 @@
 """quality matrix and null model constructor functions"""
-import sys
 import logging
+import sys
 from functools import lru_cache, partial
 
 import numpy as np
@@ -17,8 +17,8 @@ def load_constructor(graph, constructor, with_spectral_gap=True, use_cache=_USE_
     if isinstance(constructor, str):
         try:
             constructor = getattr(sys.modules[__name__], "constructor_%s" % constructor)
-        except AttributeError:
-            raise Exception("Could not load constructor %s" % constructor)
+        except AttributeError as exc:
+            raise Exception("Could not load constructor %s" % constructor) from exc
 
     if not use_cache:
         if hasattr(constructor, "with_spectral_gap"):

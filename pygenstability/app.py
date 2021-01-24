@@ -47,16 +47,16 @@ def cli():
     help="number of Louvain evaluations",
 )
 @click.option(
-    "--MI/--no-MI",
+    "--VI/--no-VI",
     default=True,
     show_default=True,
-    help="compute the mutual information between Louvain runs",
+    help="compute the variation of information between Louvain runs",
 )
 @click.option(
-    "--n-louvain-MI",
+    "--n-louvain-VI",
     default=20,
     show_default=True,
-    help="number of randomly chosen Louvain run to estimate MI",
+    help="number of randomly chosen Louvain run to estimate the VI",
 )
 @click.option(
     "--postprocessing/--no-postprocessing",
@@ -91,8 +91,8 @@ def run(
     n_time,
     log_time,
     n_louvain,
-    mi,
-    n_louvain_mi,
+    vi,
+    n_louvain_vi,
     postprocessing,
     ttprime,
     result_file,
@@ -112,8 +112,8 @@ def run(
         n_time=n_time,
         log_time=log_time,
         n_louvain=n_louvain,
-        with_MI=mi,
-        n_louvain_MI=n_louvain_mi,
+        with_VI=vi,
+        n_louvain_VI=n_louvain_vi,
         with_postprocessing=postprocessing,
         with_ttprime=ttprime,
         result_file=result_file,

@@ -8,6 +8,7 @@ ext_modules = [
         "pygenstability.generalized_louvain",
         ["pygenstability/generalized_louvain/generalized_louvain.cpp"],
         include_dirs=["extra"],
+        extra_compile_args=["-std=c++11"],
     ),
 ]
 
@@ -17,7 +18,7 @@ setup(
     author="Alexis Arnaudon",
     author_email="alexis.arnaudon@epfl.ch",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
-    description="Python binding of generalised Markov Stability",
+    description="Python binding of generalised Louvain with Markov Stability",
     ext_modules=ext_modules,
     setup_requires=["pybind11>=2.6.0"],
     install_requires=[
@@ -31,7 +32,9 @@ setup(
         "click>=7.0",
         "tqdm>=4.45.0",
     ],
+    zip_safe=False,
     extras_require={"plotly": ["plotly>=3.6.0"]},
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
     packages=find_packages(),
+    include_package_data=True,
 )

@@ -1,0 +1,6 @@
+include extra/lemon/*
+include extra/lemon/bits/*
+include extra/lemon/concepts/*
+include generalizedLouvain/*
+include generalizedLouvain/CPP/*
+include generalizedLouvain/CPP/cliques/*

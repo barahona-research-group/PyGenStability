@@ -4,10 +4,10 @@ import os
 
 import matplotlib
 import matplotlib.gridspec as gridspec
-from matplotlib import patches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from matplotlib import patches
 from tqdm import tqdm
 
 L = logging.getLogger("pygenstability")
@@ -420,7 +420,7 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time
 
     try:
         fig.write_image(filename)
-    except Exception as e:  # pylint: disable=broad_except
+    except Exception:  # pylint: disable=broad-except
         print("Plotly figure cannot be saved, please install the relevant packages.")
 
     if live:
