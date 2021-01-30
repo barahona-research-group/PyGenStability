@@ -7,6 +7,16 @@ on:
   release:
     types: [created]
 
+env:
+  CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CIBW_BUILD_VERBOSITY: 2
+  # Only build on Python 3.x
+  CIBW_BUILD: 'cp3?-*'
+  CIBW_SKIP: 'cp35-* cp39-* *-manylinux_i686'
+  CIBW_BEFORE_TEST: pip install nose mock h5py numpy
+  CIBW_TEST_COMMAND: nosetests -s -v -P {project}/tests
+  
 jobs:
   deploy:
 
