@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constructors module &#8212; PyGenStability  documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Plotting module" href="plotting.html" />
+    <link rel="prev" title="PyGenStability module" href="pygenstability.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pygenstability.constructors">
+<span id="constructors-module"></span><h1>Constructors module<a class="headerlink" href="#module-pygenstability.constructors" title="Permalink to this headline">¶</a></h1>
+<p>Quality matrix and null model constructor functions.</p>
+<dl class="py function">
+<dt id="pygenstability.constructors.apply_expm">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">apply_expm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matrix</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#apply_expm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.apply_expm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply matrix exponential.</p>
+<p>TODO: implement other variants</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.constructor_continuous_combinatorial">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_continuous_combinatorial</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor for continuous combinatorial Markov Stability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.constructor_continuous_normalized">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_continuous_normalized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor for continuous normalized Markov Stability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.constructor_directed">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_directed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.85</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor for directed Markov stability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.constructor_linearized">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_linearized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor for continuous linearized Markov Stability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.constructor_signed_modularity">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_signed_modularity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor of signed modularity.</p>
+<p>Based on (Gomes, Jensen, Arenas, PRE 2009).
+The time only multiplies the quality matrix (this many not mean anything, use with care!).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.get_spectral_gap">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">get_spectral_gap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">laplacian</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#get_spectral_gap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.get_spectral_gap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute spectral gap.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.load_constructor">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">load_constructor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">constructor</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#load_constructor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.load_constructor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load constructor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.constructors.threshold_matrix">
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">threshold_matrix</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matrix</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">1e-12</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#threshold_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.threshold_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Threshold a matrix to remove small numbers for Louvain speed up.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyGenStability</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="app.html">The cli app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pygenstability.html">PyGenStability module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Constructors module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">I/O module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="pygenstability.html" title="previous chapter">PyGenStability module</a></li>
+      <li>Next: <a href="plotting.html" title="next chapter">Plotting module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Alexis Arnaudon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/constructors.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

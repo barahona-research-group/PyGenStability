@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyGenStability module &#8212; PyGenStability  documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The cli app" href="app.html" />
+    <link rel="prev" title="PyGenStability: Genrealized Louvain and Markov Stability" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pygenstability.pygenstability">
+<span id="pygenstability-module"></span><h1>PyGenStability module<a class="headerlink" href="#module-pygenstability.pygenstability" title="Permalink to this headline">¶</a></h1>
+<p>PyGenStability module.</p>
+<dl class="py function">
+<dt id="pygenstability.pygenstability.apply_postprocessing">
+<code class="sig-prename descclassname">pygenstability.pygenstability.</code><code class="sig-name descname">apply_postprocessing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">all_results</span></em>, <em class="sig-param"><span class="n">pool</span></em>, <em class="sig-param"><span class="n">constructor</span></em>, <em class="sig-param"><span class="n">tqdm_disable</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/pygenstability.html#apply_postprocessing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.pygenstability.apply_postprocessing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply postprocessing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.pygenstability.compute_ttprime">
+<code class="sig-prename descclassname">pygenstability.pygenstability.</code><code class="sig-name descname">compute_ttprime</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">all_results</span></em>, <em class="sig-param"><span class="n">pool</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/pygenstability.html#compute_ttprime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.pygenstability.compute_ttprime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute ttprime from the stability results.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.pygenstability.run">
+<code class="sig-prename descclassname">pygenstability.pygenstability.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">constructor</span><span class="o">=</span><span class="default_value">'linearized'</span></em>, <em class="sig-param"><span class="n">min_time</span><span class="o">=</span><span class="default_value">- 2.0</span></em>, <em class="sig-param"><span class="n">max_time</span><span class="o">=</span><span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">n_time</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">log_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">times</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_louvain</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">with_VI</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_louvain_VI</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">with_postprocessing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">with_ttprime</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">result_file</span><span class="o">=</span><span class="default_value">'results.pkl'</span></em>, <em class="sig-param"><span class="n">n_workers</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">tqdm_disable</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/pygenstability.html#run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.pygenstability.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main funtion to compute clustering at various time scales.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>scipy.csgraph</em>) – graph to cluster</p></li>
+<li><p><strong>constructor</strong> (<em>str/function</em>) – name of the quality constructor,
+or custom constructor function. It must have two arguments, graph and time.</p></li>
+<li><p><strong>min_time</strong> (<em>float</em>) – minimum Markov time</p></li>
+<li><p><strong>max_time</strong> (<em>float</em>) – maximum Markov time</p></li>
+<li><p><strong>n_time</strong> (<em>int</em>) – number of time steps</p></li>
+<li><p><strong>log_time</strong> (<em>bool</em>) – use linear or log scales for times</p></li>
+<li><p><strong>times</strong> (<em>array</em>) – cutom time vector, if provided, it will overrid the other time arguments</p></li>
+<li><p><strong>n_louvain</strong> (<em>int</em>) – number of Louvain evaluations</p></li>
+<li><p><strong>with_VI</strong> (<em>bool</em>) – compute the variation of information between Louvain runs</p></li>
+<li><p><strong>n_louvain_VI</strong> (<em>int</em>) – number of randomly chosen Louvain run to estimate VI</p></li>
+<li><p><strong>with_postprocessing</strong> (<em>bool</em>) – apply the final postprocessing step</p></li>
+<li><p><strong>with_ttprime</strong> (<em>bool</em>) – compute the ttprime matrix</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – normalise time by spectral gap</p></li>
+<li><p><strong>result_file</strong> (<em>str</em>) – path to the result file</p></li>
+<li><p><strong>n_workers</strong> (<em>int</em>) – number of workers for multiprocessing</p></li>
+<li><p><strong>tqdm_disable</strong> (<em>bool</em>) – disable progress bars</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pygenstability.pygenstability.run_several_louvains">
+<code class="sig-prename descclassname">pygenstability.pygenstability.</code><code class="sig-name descname">run_several_louvains</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quality_matrix</span></em>, <em class="sig-param"><span class="n">null_model</span></em>, <em class="sig-param"><span class="n">global_shift</span></em>, <em class="sig-param"><span class="n">n_runs</span></em>, <em class="sig-param"><span class="n">pool</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/pygenstability.html#run_several_louvains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.pygenstability.run_several_louvains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run several louvain on the current quality matrix.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyGenStability</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PyGenStability module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="app.html">The cli app</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter"><em>PyGenStability</em>: Genrealized Louvain and Markov Stability</a></li>
+      <li>Next: <a href="app.html" title="next chapter">The cli app</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Alexis Arnaudon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/pygenstability.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

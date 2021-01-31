@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pygenstability.constructors &#8212; PyGenStability  documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pygenstability.constructors</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Quality matrix and null model constructor functions.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span><span class="p">,</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
+
+<span class="n">L</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">_USE_CACHE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">THRESHOLD</span> <span class="o">=</span> <span class="mf">1e-12</span>
+<span class="n">DTYPE</span> <span class="o">=</span> <span class="s2">&quot;float128&quot;</span>
+
+
+<div class="viewcode-block" id="load_constructor"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.load_constructor">[docs]</a><span class="k">def</span> <span class="nf">load_constructor</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">constructor</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="n">_USE_CACHE</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load constructor.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">constructor</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="vm">__name__</span><span class="p">],</span> <span class="s2">&quot;constructor_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">constructor</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Could not load constructor </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">constructor</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">use_cache</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="s2">&quot;with_spectral_gap&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="n">with_spectral_gap</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span>
+
+    <span class="nd">@lru_cache</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">cached_constructor</span><span class="p">(</span><span class="n">time</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="s2">&quot;with_spectral_gap&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="n">with_spectral_gap</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cached_constructor</span></div>
+
+
+<div class="viewcode-block" id="threshold_matrix"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.threshold_matrix">[docs]</a><span class="k">def</span> <span class="nf">threshold_matrix</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">THRESHOLD</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Threshold a matrix to remove small numbers for Louvain speed up.&quot;&quot;&quot;</span>
+    <span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">matrix</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">matrix</span><span class="o">.</span><span class="n">eliminate_zeros</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="apply_expm"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.apply_expm">[docs]</a><span class="k">def</span> <span class="nf">apply_expm</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply matrix exponential.</span>
+
+<span class="sd">    TODO: implement other variants</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">expm</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">DTYPE</span><span class="p">)))</span>
+    <span class="n">threshold_matrix</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">exp</span></div>
+
+
+<span class="k">def</span> <span class="nf">_check_total_degree</span><span class="p">(</span><span class="n">degrees</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensures the sum(degree) &gt; 0.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">degrees</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The total degree = 0, we cannot proceed further&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_spectral_gap"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.get_spectral_gap">[docs]</a><span class="k">def</span> <span class="nf">get_spectral_gap</span><span class="p">(</span><span class="n">laplacian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute spectral gap.&quot;&quot;&quot;</span>
+    <span class="n">spectral_gap</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigs</span><span class="p">(</span><span class="n">laplacian</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;SM&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">L</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Spectral gap = 10^</span><span class="si">{:.1f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">spectral_gap</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">spectral_gap</span></div>
+
+
+<div class="viewcode-block" id="constructor_linearized"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.constructor_linearized">[docs]</a><span class="k">def</span> <span class="nf">constructor_linearized</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constructor for continuous linearized Markov Stability.&quot;&quot;&quot;</span>
+    <span class="n">degrees</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">_check_total_degree</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span>
+
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">degrees</span> <span class="o">/</span> <span class="n">degrees</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">null_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">pi</span><span class="p">,</span> <span class="n">pi</span><span class="p">])</span>
+
+    <span class="n">quality_matrix</span> <span class="o">=</span> <span class="n">time</span> <span class="o">*</span> <span class="p">(</span><span class="n">graph</span> <span class="o">/</span> <span class="n">degrees</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">DTYPE</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">time</span></div>
+
+
+<div class="viewcode-block" id="constructor_continuous_combinatorial"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.constructor_continuous_combinatorial">[docs]</a><span class="k">def</span> <span class="nf">constructor_continuous_combinatorial</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constructor for continuous combinatorial Markov Stability.&quot;&quot;&quot;</span>
+    <span class="n">laplacian</span><span class="p">,</span> <span class="n">degrees</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csgraph</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">return_diag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_check_total_degree</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span>
+    <span class="n">laplacian</span> <span class="o">/=</span> <span class="n">degrees</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">graph</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">null_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">pi</span><span class="p">,</span> <span class="n">pi</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTYPE</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">with_spectral_gap</span><span class="p">:</span>
+        <span class="n">time</span> <span class="o">/=</span> <span class="n">get_spectral_gap</span><span class="p">(</span><span class="n">laplacian</span><span class="p">)</span>
+
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">apply_expm</span><span class="p">(</span><span class="o">-</span><span class="n">time</span> <span class="o">*</span> <span class="n">laplacian</span><span class="p">)</span>
+    <span class="n">quality_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span></div>
+
+
+<div class="viewcode-block" id="constructor_continuous_normalized"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.constructor_continuous_normalized">[docs]</a><span class="k">def</span> <span class="nf">constructor_continuous_normalized</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constructor for continuous normalized Markov Stability.&quot;&quot;&quot;</span>
+    <span class="n">laplacian</span><span class="p">,</span> <span class="n">degrees</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csgraph</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">return_diag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_check_total_degree</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span>
+    <span class="n">normed_laplacian</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">degrees</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">laplacian</span><span class="p">)</span>
+
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">degrees</span> <span class="o">/</span> <span class="n">degrees</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">null_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">pi</span><span class="p">,</span> <span class="n">pi</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTYPE</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">with_spectral_gap</span><span class="p">:</span>
+        <span class="n">time</span> <span class="o">/=</span> <span class="n">get_spectral_gap</span><span class="p">(</span><span class="n">normed_laplacian</span><span class="p">)</span>
+
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">apply_expm</span><span class="p">(</span><span class="o">-</span><span class="n">time</span> <span class="o">*</span> <span class="n">normed_laplacian</span><span class="p">)</span>
+    <span class="n">quality_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span></div>
+
+
+<div class="viewcode-block" id="constructor_signed_modularity"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.constructor_signed_modularity">[docs]</a><span class="k">def</span> <span class="nf">constructor_signed_modularity</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constructor of signed modularity.</span>
+
+<span class="sd">    Based on (Gomes, Jensen, Arenas, PRE 2009).</span>
+<span class="sd">    The time only multiplies the quality matrix (this many not mean anything, use with care!).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">constructor_linearized</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+
+    <span class="n">adj_pos</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">adj_pos</span><span class="p">[</span><span class="n">graph</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">adj_neg</span> <span class="o">=</span> <span class="o">-</span><span class="n">graph</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">adj_neg</span><span class="p">[</span><span class="n">graph</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">deg_plus</span> <span class="o">=</span> <span class="n">adj_pos</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">deg_neg</span> <span class="o">=</span> <span class="n">adj_neg</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="n">deg_norm</span> <span class="o">=</span> <span class="n">deg_plus</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">deg_neg</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">null_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">deg_plus</span> <span class="o">/</span> <span class="n">deg_norm</span><span class="p">,</span>
+            <span class="n">deg_plus</span> <span class="o">/</span> <span class="n">deg_plus</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+            <span class="o">-</span><span class="n">deg_neg</span> <span class="o">/</span> <span class="n">deg_neg</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+            <span class="n">deg_neg</span> <span class="o">/</span> <span class="n">deg_norm</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">quality_matrix</span> <span class="o">=</span> <span class="n">time</span> <span class="o">*</span> <span class="n">graph</span> <span class="o">/</span> <span class="n">deg_norm</span>
+    <span class="k">return</span> <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span></div>
+
+
+<div class="viewcode-block" id="constructor_directed"><a class="viewcode-back" href="../../constructors.html#pygenstability.constructors.constructor_directed">[docs]</a><span class="k">def</span> <span class="nf">constructor_directed</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.85</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Constructor for directed Markov stability.&quot;&quot;&quot;</span>
+    <span class="n">out_degrees</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">dinv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_degrees</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">out_degrees</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ones</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span> <span class="o">/</span> <span class="n">N</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">dinv</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">toarray</span><span class="p">())</span> <span class="o">+</span> <span class="p">(</span>
+        <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">dinv</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">))</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ones</span><span class="p">)</span>
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">M</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">apply_expm</span><span class="p">(</span><span class="n">time</span> <span class="o">*</span> <span class="n">Q</span><span class="p">)</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigs</span><span class="p">(</span><span class="n">Q</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;SM&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">pi</span> <span class="o">/=</span> <span class="n">pi</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="n">quality_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span>
+    <span class="n">null_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">pi</span><span class="p">,</span> <span class="n">pi</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">PyGenStability</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../app.html">The cli app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pygenstability.html">PyGenStability module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../constructors.html">Constructors module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../io.html">I/O module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Alexis Arnaudon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The cli app &#8212; PyGenStability  documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="PyGenStability module" href="pygenstability.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pygenstability.app">
+<span id="the-cli-app"></span><h1>The cli app<a class="headerlink" href="#module-pygenstability.app" title="Permalink to this headline">¶</a></h1>
+<p>Command line interface.</p>
+<div class="section" id="cli">
+<h2>cli<a class="headerlink" href="#cli" title="Permalink to this headline">¶</a></h2>
+<p>App initialisation.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cli <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<div class="section" id="cli-plot-communities">
+<h3>plot_communities<a class="headerlink" href="#cli-plot-communities" title="Permalink to this headline">¶</a></h3>
+<p>Plot communities on networkx graph.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cli plot_communities <span class="o">[</span>OPTIONS<span class="o">]</span> GRAPH_FILE RESULTS_FILE
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt id="cmdoption-cli-plot_communities-arg-GRAPH_FILE">
+<span id="cmdoption-cli-plot-communities-arg-graph-file"></span><code class="sig-name descname">GRAPH_FILE</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-plot_communities-arg-GRAPH_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-plot_communities-arg-RESULTS_FILE">
+<span id="cmdoption-cli-plot-communities-arg-results-file"></span><code class="sig-name descname">RESULTS_FILE</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-plot_communities-arg-RESULTS_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</div>
+<div class="section" id="cli-plot-scan">
+<h3>plot_scan<a class="headerlink" href="#cli-plot-scan" title="Permalink to this headline">¶</a></h3>
+<p>Plot results in scan plot.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cli plot_scan <span class="o">[</span>OPTIONS<span class="o">]</span> RESULTS_FILE
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt id="cmdoption-cli-plot_scan-arg-RESULTS_FILE">
+<span id="cmdoption-cli-plot-scan-arg-results-file"></span><code class="sig-name descname">RESULTS_FILE</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-plot_scan-arg-RESULTS_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</div>
+<div class="section" id="cli-run">
+<h3>run<a class="headerlink" href="#cli-run" title="Permalink to this headline">¶</a></h3>
+<p>Run pygenstability.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cli run <span class="o">[</span>OPTIONS<span class="o">]</span> GRAPH_FILE
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-cli-run-constructor">
+<code class="sig-name descname">--constructor</code><code class="sig-prename descclassname"> &lt;constructor&gt;</code><a class="headerlink" href="#cmdoption-cli-run-constructor" title="Permalink to this definition">¶</a></dt>
+<dd><p>name of the quality constructor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>linearized</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-min-time">
+<code class="sig-name descname">--min-time</code><code class="sig-prename descclassname"> &lt;min_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-min-time" title="Permalink to this definition">¶</a></dt>
+<dd><p>minimum Markov time</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>-2.0</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-max-time">
+<code class="sig-name descname">--max-time</code><code class="sig-prename descclassname"> &lt;max_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-max-time" title="Permalink to this definition">¶</a></dt>
+<dd><p>maximum Markov time</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>0.5</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-n-time">
+<code class="sig-name descname">--n-time</code><code class="sig-prename descclassname"> &lt;n_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-time" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of time steps</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>20</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-log-time">
+<code class="sig-name descname">--log-time</code><code class="sig-prename descclassname"> &lt;log_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-log-time" title="Permalink to this definition">¶</a></dt>
+<dd><p>use linear or log scales for times</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-n-louvain">
+<code class="sig-name descname">--n-louvain</code><code class="sig-prename descclassname"> &lt;n_louvain&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-louvain" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of Louvain evaluations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>100</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-VI">
+<span id="cmdoption-cli-run-vi"></span><span id="cmdoption-cli-run-no-VI"></span><span id="cmdoption-cli-run-no-vi"></span><code class="sig-name descname">--VI</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-VI</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-VI" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute the variation of information between Louvain runs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-n-louvain-VI">
+<span id="cmdoption-cli-run-n-louvain-vi"></span><code class="sig-name descname">--n-louvain-VI</code><code class="sig-prename descclassname"> &lt;n_louvain_vi&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-louvain-VI" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of randomly chosen Louvain run to estimate the VI</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>20</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-postprocessing">
+<span id="cmdoption-cli-run-no-postprocessing"></span><code class="sig-name descname">--postprocessing</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-postprocessing</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-postprocessing" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply the final postprocessing step</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-ttprime">
+<span id="cmdoption-cli-run-no-ttprime"></span><code class="sig-name descname">--ttprime</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-ttprime</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-ttprime" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute the ttprime matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-result-file">
+<code class="sig-name descname">--result-file</code><code class="sig-prename descclassname"> &lt;result_file&gt;</code><a class="headerlink" href="#cmdoption-cli-run-result-file" title="Permalink to this definition">¶</a></dt>
+<dd><p>path to the result file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>results.pkl</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-n-workers">
+<code class="sig-name descname">--n-workers</code><code class="sig-prename descclassname"> &lt;n_workers&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-workers" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of workers for multiprocessing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>4</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-tqdm-disable">
+<code class="sig-name descname">--tqdm-disable</code><code class="sig-prename descclassname"> &lt;tqdm_disable&gt;</code><a class="headerlink" href="#cmdoption-cli-run-tqdm-disable" title="Permalink to this definition">¶</a></dt>
+<dd><p>disable progress bars</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>False</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt id="cmdoption-cli-run-arg-GRAPH_FILE">
+<span id="cmdoption-cli-run-arg-graph-file"></span><code class="sig-name descname">GRAPH_FILE</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-arg-GRAPH_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyGenStability</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="pygenstability.html">PyGenStability module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The cli app</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cli">cli</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cli-plot-communities">plot_communities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-plot-scan">plot_scan</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-run">run</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="pygenstability.html" title="previous chapter">PyGenStability module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Alexis Arnaudon.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/app.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
