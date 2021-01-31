@@ -23,6 +23,11 @@ To use plotly for interacting plos in browser, install this package with
 pip install .[plotly]
 ```
 
+Documentation
+-------------
+
+Documentation is here: https://barahona-research-group.github.io/PyGenStability/
+
 Example
 -------
 
