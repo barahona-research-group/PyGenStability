@@ -31,6 +31,7 @@ setup(
         "pyyaml>=5.3",
         "click>=7.0",
         "tqdm>=4.45.0",
+        "pybind11>=2.6.2",
     ],
     zip_safe=False,
     extras_require={"plotly": ["plotly>=3.6.0"]},

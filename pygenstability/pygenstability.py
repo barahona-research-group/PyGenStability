@@ -206,8 +206,8 @@ def _to_indices(matrix):
 def _evaluate_louvain(_, quality_indices, quality_values, null_model, global_shift):
     """Worker for Louvain runs."""
     stability, community_id = generalized_louvain.run_louvain(
-        quality_indices,
-        quality_indices,
+        quality_indices[0],
+        quality_indices[1],
         quality_values,
         len(quality_values),
         null_model,
