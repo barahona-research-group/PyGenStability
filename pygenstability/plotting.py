@@ -36,7 +36,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     all_results,
 ):
     """Plot results of pygenstability with plotly."""
-    from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
+    # from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
     import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
 
     if all_results["run_params"]["log_time"]:
