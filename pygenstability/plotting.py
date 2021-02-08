@@ -180,8 +180,6 @@ def _plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,
         ),
         xaxis=dict(range=[times[0], times[-1]]),
         xaxis2=dict(range=[times[0], times[-1]]),
-        height=600,
-        width=800,
     )
 
     fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
