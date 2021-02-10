@@ -36,7 +36,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     all_results,
 ):
     """Plot results of pygenstability with plotly."""
-    # from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
+    from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
     import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
 
     if all_results["run_params"]["log_time"]:
@@ -70,6 +70,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         )
     ]
 
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
     ncom = go.Scatter(
         x=times,
         y=all_results["number_of_communities"],
@@ -131,42 +132,18 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         opacity=vi_opacity,
     )
 
-    opt_criterion = go.Scatter(
-        x=times,
-        y=all_results["optimal_scale_criterion"],
-        mode="lines+markers",
-        hovertemplate=hovertemplate,
-        text=text,
-        name="Optimal Scale Criterion",
-        yaxis="y5",
-        xaxis="x3",
-        marker_color="orange",
-    )
-
-    opt_scale = go.Scatter(
-        x=times[all_results["selected_partitions"]],
-        y=np.zeros(len(all_results["selected_partitions"])),
-        mode="markers",
-        hovertemplate=hovertemplate,
-        text=text,
-        name="Optimal Scale",
-        yaxis="y5",
-        xaxis="x3",
-        marker_color="black",
-    )
-
     layout = go.Layout(
         yaxis=dict(
             title="Stability",
             titlefont=dict(color="blue"),
             tickfont=dict(color="blue"),
-            domain=[0.26, 0.49],
+            domain=[0, 0.28],
         ),
         yaxis2=dict(
             title=tprime_title,
             titlefont=dict(color="black"),
             tickfont=dict(color="black"),
-            domain=[0.51, 1],
+            domain=[0.32, 1],
             side="right",
             range=[times[0], times[-1]],
         ),
@@ -184,21 +161,13 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             tickfont=dict(color="red"),
             overlaying="y2",
         ),
-        yaxis5=dict(
-            title="Optimal Scale Criterion",
-            titlefont=dict(color="orange"),
-            tickfont=dict(color="orange"),
-            domain=[0, 0.24],
-        ),
         xaxis=dict(
             range=[times[0], times[-1]],
         ),
         xaxis2=dict(range=[times[0], times[-1]]),
-        height=600,
-        width=800,
     )
 
-    fig = go.Figure(data=[stab, ncom, vi, ttprime, opt_criterion, opt_scale], layout=layout)
+    fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
     fig.show()
 
 
