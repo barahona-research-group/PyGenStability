@@ -1,5 +1,5 @@
 # PyGenStability
-Python wrapper of the generalised Louvain code of Micheal Schaub at https://github.com/michaelschaub/generalizedLouvain with python code to run various versions of Markov Stability. 
+Python wrapper of the generalised Louvain code of Michael Schaub at https://github.com/michaelschaub/generalizedLouvain with python code to run various versions of Markov Stability. 
 
 Installation
 -------------
