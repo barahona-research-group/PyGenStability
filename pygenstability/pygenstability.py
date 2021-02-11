@@ -25,7 +25,7 @@ def _get_chunksize(n_comp, pool):
 
 def _graph_checks(graph, dtype=_DTYPE):
     """Do some checks and preprocessing of the graph."""
-    graph = sp.csr_matrix(graph, dtype=_DTYPE)
+    graph = sp.csr_matrix(graph, dtype=dtype)
     if sp.csgraph.connected_components(graph)[0] > 1:
         raise Exception(
             "Graph not connected, with {} components".format(
@@ -50,17 +50,6 @@ def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None
     if log_time:
         return np.logspace(min_time, max_time, n_time)
     return np.linspace(min_time, max_time, n_time)
-
-
-def _get_constructor_data(constructor, time):
-    """Extract data from constructor."""
-    data = constructor(time)
-    quality_matrix, null_model = data[0], data[1]
-    if len(data) == 3:
-        global_shift = data[2]
-    else:
-        global_shift = None
-    return quality_matrix, null_model, global_shift
 
 
 def _get_params(all_locals):
@@ -277,7 +266,7 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         total=len(all_results["times"]),
         disable=tqdm_disable,
     ):
-        quality_matrix, null_model, global_shift = _get_constructor_data(constructor, time)
+        quality_matrix, null_model, global_shift = constructor.get_data(time)
         worker = partial(
             _evaluate_quality,
             qualities_index=_to_indices(quality_matrix),
@@ -299,4 +288,3 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
             best_quality_id
         ]
-

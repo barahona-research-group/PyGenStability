@@ -55,7 +55,7 @@ def get_spectral_gap(laplacian):
 class Constructor:
     """Parent constructor class."""
 
-    def __init__(self, graph, with_spectral_gap=False, kwargs={}):
+    def __init__(self, graph, with_spectral_gap=False, **kwargs):
         """Initialise constructor."""
         self.graph = graph
         self.with_spectral_gap = with_spectral_gap
@@ -71,7 +71,7 @@ class Constructor:
         """Prepare the constructor with non-time dependent computations."""
 
     def get_data(self, time):
-        """Return quality and null model at given time."""
+        """Return quality and null model at given time as well as global shift (or None)."""
 
 
 class constructor_linearized(Constructor):
@@ -117,7 +117,7 @@ class constructor_continuous_combinatorial(Constructor):
             time /= self.spectral_gap
         exp = apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return quality_matrix, self.partial_null_model
+        return quality_matrix, self.partial_null_model, None
 
 
 class constructor_continuous_normalized(Constructor):
@@ -175,10 +175,10 @@ class constructor_signed_modularity(Constructor):
 
     def get_data(self, time):
         """Return quality and null model at given time."""
-        return time * self.partial_quality_matrix, self.partial_null_model
+        return time * self.partial_quality_matrix, self.partial_null_model, None
 
 
-def constructor_directed(Constructor):
+class constructor_directed(Constructor):
     """Constructor for directed Markov stability."""
 
     def prepare(self, **kwargs):
@@ -204,4 +204,4 @@ def constructor_directed(Constructor):
         """Return quality and null model at given time."""
         exp = apply_expm(time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model).dot(exp)
-        return quality_matrix, self.partial_null_model
+        return quality_matrix, self.partial_null_model, None
