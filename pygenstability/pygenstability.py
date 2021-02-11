@@ -31,6 +31,10 @@ def _graph_checks(graph):
             )
         )
 
+    if np.dtype(graph)=='int64':
+        L.warning("Converting your graph dtype from int64 to float64!")        
+        graph = graph.astype(np.float64)
+
     if sp.linalg.norm(graph - graph.T) > 0:
         L.warning("Your graph is directed!")
 
