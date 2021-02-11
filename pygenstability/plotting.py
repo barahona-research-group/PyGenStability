@@ -13,7 +13,7 @@ from tqdm import tqdm
 L = logging.getLogger("pygenstability")
 
 
-def plot_scan(all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True):
+def plot_scan(all_results, time_axis=True, figure_name="scan_results.pdf", use_plotly=True):
     """Plot results of pygenstability with matplotlib or plotly."""
     if len(all_results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
@@ -36,7 +36,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     all_results,
 ):
     """Plot results of pygenstability with plotly."""
-    from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
+    # from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
     import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
 
     if all_results["run_params"]["log_time"]:
@@ -70,7 +70,6 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         )
     ]
 
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
     ncom = go.Scatter(
         x=times,
         y=all_results["number_of_communities"],
@@ -132,18 +131,42 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         opacity=vi_opacity,
     )
 
+    opt_criterion = go.Scatter(
+        x=times,
+        y=all_results["optimal_scale_criterion"],
+        mode="lines+markers",
+        hovertemplate=hovertemplate,
+        text=text,
+        name="Optimal Scale Criterion",
+        yaxis="y5",
+        xaxis="x3",
+        marker_color="orange",
+    )
+
+    opt_scale = go.Scatter(
+        x=times[all_results["selected_partitions"]],
+        y=np.zeros(len(all_results["selected_partitions"])),
+        mode="markers",
+        hovertemplate=hovertemplate,
+        text=text,
+        name="Optimal Scale",
+        yaxis="y5",
+        xaxis="x3",
+        marker_color="black",
+    )
+
     layout = go.Layout(
         yaxis=dict(
             title="Stability",
             titlefont=dict(color="blue"),
             tickfont=dict(color="blue"),
-            domain=[0, 0.28],
+            domain=[0.26, 0.49],
         ),
         yaxis2=dict(
             title=tprime_title,
             titlefont=dict(color="black"),
             tickfont=dict(color="black"),
-            domain=[0.32, 1],
+            domain=[0.51, 1],
             side="right",
             range=[times[0], times[-1]],
         ),
@@ -161,13 +184,21 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             tickfont=dict(color="red"),
             overlaying="y2",
         ),
+        yaxis5=dict(
+            title="Optimal Scale Criterion",
+            titlefont=dict(color="orange"),
+            tickfont=dict(color="orange"),
+            domain=[0, 0.24],
+        ),
         xaxis=dict(
             range=[times[0], times[-1]],
         ),
         xaxis2=dict(range=[times[0], times[-1]]),
+        height=600,
+        width=800,
     )
 
-    fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
+    fig = go.Figure(data=[stab, ncom, vi, ttprime, opt_criterion, opt_scale], layout=layout)
     fig.show()
 
 
@@ -198,7 +229,9 @@ def plot_single_community(
     )
 
 
-def plot_communities(graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5):
+def plot_communities(
+    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
+):
     """Plot the community structures at each time in a folder."""
     if not os.path.isdir(folder):
         os.mkdir(folder)
@@ -210,7 +243,7 @@ def plot_communities(graph, all_results, folder="communities", edge_color="0.5",
         plot_single_community(
             graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight")
+        plt.savefig(os.path.join(folder, "time_" + str(time_id) + ext), bbox_inches="tight")
         plt.close()
     matplotlib.use(mpl_backend)
 
@@ -260,7 +293,6 @@ def plot_stability(all_results, ax, time_axis=True):
     """Plot stability."""
     times = _get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
-    ax.set_ylim(0.8, 1.1)
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
@@ -305,7 +337,7 @@ def plot_clustered_adjacency(
     labels=None,
     figsize=(12, 10),
     cmap="Blues",
-    figure_name="clustered_adjacency.png",
+    figure_name="clustered_adjacency.pdf",
 ):
     """Plot the clustered adjacency matrix of the graph at a given time.
 

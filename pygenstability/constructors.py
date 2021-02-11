@@ -1,7 +1,6 @@
 """Quality matrix and null model constructor functions."""
 import logging
 import sys
-from functools import lru_cache, partial
 
 import numpy as np
 import scipy.sparse as sp
@@ -12,26 +11,16 @@ THRESHOLD = 1e-12
 DTYPE = "float128"
 
 
-def load_constructor(graph, constructor, with_spectral_gap=True, use_cache=_USE_CACHE):
-    """Load constructor."""
+def load_constructor(constructor):
+    """Load a constructor from its name, or as a custom Constructor class."""
     if isinstance(constructor, str):
         try:
-            constructor = getattr(sys.modules[__name__], "constructor_%s" % constructor)
+            return getattr(sys.modules[__name__], "constructor_%s" % constructor)
         except AttributeError as exc:
             raise Exception("Could not load constructor %s" % constructor) from exc
-
-    if not use_cache:
-        if hasattr(constructor, "with_spectral_gap"):
-            return partial(constructor, graph, with_spectral_gap=with_spectral_gap)
-        return partial(constructor, graph)
-
-    @lru_cache()
-    def cached_constructor(time):
-        if hasattr(constructor, "with_spectral_gap"):
-            return partial(constructor, graph, with_spectral_gap=with_spectral_gap)
-        return constructor(graph, time)
-
-    return cached_constructor
+    if not isinstance(constructor, Constructor):
+        raise Exception("Only Constructor class object can be used.")
+    return constructor
 
 
 def threshold_matrix(matrix, threshold=THRESHOLD):
@@ -63,100 +52,156 @@ def get_spectral_gap(laplacian):
     return spectral_gap
 
 
-def constructor_linearized(graph, time):
+class Constructor:
+    """Parent constructor class."""
+
+    def __init__(self, graph, with_spectral_gap=False, **kwargs):
+        """Initialise constructor."""
+        self.graph = graph
+        self.with_spectral_gap = with_spectral_gap
+        self.spectral_gap = None
+
+        # these two variable can be used in prepare method
+        self.partial_quality_matrix = None
+        self.partial_null_model = None
+
+        self.prepare(**kwargs)
+
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-time dependent computations."""
+
+    def get_data(self, time):
+        """Return quality and null model at given time as well as global shift (or None)."""
+
+
+class constructor_linearized(Constructor):
     """Constructor for continuous linearized Markov Stability."""
-    degrees = np.array(graph.sum(1)).flatten()
-    _check_total_degree(degrees)
 
-    pi = degrees / degrees.sum()
-    null_model = np.array([pi, pi])
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-time dependent computations."""
+        degrees = np.array(self.graph.sum(1)).flatten()
+        _check_total_degree(degrees)
 
-    quality_matrix = time * (graph / degrees.sum()).astype(DTYPE)
+        pi = degrees / degrees.sum()
+        self.partial_null_model = np.array([pi, pi])
 
-    return quality_matrix, null_model, 1 - time
+        if self.with_spectral_gap:
+            laplacian = sp.csgraph.laplacian(self.graph, normed=False)
+            self.spectral_gap = get_spectral_gap(laplacian)
+        self.partial_quality_matrix = (self.graph / degrees.sum()).astype(DTYPE)
+
+    def get_data(self, time):
+        """Return quality and null model at given time."""
+        if self.with_spectral_gap:
+            time /= self.spectral_gap
+        return time * self.partial_quality_matrix, self.partial_null_model, 1 - time
 
 
-def constructor_continuous_combinatorial(graph, time, with_spectral_gap=True):
+class constructor_continuous_combinatorial(Constructor):
     """Constructor for continuous combinatorial Markov Stability."""
-    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True, normed=False)
-    _check_total_degree(degrees)
-    laplacian /= degrees.mean()
-    pi = np.ones(graph.shape[0]) / graph.shape[0]
-    null_model = np.array([pi, pi], dtype=DTYPE)
 
-    if with_spectral_gap:
-        time /= get_spectral_gap(laplacian)
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-time dependent computations."""
+        laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
+        _check_total_degree(degrees)
+        laplacian /= degrees.mean()
+        pi = np.ones(self.graph.shape[0]) / self.graph.shape[0]
+        self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
+        if self.with_spectral_gap:
+            self.spectral_gap = get_spectral_gap(laplacian)
+        self.partial_quality_matrix = laplacian
 
-    exp = apply_expm(-time * laplacian)
-    quality_matrix = sp.diags(pi).dot(exp)
+    def get_data(self, time):
+        """Return quality and null model at given time."""
+        if self.with_spectral_gap:
+            time /= self.spectral_gap
+        exp = apply_expm(-time * self.partial_quality_matrix)
+        quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
+        return quality_matrix, self.partial_null_model, None
 
-    return quality_matrix, null_model
 
-
-def constructor_continuous_normalized(graph, time, with_spectral_gap=True):
+class constructor_continuous_normalized(Constructor):
     """Constructor for continuous normalized Markov Stability."""
-    laplacian, degrees = sp.csgraph.laplacian(graph, return_diag=True, normed=False)
-    _check_total_degree(degrees)
-    normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
-    pi = degrees / degrees.sum()
-    null_model = np.array([pi, pi], dtype=DTYPE)
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-time dependent computations."""
+        laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
+        _check_total_degree(degrees)
+        normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
-    if with_spectral_gap:
-        time /= get_spectral_gap(normed_laplacian)
+        pi = degrees / degrees.sum()
+        self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
 
-    exp = apply_expm(-time * normed_laplacian)
-    quality_matrix = sp.diags(pi).dot(exp)
+        if self.with_spectral_gap:
+            self.spectral_gap = get_spectral_gap(normed_laplacian)
+        self.partial_quality_matrix = normed_laplacian
 
-    return quality_matrix, null_model
+    def get_data(self, time):
+        """Return quality and null model at given time."""
+        if self.with_spectral_gap:
+            time /= self.spectral_gap
+        exp = apply_expm(-time * self.partial_quality_matrix)
+        quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
+        return quality_matrix, self.partial_null_model, None
 
 
-def constructor_signed_modularity(graph, time):
+class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
     Based on (Gomes, Jensen, Arenas, PRE 2009).
     The time only multiplies the quality matrix (this many not mean anything, use with care!).
     """
-    if np.min(graph) >= 0:
-        return constructor_linearized(graph, time)
 
-    adj_pos = graph.copy()
-    adj_pos[graph < 0] = 0.0
-    adj_neg = -graph.copy()
-    adj_neg[graph > 0] = 0.0
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-time dependent computations."""
+        adj_pos = self.graph.copy()
+        adj_pos[self.graph < 0] = 0.0
+        adj_neg = -self.graph.copy()
+        adj_neg[self.graph > 0] = 0.0
 
-    deg_plus = adj_pos.sum(1).flatten()
-    deg_neg = adj_neg.sum(1).flatten()
+        deg_plus = adj_pos.sum(1).flatten()
+        deg_neg = adj_neg.sum(1).flatten()
 
-    deg_norm = deg_plus.sum() + deg_neg.sum()
-    null_model = np.array(
-        [
-            deg_plus / deg_norm,
-            deg_plus / deg_plus.sum(),
-            -deg_neg / deg_neg.sum(),
-            deg_neg / deg_norm,
-        ]
-    )
-    quality_matrix = time * graph / deg_norm
-    return quality_matrix, null_model
+        deg_norm = deg_plus.sum() + deg_neg.sum()
+        self.partial_null_model = np.array(
+            [
+                deg_plus / deg_norm,
+                deg_plus / deg_plus.sum(),
+                -deg_neg / deg_neg.sum(),
+                deg_neg / deg_norm,
+            ]
+        )
+        self.partial_quality_matrix = self.graph / deg_norm
+
+    def get_data(self, time):
+        """Return quality and null model at given time."""
+        return time * self.partial_quality_matrix, self.partial_null_model, None
 
 
-def constructor_directed(graph, time, alpha=0.85):
+class constructor_directed(Constructor):
     """Constructor for directed Markov stability."""
-    out_degrees = graph.toarray().sum(axis=1).flatten()
-    dinv = np.divide(1, out_degrees, where=out_degrees != 0)
-    N = graph.shape[0]
-    ones = np.ones((N, N)) / N
-    M = alpha * np.diag(dinv).dot(graph.toarray()) + (
-        (1 - alpha) * np.diag(np.ones(N)) + np.diag(alpha * (dinv == 0.0))
-    ).dot(ones)
-    Q = sp.csr_matrix(M - np.eye(N))
 
-    exp = apply_expm(time * Q)
-    pi = abs(sp.linalg.eigs(Q.transpose(), which="SM", k=1)[1][:, 0])
-    pi /= pi.sum()
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-time dependent computations."""
+        alpha = kwargs["alpha"]
+        n_nodes = self.graph.shape[0]
+        ones = np.ones((n_nodes, n_nodes)) / n_nodes
 
-    quality_matrix = sp.diags(pi).dot(exp)
-    null_model = np.array([pi, pi])
+        out_degrees = self.graph.toarray().sum(axis=1).flatten()
+        dinv = np.divide(1, out_degrees, where=out_degrees != 0)
 
-    return quality_matrix, null_model
+        self.partial_quality_matrix = sp.csr_matrix(
+            alpha * np.diag(dinv).dot(self.graph.toarray())
+            + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(ones)
+            - np.eye(n_nodes)
+        )
+
+        pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
+        pi /= pi.sum()
+        self.partial_null_model = np.array([pi, pi])
+
+    def get_data(self, time):
+        """Return quality and null model at given time."""
+        exp = apply_expm(time * self.partial_quality_matrix)
+        quality_matrix = sp.diags(self.partial_null_model).dot(exp)
+        return quality_matrix, self.partial_null_model, None

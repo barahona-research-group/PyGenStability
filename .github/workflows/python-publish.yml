@@ -2,7 +2,6 @@ name: Publish sdist and wheels macos-manylinux
 
 on:
   release:
-  push:
     types: [created]
     
 env:
@@ -12,8 +11,8 @@ env:
   # Only build on Python 3.x
   CIBW_BUILD: 'cp3?-*'
   CIBW_SKIP: 'cp35-* cp39-* *-manylinux_i686'
-  CIBW_BEFORE_TEST: pip install nose mock h5py numpy
-  CIBW_TEST_COMMAND: nosetests -s -v -P {project}/tests
+  CIBW_BEFORE_TEST: pip install pybind11
+  CIBW_TEST_COMMAND: pytest {package}/tests
 
 jobs:
   build_wheels:
@@ -93,6 +92,6 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
-          user: __token__
+          user: ${{ secrets.PYPI_USERNAME }}
           password: ${{ secrets.PYPI_PASSWORD }}
           packages_dir: dist/

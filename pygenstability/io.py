@@ -1,4 +1,4 @@
-"""I/I functions."""
+"""I/O functions."""
 import pickle
 
 

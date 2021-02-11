@@ -1,8 +1,8 @@
 """PyGenStability module."""
 import logging
 import multiprocessing
-from functools import partial
 from collections import defaultdict
+from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
@@ -15,6 +15,7 @@ from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 
 L = logging.getLogger(__name__)
+_DTYPE = np.float64
 
 
 def _get_chunksize(n_comp, pool):
@@ -22,8 +23,9 @@ def _get_chunksize(n_comp, pool):
     return max(1, int(n_comp / pool._processes))  # pylint: disable=protected-access
 
 
-def _graph_checks(graph):
+def _graph_checks(graph, dtype=_DTYPE):
     """Do some checks and preprocessing of the graph."""
+    graph = sp.csr_matrix(graph, dtype=dtype)
     if sp.csgraph.connected_components(graph)[0] > 1:
         raise Exception(
             "Graph not connected, with {} components".format(
@@ -50,17 +52,6 @@ def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None
     return np.linspace(min_time, max_time, n_time)
 
 
-def _get_constructor_data(constructor, time):
-    """Extract data from constructor."""
-    data = constructor(time)
-    quality_matrix, null_model = data[0], data[1]
-    if len(data) == 3:
-        global_shift = data[2]
-    else:
-        global_shift = None
-    return quality_matrix, null_model, global_shift
-
-
 def _get_params(all_locals):
     """Get run paramters from the local variables."""
     del all_locals["graph"]
@@ -82,7 +73,7 @@ def run(
     n_louvain_VI=20,
     with_postprocessing=True,
     with_ttprime=True,
-    with_spectral_gap=True,
+    with_spectral_gap=False,
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
@@ -97,7 +88,7 @@ def run(
         max_time (float): maximum Markov time
         n_time (int): number of time steps
         log_time (bool): use linear or log scales for times
-        times (array): cutom time vector, if provided, it will overrid the other time arguments
+        times (array): custom time vector, if provided, it will override the other time arguments
         n_louvain (int): number of Louvain evaluations
         with_VI (bool): compute the variation of information between Louvain runs
         n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
@@ -117,14 +108,14 @@ def run(
         log_time=log_time,
         times=times,
     )
-    constructor = load_constructor(graph, constructor, with_spectral_gap=with_spectral_gap)
+    constructor = load_constructor(constructor)(graph, with_spectral_gap=with_spectral_gap)
     pool = multiprocessing.Pool(n_workers)
 
     L.info("Start loop over times...")
     all_results = defaultdict(list)
     all_results["run_params"] = run_params
     for time in tqdm(times, disable=tqdm_disable):
-        quality_matrix, null_model, global_shift = _get_constructor_data(constructor, time)
+        quality_matrix, null_model, global_shift = constructor.get_data(time)
         louvain_results = run_several_louvains(
             quality_matrix, null_model, global_shift, n_louvain, pool
         )
@@ -275,7 +266,7 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         total=len(all_results["times"]),
         disable=tqdm_disable,
     ):
-        quality_matrix, null_model, global_shift = _get_constructor_data(constructor, time)
+        quality_matrix, null_model, global_shift = constructor.get_data(time)
         worker = partial(
             _evaluate_quality,
             qualities_index=_to_indices(quality_matrix),
