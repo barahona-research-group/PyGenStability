@@ -67,6 +67,7 @@ jobs:
           python-version: 3.6
       - name: Build a source tarball
         run:
+          pip install pybind11
           python setup.py sdist
       - name: Store sdist as artifact
         uses: actions/upload-artifact@v2
