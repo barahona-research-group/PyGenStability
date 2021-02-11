@@ -142,7 +142,7 @@ class constructor_continuous_normalized(Constructor):
             time /= self.spectral_gap
         exp = apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return quality_matrix, self.partial_null_model
+        return quality_matrix, self.partial_null_model, None
 
 
 class constructor_signed_modularity(Constructor):

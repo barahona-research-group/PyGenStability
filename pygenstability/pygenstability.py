@@ -1,8 +1,8 @@
 """PyGenStability module."""
 import logging
 import multiprocessing
-from functools import partial
 from collections import defaultdict
+from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
@@ -88,7 +88,7 @@ def run(
         max_time (float): maximum Markov time
         n_time (int): number of time steps
         log_time (bool): use linear or log scales for times
-        times (array): cutom time vector, if provided, it will overrid the other time arguments
+        times (array): custom time vector, if provided, it will override the other time arguments
         n_louvain (int): number of Louvain evaluations
         with_VI (bool): compute the variation of information between Louvain runs
         n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI

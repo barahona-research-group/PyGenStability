@@ -13,7 +13,7 @@ from tqdm import tqdm
 L = logging.getLogger("pygenstability")
 
 
-def plot_scan(all_results, time_axis=True, figure_name="scan_results.png", use_plotly=True):
+def plot_scan(all_results, time_axis=True, figure_name="scan_results.pdf", use_plotly=True):
     """Plot results of pygenstability with matplotlib or plotly."""
     if len(all_results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
@@ -229,7 +229,9 @@ def plot_single_community(
     )
 
 
-def plot_communities(graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5):
+def plot_communities(
+    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
+):
     """Plot the community structures at each time in a folder."""
     if not os.path.isdir(folder):
         os.mkdir(folder)
@@ -241,7 +243,7 @@ def plot_communities(graph, all_results, folder="communities", edge_color="0.5",
         plot_single_community(
             graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(os.path.join(folder, "time_" + str(time_id) + ".png"), bbox_inches="tight")
+        plt.savefig(os.path.join(folder, "time_" + str(time_id) + ext), bbox_inches="tight")
         plt.close()
     matplotlib.use(mpl_backend)
 
@@ -291,7 +293,6 @@ def plot_stability(all_results, ax, time_axis=True):
     """Plot stability."""
     times = _get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
-    ax.set_ylim(0.8, 1.1)
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
@@ -336,7 +337,7 @@ def plot_clustered_adjacency(
     labels=None,
     figsize=(12, 10),
     cmap="Blues",
-    figure_name="clustered_adjacency.png",
+    figure_name="clustered_adjacency.pdf",
 ):
     """Plot the clustered adjacency matrix of the graph at a given time.
 
