@@ -17,7 +17,7 @@ def load_constructor(constructor, graph, **kwargs):
         if graph is None:
             raise Exception(f"No graph was provided with a generic constructor {constructor}")
         try:
-            return getattr(sys.modules[__name__], "constructor_%s" % constructor(graph, **kwargs))
+            return getattr(sys.modules[__name__], "constructor_%s" % constructor)(graph, **kwargs)
         except AttributeError as exc:
             raise Exception("Could not load constructor %s" % constructor) from exc
     if not isinstance(constructor, Constructor):

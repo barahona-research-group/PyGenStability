@@ -377,7 +377,7 @@ def plot_clustered_adjacency(
     plt.savefig(figure_name, bbox_inches="tight")
 
 
-def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time_index=None):
+def plot_sankey(all_results, live=False, filename="communities_sankey.html", time_index=None):
     """Plot Sankey diagram of communities accros time.
 
     Args:
