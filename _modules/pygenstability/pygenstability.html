@@ -34,8 +34,8 @@
 <span></span><span class="sd">&quot;&quot;&quot;PyGenStability module.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
@@ -48,6 +48,7 @@
 <span class="kn">from</span> <span class="nn">pygenstability.io</span> <span class="kn">import</span> <span class="n">save_results</span>
 
 <span class="n">L</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">_DTYPE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span>
 
 
 <span class="k">def</span> <span class="nf">_get_chunksize</span><span class="p">(</span><span class="n">n_comp</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
@@ -55,8 +56,9 @@
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_comp</span> <span class="o">/</span> <span class="n">pool</span><span class="o">.</span><span class="n">_processes</span><span class="p">))</span>  <span class="c1"># pylint: disable=protected-access</span>
 
 
-<span class="k">def</span> <span class="nf">_graph_checks</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_graph_checks</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_DTYPE</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Do some checks and preprocessing of the graph.&quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">csgraph</span><span class="o">.</span><span class="n">connected_components</span><span class="p">(</span><span class="n">graph</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
             <span class="s2">&quot;Graph not connected, with </span><span class="si">{}</span><span class="s2"> components&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -83,17 +85,6 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">min_time</span><span class="p">,</span> <span class="n">max_time</span><span class="p">,</span> <span class="n">n_time</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_get_constructor_data</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Extract data from constructor.&quot;&quot;&quot;</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">constructor</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
-    <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="n">global_shift</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">global_shift</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span>
-
-
 <span class="k">def</span> <span class="nf">_get_params</span><span class="p">(</span><span class="n">all_locals</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get run paramters from the local variables.&quot;&quot;&quot;</span>
     <span class="k">del</span> <span class="n">all_locals</span><span class="p">[</span><span class="s2">&quot;graph&quot;</span><span class="p">]</span>
@@ -103,7 +94,7 @@
 
 
 <div class="viewcode-block" id="run"><a class="viewcode-back" href="../../pygenstability.html#pygenstability.pygenstability.run">[docs]</a><span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
-    <span class="n">graph</span><span class="p">,</span>
+    <span class="n">graph</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">constructor</span><span class="o">=</span><span class="s2">&quot;linearized&quot;</span><span class="p">,</span>
     <span class="n">min_time</span><span class="o">=-</span><span class="mf">2.0</span><span class="p">,</span>
     <span class="n">max_time</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
@@ -115,22 +106,22 @@
     <span class="n">n_louvain_VI</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
     <span class="n">with_postprocessing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">with_ttprime</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">with_spectral_gap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">with_spectral_gap</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">result_file</span><span class="o">=</span><span class="s2">&quot;results.pkl&quot;</span><span class="p">,</span>
     <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">tqdm_disable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Main funtion to compute clustering at various time scales.</span>
+    <span class="sd">&quot;&quot;&quot;Main function to compute clustering at various time scales.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        graph (scipy.csgraph): graph to cluster</span>
+<span class="sd">        graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str</span>
 <span class="sd">        constructor (str/function): name of the quality constructor,</span>
 <span class="sd">            or custom constructor function. It must have two arguments, graph and time.</span>
 <span class="sd">        min_time (float): minimum Markov time</span>
 <span class="sd">        max_time (float): maximum Markov time</span>
 <span class="sd">        n_time (int): number of time steps</span>
 <span class="sd">        log_time (bool): use linear or log scales for times</span>
-<span class="sd">        times (array): cutom time vector, if provided, it will overrid the other time arguments</span>
+<span class="sd">        times (array): custom time vector, if provided, it will override the other time arguments</span>
 <span class="sd">        n_louvain (int): number of Louvain evaluations</span>
 <span class="sd">        with_VI (bool): compute the variation of information between Louvain runs</span>
 <span class="sd">        n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI</span>
@@ -150,15 +141,15 @@
         <span class="n">log_time</span><span class="o">=</span><span class="n">log_time</span><span class="p">,</span>
         <span class="n">times</span><span class="o">=</span><span class="n">times</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">constructor</span> <span class="o">=</span> <span class="n">load_constructor</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">constructor</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="n">with_spectral_gap</span><span class="p">)</span>
+    <span class="n">constructor</span> <span class="o">=</span> <span class="n">load_constructor</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">with_spectral_gap</span><span class="o">=</span><span class="n">with_spectral_gap</span><span class="p">)</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">n_workers</span><span class="p">)</span>
 
     <span class="n">L</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Start loop over times...&quot;</span><span class="p">)</span>
     <span class="n">all_results</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;run_params&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_params</span>
     <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="n">tqdm_disable</span><span class="p">):</span>
-        <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span> <span class="o">=</span> <span class="n">_get_constructor_data</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
-        <span class="n">louvain_results</span> <span class="o">=</span> <span class="n">run_several_louvains</span><span class="p">(</span>
+        <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span> <span class="o">=</span> <span class="n">constructor</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="n">louvain_results</span> <span class="o">=</span> <span class="n">_run_several_louvains</span><span class="p">(</span>
             <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span><span class="p">,</span> <span class="n">n_louvain</span><span class="p">,</span> <span class="n">pool</span>
         <span class="p">)</span>
         <span class="n">communities</span> <span class="o">=</span> <span class="n">_process_louvain_run</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">louvain_results</span><span class="p">,</span> <span class="n">all_results</span><span class="p">)</span>
@@ -239,8 +230,8 @@
 <span class="k">def</span> <span class="nf">_evaluate_louvain</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">quality_indices</span><span class="p">,</span> <span class="n">quality_values</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Worker for Louvain runs.&quot;&quot;&quot;</span>
     <span class="n">stability</span><span class="p">,</span> <span class="n">community_id</span> <span class="o">=</span> <span class="n">generalized_louvain</span><span class="o">.</span><span class="n">run_louvain</span><span class="p">(</span>
-        <span class="n">quality_indices</span><span class="p">,</span>
-        <span class="n">quality_indices</span><span class="p">,</span>
+        <span class="n">quality_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">quality_indices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
         <span class="n">quality_values</span><span class="p">,</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">quality_values</span><span class="p">),</span>
         <span class="n">null_model</span><span class="p">,</span>
@@ -269,7 +260,7 @@
     <span class="k">return</span> <span class="n">quality</span>
 
 
-<div class="viewcode-block" id="run_several_louvains"><a class="viewcode-back" href="../../pygenstability.html#pygenstability.pygenstability.run_several_louvains">[docs]</a><span class="k">def</span> <span class="nf">run_several_louvains</span><span class="p">(</span><span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span><span class="p">,</span> <span class="n">n_runs</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_run_several_louvains</span><span class="p">(</span><span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span><span class="p">,</span> <span class="n">n_runs</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Run several louvain on the current quality matrix.&quot;&quot;&quot;</span>
     <span class="n">quality_indices</span><span class="p">,</span> <span class="n">quality_values</span> <span class="o">=</span> <span class="n">_to_indices</span><span class="p">(</span><span class="n">quality_matrix</span><span class="p">)</span>
     <span class="n">worker</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
@@ -281,7 +272,7 @@
     <span class="p">)</span>
 
     <span class="n">chunksize</span> <span class="o">=</span> <span class="n">_get_chunksize</span><span class="p">(</span><span class="n">n_runs</span><span class="p">,</span> <span class="n">pool</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">),</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">),</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="compute_ttprime"><a class="viewcode-back" href="../../pygenstability.html#pygenstability.pygenstability.compute_ttprime">[docs]</a><span class="k">def</span> <span class="nf">compute_ttprime</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
@@ -308,7 +299,7 @@
         <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;times&quot;</span><span class="p">]),</span>
         <span class="n">disable</span><span class="o">=</span><span class="n">tqdm_disable</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span> <span class="o">=</span> <span class="n">_get_constructor_data</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="n">quality_matrix</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span> <span class="o">=</span> <span class="n">constructor</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
         <span class="n">worker</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
             <span class="n">_evaluate_quality</span><span class="p">,</span>
             <span class="n">qualities_index</span><span class="o">=</span><span class="n">_to_indices</span><span class="p">(</span><span class="n">quality_matrix</span><span class="p">),</span>

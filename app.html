@@ -14,7 +14,8 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="PyGenStability module" href="pygenstability.html" />
+    <link rel="next" title="PyGenStability module" href="pygenstability.html" />
+    <link rel="prev" title="PyGenStability: Generalized Louvain and Markov Stability" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -43,6 +44,7 @@
 <div class="section" id="cli-plot-communities">
 <h3>plot_communities<a class="headerlink" href="#cli-plot-communities" title="Permalink to this headline">¶</a></h3>
 <p>Plot communities on networkx graph.</p>
+<p>Argument graph_file has to be a .gpickle compatible with network.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cli plot_communities <span class="o">[</span>OPTIONS<span class="o">]</span> GRAPH_FILE RESULTS_FILE
 </pre></div>
 </div>
@@ -77,6 +79,11 @@
 <div class="section" id="cli-run">
 <h3>run<a class="headerlink" href="#cli-run" title="Permalink to this headline">¶</a></h3>
 <p>Run pygenstability.</p>
+<p>graph_file: path to either a .pkl with adjacency matrix in sparse format,
+or a text file with three columns encoding node indices and edge weight.
+The columns need a header, or the first line will be dropped.
+Notice that doubled edges with opposite orientations are needed for symetric graph.</p>
+<p>See <a class="reference external" href="https://barahona-research-group.github.io/PyGenStability/">https://barahona-research-group.github.io/PyGenStability/</a> for more information.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cli run <span class="o">[</span>OPTIONS<span class="o">]</span> GRAPH_FILE
 </pre></div>
 </div>
@@ -84,7 +91,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-constructor">
 <code class="sig-name descname">--constructor</code><code class="sig-prename descclassname"> &lt;constructor&gt;</code><a class="headerlink" href="#cmdoption-cli-run-constructor" title="Permalink to this definition">¶</a></dt>
-<dd><p>name of the quality constructor</p>
+<dd><p>Name of the quality constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>linearized</p>
@@ -95,7 +102,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-min-time">
 <code class="sig-name descname">--min-time</code><code class="sig-prename descclassname"> &lt;min_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-min-time" title="Permalink to this definition">¶</a></dt>
-<dd><p>minimum Markov time</p>
+<dd><p>Minimum Markov time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>-2.0</p>
@@ -106,7 +113,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-max-time">
 <code class="sig-name descname">--max-time</code><code class="sig-prename descclassname"> &lt;max_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-max-time" title="Permalink to this definition">¶</a></dt>
-<dd><p>maximum Markov time</p>
+<dd><p>Maximum Markov time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>0.5</p>
@@ -117,7 +124,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-n-time">
 <code class="sig-name descname">--n-time</code><code class="sig-prename descclassname"> &lt;n_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-time" title="Permalink to this definition">¶</a></dt>
-<dd><p>number of time steps</p>
+<dd><p>Number of time steps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>20</p>
@@ -128,7 +135,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-log-time">
 <code class="sig-name descname">--log-time</code><code class="sig-prename descclassname"> &lt;log_time&gt;</code><a class="headerlink" href="#cmdoption-cli-run-log-time" title="Permalink to this definition">¶</a></dt>
-<dd><p>use linear or log scales for times</p>
+<dd><p>Use linear or log scales for times.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>True</p>
@@ -139,7 +146,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-n-louvain">
 <code class="sig-name descname">--n-louvain</code><code class="sig-prename descclassname"> &lt;n_louvain&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-louvain" title="Permalink to this definition">¶</a></dt>
-<dd><p>number of Louvain evaluations</p>
+<dd><p>Number of Louvain evaluations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>100</p>
@@ -150,7 +157,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-VI">
 <span id="cmdoption-cli-run-vi"></span><span id="cmdoption-cli-run-no-VI"></span><span id="cmdoption-cli-run-no-vi"></span><code class="sig-name descname">--VI</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-VI</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-VI" title="Permalink to this definition">¶</a></dt>
-<dd><p>compute the variation of information between Louvain runs</p>
+<dd><p>Compute the variation of information between Louvain runs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>True</p>
@@ -161,7 +168,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-n-louvain-VI">
 <span id="cmdoption-cli-run-n-louvain-vi"></span><code class="sig-name descname">--n-louvain-VI</code><code class="sig-prename descclassname"> &lt;n_louvain_vi&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-louvain-VI" title="Permalink to this definition">¶</a></dt>
-<dd><p>number of randomly chosen Louvain run to estimate the VI</p>
+<dd><p>Number of randomly chosen Louvain run to estimate the VI.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>20</p>
@@ -172,7 +179,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-postprocessing">
 <span id="cmdoption-cli-run-no-postprocessing"></span><code class="sig-name descname">--postprocessing</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-postprocessing</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-postprocessing" title="Permalink to this definition">¶</a></dt>
-<dd><p>apply the final postprocessing step</p>
+<dd><p>Apply the final postprocessing step.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>True</p>
@@ -183,7 +190,18 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-ttprime">
 <span id="cmdoption-cli-run-no-ttprime"></span><code class="sig-name descname">--ttprime</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-ttprime</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-ttprime" title="Permalink to this definition">¶</a></dt>
-<dd><p>compute the ttprime matrix</p>
+<dd><p>Compute the ttprime matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-cli-run-spectral-gap">
+<span id="cmdoption-cli-run-no-spectral-gap"></span><code class="sig-name descname">--spectral-gap</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-spectral-gap</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-cli-run-spectral-gap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize time by spectral gap.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>True</p>
@@ -194,7 +212,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-result-file">
 <code class="sig-name descname">--result-file</code><code class="sig-prename descclassname"> &lt;result_file&gt;</code><a class="headerlink" href="#cmdoption-cli-run-result-file" title="Permalink to this definition">¶</a></dt>
-<dd><p>path to the result file</p>
+<dd><p>Path to the result file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>results.pkl</p>
@@ -205,7 +223,7 @@
 <dl class="std option">
 <dt id="cmdoption-cli-run-n-workers">
 <code class="sig-name descname">--n-workers</code><code class="sig-prename descclassname"> &lt;n_workers&gt;</code><a class="headerlink" href="#cmdoption-cli-run-n-workers" title="Permalink to this definition">¶</a></dt>
-<dd><p>number of workers for multiprocessing</p>
+<dd><p>Number of workers for multiprocessing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Default</dt>
 <dd class="field-odd"><p>4</p>
@@ -253,7 +271,6 @@
 
 <h3>Navigation</h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="pygenstability.html">PyGenStability module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The cli app</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#cli">cli</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#cli-plot-communities">plot_communities</a></li>
@@ -263,13 +280,18 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="pygenstability.html">PyGenStability module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="constructors.html">Constructors module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">I/O module</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="pygenstability.html" title="previous chapter">PyGenStability module</a></li>
+      <li>Previous: <a href="index.html" title="previous chapter"><em>PyGenStability</em>: Generalized Louvain and Markov Stability</a></li>
+      <li>Next: <a href="pygenstability.html" title="next chapter">PyGenStability module</a></li>
   </ul></li>
 </ul>
 </div>

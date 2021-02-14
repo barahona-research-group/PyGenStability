@@ -105,13 +105,20 @@
         <li><a href="app.html#cmdoption-cli-run-n-workers">cli-run command line option</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     --no-postprocessing
 
       <ul>
         <li><a href="app.html#cmdoption-cli-run-postprocessing">cli-run command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    --no-spectral-gap
+
+      <ul>
+        <li><a href="app.html#cmdoption-cli-run-spectral-gap">cli-run command line option</a>
 </li>
       </ul></li>
       <li>
@@ -140,6 +147,13 @@
 
       <ul>
         <li><a href="app.html#cmdoption-cli-run-result-file">cli-run command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --spectral-gap
+
+      <ul>
+        <li><a href="app.html#cmdoption-cli-run-spectral-gap">cli-run command line option</a>
 </li>
       </ul></li>
       <li>
@@ -219,6 +233,8 @@
 </li>
         <li><a href="app.html#cmdoption-cli-run-postprocessing">--no-postprocessing</a>
 </li>
+        <li><a href="app.html#cmdoption-cli-run-spectral-gap">--no-spectral-gap</a>
+</li>
         <li><a href="app.html#cmdoption-cli-run-ttprime">--no-ttprime</a>
 </li>
         <li><a href="app.html#cmdoption-cli-run-VI">--no-VI</a>
@@ -226,6 +242,8 @@
         <li><a href="app.html#cmdoption-cli-run-postprocessing">--postprocessing</a>
 </li>
         <li><a href="app.html#cmdoption-cli-run-result-file">--result-file &lt;result_file&gt;</a>
+</li>
+        <li><a href="app.html#cmdoption-cli-run-spectral-gap">--spectral-gap</a>
 </li>
         <li><a href="app.html#cmdoption-cli-run-tqdm-disable">--tqdm-disable &lt;tqdm_disable&gt;</a>
 </li>
@@ -240,21 +258,39 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pygenstability.html#pygenstability.pygenstability.compute_ttprime">compute_ttprime() (in module pygenstability.pygenstability)</a>
 </li>
-      <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_combinatorial">constructor_continuous_combinatorial() (in module pygenstability.constructors)</a>
+      <li><a href="constructors.html#pygenstability.constructors.Constructor">Constructor (class in pygenstability.constructors)</a>
 </li>
-      <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_normalized">constructor_continuous_normalized() (in module pygenstability.constructors)</a>
+      <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_combinatorial">constructor_continuous_combinatorial (class in pygenstability.constructors)</a>
 </li>
-      <li><a href="constructors.html#pygenstability.constructors.constructor_directed">constructor_directed() (in module pygenstability.constructors)</a>
+      <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_normalized">constructor_continuous_normalized (class in pygenstability.constructors)</a>
 </li>
-      <li><a href="constructors.html#pygenstability.constructors.constructor_linearized">constructor_linearized() (in module pygenstability.constructors)</a>
+      <li><a href="constructors.html#pygenstability.constructors.constructor_directed">constructor_directed (class in pygenstability.constructors)</a>
 </li>
-      <li><a href="constructors.html#pygenstability.constructors.constructor_signed_modularity">constructor_signed_modularity() (in module pygenstability.constructors)</a>
+      <li><a href="constructors.html#pygenstability.constructors.constructor_linearized">constructor_linearized (class in pygenstability.constructors)</a>
+</li>
+      <li><a href="constructors.html#pygenstability.constructors.constructor_signed_modularity">constructor_signed_modularity (class in pygenstability.constructors)</a>
 </li>
   </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="constructors.html#pygenstability.constructors.Constructor.get_data">get_data() (pygenstability.constructors.Constructor method)</a>
+
+      <ul>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_combinatorial.get_data">(pygenstability.constructors.constructor_continuous_combinatorial method)</a>
+</li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_normalized.get_data">(pygenstability.constructors.constructor_continuous_normalized method)</a>
+</li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_directed.get_data">(pygenstability.constructors.constructor_directed method)</a>
+</li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_linearized.get_data">(pygenstability.constructors.constructor_linearized method)</a>
+</li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_signed_modularity.get_data">(pygenstability.constructors.constructor_signed_modularity method)</a>
+</li>
+      </ul></li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="constructors.html#pygenstability.constructors.get_spectral_gap">get_spectral_gap() (in module pygenstability.constructors)</a>
 </li>
@@ -310,26 +346,28 @@
 </li>
       <li><a href="plotting.html#pygenstability.plotting.plot_communities">plot_communities() (in module pygenstability.plotting)</a>
 </li>
-      <li><a href="plotting.html#pygenstability.plotting.plot_number_comm">plot_number_comm() (in module pygenstability.plotting)</a>
-</li>
       <li><a href="plotting.html#pygenstability.plotting.plot_sankey">plot_sankey() (in module pygenstability.plotting)</a>
 </li>
       <li><a href="plotting.html#pygenstability.plotting.plot_scan">plot_scan() (in module pygenstability.plotting)</a>
 </li>
-      <li><a href="plotting.html#pygenstability.plotting.plot_scan_plotly">plot_scan_plotly() (in module pygenstability.plotting)</a>
-</li>
-      <li><a href="plotting.html#pygenstability.plotting.plot_scan_plt">plot_scan_plt() (in module pygenstability.plotting)</a>
-</li>
       <li><a href="plotting.html#pygenstability.plotting.plot_single_community">plot_single_community() (in module pygenstability.plotting)</a>
 </li>
-      <li><a href="plotting.html#pygenstability.plotting.plot_stability">plot_stability() (in module pygenstability.plotting)</a>
+      <li><a href="constructors.html#pygenstability.constructors.Constructor.prepare">prepare() (pygenstability.constructors.Constructor method)</a>
+
+      <ul>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_combinatorial.prepare">(pygenstability.constructors.constructor_continuous_combinatorial method)</a>
 </li>
-      <li><a href="plotting.html#pygenstability.plotting.plot_ttprime">plot_ttprime() (in module pygenstability.plotting)</a>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_continuous_normalized.prepare">(pygenstability.constructors.constructor_continuous_normalized method)</a>
 </li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_directed.prepare">(pygenstability.constructors.constructor_directed method)</a>
+</li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_linearized.prepare">(pygenstability.constructors.constructor_linearized method)</a>
+</li>
+        <li><a href="constructors.html#pygenstability.constructors.constructor_signed_modularity.prepare">(pygenstability.constructors.constructor_signed_modularity method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="plotting.html#pygenstability.plotting.plot_variation_information">plot_variation_information() (in module pygenstability.plotting)</a>
-</li>
       <li>
     pygenstability.app
 
@@ -383,8 +421,6 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pygenstability.html#pygenstability.pygenstability.run">run() (in module pygenstability.pygenstability)</a>
-</li>
-      <li><a href="pygenstability.html#pygenstability.pygenstability.run_several_louvains">run_several_louvains() (in module pygenstability.pygenstability)</a>
 </li>
   </ul></td>
 </tr></table>

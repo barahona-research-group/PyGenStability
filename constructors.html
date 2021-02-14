@@ -35,6 +35,37 @@
   <div class="section" id="module-pygenstability.constructors">
 <span id="constructors-module"></span><h1>Constructors module<a class="headerlink" href="#module-pygenstability.constructors" title="Permalink to this headline">¶</a></h1>
 <p>Quality matrix and null model constructor functions.</p>
+<dl class="py class">
+<dt id="pygenstability.constructors.Constructor">
+<em class="property">class </em><code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">Constructor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#Constructor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.Constructor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parent constructor class.</p>
+<p>This class encodes method specific construction of quality matrix and null models.
+Use the method prepare to load and compute time independent quantities, and the method get_data
+to return quality matrix, null model, and possible global shift (for linearised stability).</p>
+<p>The constructor calls te prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap time rescale if available</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pygenstability.constructors.Constructor.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#Constructor.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.Constructor.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return quality and null model at given time as well as global shift (or None).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pygenstability.constructors.Constructor.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#Constructor.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.Constructor.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the constructor with non-time dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt id="pygenstability.constructors.apply_expm">
 <code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">apply_expm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matrix</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#apply_expm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.apply_expm" title="Permalink to this definition">¶</a></dt>
@@ -42,36 +73,146 @@
 <p>TODO: implement other variants</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt id="pygenstability.constructors.constructor_continuous_combinatorial">
-<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_continuous_combinatorial</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_continuous_combinatorial</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor for continuous combinatorial Markov Stability.</p>
+<p>The constructor calls te prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap time rescale if available</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_continuous_combinatorial.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return quality and null model at given time.</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_continuous_combinatorial.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the constructor with non-time dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="pygenstability.constructors.constructor_continuous_normalized">
-<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_continuous_normalized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_continuous_normalized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor for continuous normalized Markov Stability.</p>
+<p>The constructor calls te prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap time rescale if available</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_continuous_normalized.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return quality and null model at given time.</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_continuous_normalized.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the constructor with non-time dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="pygenstability.constructors.constructor_directed">
-<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_directed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.85</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_directed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor for directed Markov stability.</p>
+<p>The constructor calls te prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap time rescale if available</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_directed.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return quality and null model at given time.</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_directed.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the constructor with non-time dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="pygenstability.constructors.constructor_linearized">
-<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_linearized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_linearized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor for continuous linearized Markov Stability.</p>
+<p>The constructor calls te prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap time rescale if available</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_linearized.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return quality and null model at given time.</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_linearized.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the constructor with non-time dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="pygenstability.constructors.constructor_signed_modularity">
-<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_signed_modularity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">constructor_signed_modularity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor of signed modularity.</p>
 <p>Based on (Gomes, Jensen, Arenas, PRE 2009).
 The time only multiplies the quality matrix (this many not mean anything, use with care!).</p>
+<p>The constructor calls te prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap time rescale if available</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_signed_modularity.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return quality and null model at given time.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pygenstability.constructors.constructor_signed_modularity.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity.prepare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the constructor with non-time dependent computations.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -82,8 +223,8 @@ The time only multiplies the quality matrix (this many not mean anything, use wi
 
 <dl class="py function">
 <dt id="pygenstability.constructors.load_constructor">
-<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">load_constructor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="n">constructor</span></em>, <em class="sig-param"><span class="n">with_spectral_gap</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#load_constructor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.load_constructor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load constructor.</p>
+<code class="sig-prename descclassname">pygenstability.constructors.</code><code class="sig-name descname">load_constructor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">constructor</span></em>, <em class="sig-param"><span class="n">graph</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#load_constructor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pygenstability.constructors.load_constructor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a constructor from its name, or as a custom Constructor class.</p>
 </dd></dl>
 
 <dl class="py function">
