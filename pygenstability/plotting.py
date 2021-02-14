@@ -10,10 +10,19 @@ import numpy as np
 from matplotlib import patches
 from tqdm import tqdm
 
-L = logging.getLogger("pygenstability")
+L = logging.getLogger(__name__)
+
+# pylint: disable=import-outside-toplevel
 
 
-def plot_scan(all_results, time_axis=True, figure_name="scan_results.pdf", use_plotly=True):
+def plot_scan(
+    all_results,
+    time_axis=True,
+    figure_name="scan_results.pdf",
+    use_plotly=True,
+    live=True,
+    plotly_filename="scan_results.html",
+):
     """Plot results of pygenstability with matplotlib or plotly."""
     if len(all_results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
@@ -22,33 +31,31 @@ def plot_scan(all_results, time_axis=True, figure_name="scan_results.pdf", use_p
 
     if use_plotly:
         try:
-            plot_scan_plotly(all_results)
+            plot_scan_plotly(all_results, live=live, filename=plotly_filename)
         except ImportError:
             L.warning(
                 "Plotly is not installed, please install package with \
                  pip install pygenstabiliy[plotly], using matplotlib instead."
             )
-
-    plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+    else:
+        plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
 
 
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     all_results,
+    live=False,
+    filename="clusters.html",
 ):
     """Plot results of pygenstability with plotly."""
-    # from plotly.subplots import make_subplots  # pylint: disable=import-outside-toplevel
-    import plotly.graph_objects as go  # pylint: disable=import-outside-toplevel
+    import plotly.graph_objects as go
+    from plotly.offline import plot as _plot
 
     if all_results["run_params"]["log_time"]:
         times = np.log10(all_results["times"])
     else:
         times = all_results["times"]
 
-    hovertemplate = str(
-        "<b>Time</b>: %{x:.2f}"
-        + "<br><i>Number of communities</i>: %{y}"
-        + "<br>%{text}<extra></extra>"
-    )
+    hovertemplate = str("<b>Time</b>: %{x:.2f}, <br>%{text}<extra></extra>")
 
     if "variation_information" in all_results:
         vi_data = all_results["variation_information"]
@@ -62,8 +69,10 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         vi_ticks = False
 
     text = [
-        "Stability: {0:.3f}, <br> Variation Information: {1:.3f}, <br> Index: {2}".format(s, vi, i)
-        for s, vi, i in zip(
+        f"""Number of communities: {n}, <br> Stability: {np.round(s, 3)},
+        <br> Variation Information: {np.round(vi, 3)}, <br> Index: {i}"""
+        for n, s, vi, i in zip(
+            all_results["number_of_communities"],
             all_results["stability"],
             vi_data,
             np.arange(0, len(times)),
@@ -107,16 +116,16 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         ),
         showscale=showscale,
     )
-
-    stab = go.Scatter(
-        x=times,
-        y=all_results["stability"],
-        mode="lines+markers",
-        hovertemplate=hovertemplate,
-        text=text,
-        name="Stability",
-        marker_color="blue",
-    )
+    if "stability" in all_results:
+        stab = go.Scatter(
+            x=times,
+            y=all_results["stability"],
+            mode="lines+markers",
+            hovertemplate=hovertemplate,
+            text=text,
+            name="Stability",
+            marker_color="blue",
+        )
 
     vi = go.Scatter(
         x=times,
@@ -131,42 +140,18 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         opacity=vi_opacity,
     )
 
-    opt_criterion = go.Scatter(
-        x=times,
-        y=all_results["optimal_scale_criterion"],
-        mode="lines+markers",
-        hovertemplate=hovertemplate,
-        text=text,
-        name="Optimal Scale Criterion",
-        yaxis="y5",
-        xaxis="x3",
-        marker_color="orange",
-    )
-
-    opt_scale = go.Scatter(
-        x=times[all_results["selected_partitions"]],
-        y=np.zeros(len(all_results["selected_partitions"])),
-        mode="markers",
-        hovertemplate=hovertemplate,
-        text=text,
-        name="Optimal Scale",
-        yaxis="y5",
-        xaxis="x3",
-        marker_color="black",
-    )
-
     layout = go.Layout(
         yaxis=dict(
             title="Stability",
             titlefont=dict(color="blue"),
             tickfont=dict(color="blue"),
-            domain=[0.26, 0.49],
+            domain=[0.0, 0.28],
         ),
         yaxis2=dict(
             title=tprime_title,
             titlefont=dict(color="black"),
             tickfont=dict(color="black"),
-            domain=[0.51, 1],
+            domain=[0.32, 1],
             side="right",
             range=[times[0], times[-1]],
         ),
@@ -184,22 +169,17 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             tickfont=dict(color="red"),
             overlaying="y2",
         ),
-        yaxis5=dict(
-            title="Optimal Scale Criterion",
-            titlefont=dict(color="orange"),
-            tickfont=dict(color="orange"),
-            domain=[0, 0.24],
-        ),
-        xaxis=dict(
-            range=[times[0], times[-1]],
-        ),
+        xaxis=dict(range=[times[0], times[-1]]),
         xaxis2=dict(range=[times[0], times[-1]]),
         height=600,
         width=800,
     )
 
-    fig = go.Figure(data=[stab, ncom, vi, ttprime, opt_criterion, opt_scale], layout=layout)
-    fig.show()
+    fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
+    _plot(fig, filename=filename)
+
+    if live:
+        fig.show()
 
 
 def plot_single_community(
@@ -313,7 +293,6 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     ax1.set_xticks([])
 
     plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
-
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
@@ -408,6 +387,7 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time
         time_index (bool): plot time of indices
     """
     import plotly.graph_objects as go
+    from plotly.offline import plot as _plot
 
     sources = []
     targets = []
@@ -448,10 +428,7 @@ def plot_sankey(all_results, live=False, filename="communities_sankey.svg", time
         layout=layout,
     )
 
-    try:
-        fig.write_image(filename)
-    except Exception:  # pylint: disable=broad-except
-        print("Plotly figure cannot be saved, please install the relevant packages.")
+    _plot(fig, filename=filename)
 
     if live:
         fig.show()

@@ -61,7 +61,7 @@ def _get_params(all_locals):
 
 
 def run(
-    graph,
+    graph=None,
     constructor="linearized",
     min_time=-2.0,
     max_time=0.5,
@@ -78,10 +78,10 @@ def run(
     n_workers=4,
     tqdm_disable=False,
 ):
-    """Main funtion to compute clustering at various time scales.
+    """Main function to compute clustering at various time scales.
 
     Args:
-        graph (scipy.csgraph): graph to cluster
+        graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
         constructor (str/function): name of the quality constructor,
             or custom constructor function. It must have two arguments, graph and time.
         min_time (float): minimum Markov time
@@ -108,7 +108,7 @@ def run(
         log_time=log_time,
         times=times,
     )
-    constructor = load_constructor(constructor)(graph, with_spectral_gap=with_spectral_gap)
+    constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
     pool = multiprocessing.Pool(n_workers)
 
     L.info("Start loop over times...")
