@@ -19,11 +19,20 @@ def plot_scan(
     all_results,
     time_axis=True,
     figure_name="scan_results.pdf",
-    use_plotly=True,
+    use_plotly=False,
     live=True,
     plotly_filename="scan_results.html",
 ):
-    """Plot results of pygenstability with matplotlib or plotly."""
+    """Plot results of pygenstability with matplotlib or plotly.
+
+    Args:
+        all_results (dict): results of pygenstability scan
+        time_axis (bool): display time of time index on time axis
+        figure_name (str): name of matplotlib figure
+        use_plotly (bool): use matplotlib or plotly backend
+        live (bool): for plotly backend, open browser with pot
+        plotly_filename (str): filename of .html figure from plotly
+    """
     if len(all_results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
         L.info(all_results)
@@ -31,17 +40,17 @@ def plot_scan(
 
     if use_plotly:
         try:
-            plot_scan_plotly(all_results, live=live, filename=plotly_filename)
+            _plot_scan_plotly(all_results, live=live, filename=plotly_filename)
         except ImportError:
             L.warning(
                 "Plotly is not installed, please install package with \
                  pip install pygenstabiliy[plotly], using matplotlib instead."
             )
     else:
-        plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+        _plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
 
 
-def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+def _plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     all_results,
     live=False,
     filename="clusters.html",
@@ -185,7 +194,18 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
 def plot_single_community(
     graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100
 ):
-    """Plot the community structures for a given time."""
+    """Plot the community structures for a given time.
+
+    Args:
+        graph (networkx.Graph): graph to plot
+        all_results (dict): results of pygenstability scan
+        time_id (int): index of time to plot
+        folder (str): folder to save figures
+        edge_color (str): color of edges
+        edge_width (float): width of edges
+        node_size (float): size of nodes
+        ext (str): extension of figures files
+    """
     pos = {u: graph.nodes[u]["pos"] for u in graph}
 
     node_color = all_results["community_id"][time_id]
@@ -212,7 +232,16 @@ def plot_single_community(
 def plot_communities(
     graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
 ):
-    """Plot the community structures at each time in a folder."""
+    """Plot the community structures at each time in a folder.
+
+    Args:
+        graph (networkx.Graph): graph to plot
+        all_results (dict): results of pygenstability scan
+        folder (str): folder to save figures
+        edge_color (str): color of edges
+        edge_width (float): width of edgs
+        ext (str): extension of figures files
+    """
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
@@ -237,7 +266,7 @@ def _get_times(all_results, time_axis=True):
     return all_results["times"]
 
 
-def plot_number_comm(all_results, ax, time_axis=True):
+def _plot_number_comm(all_results, ax, time_axis=True):
     """Plot number of communities."""
     times = _get_times(all_results, time_axis)
 
@@ -246,7 +275,7 @@ def plot_number_comm(all_results, ax, time_axis=True):
     ax.tick_params("y", colors="C3")
 
 
-def plot_ttprime(all_results, ax, time_axis):
+def _plot_ttprime(all_results, ax, time_axis):
     """Plot ttprime."""
     times = _get_times(all_results, time_axis)
 
@@ -257,7 +286,7 @@ def plot_ttprime(all_results, ax, time_axis):
     ax.axis([times[0], times[-1], times[0], times[-1]])
 
 
-def plot_variation_information(all_results, ax, time_axis=True):
+def _plot_variation_information(all_results, ax, time_axis=True):
     """Plot variation information."""
     times = _get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI")
@@ -269,7 +298,7 @@ def plot_variation_information(all_results, ax, time_axis=True):
     ax.axis([times[0], times[-1], 0.0, np.max(all_results["variation_information"]) * 1.1])
 
 
-def plot_stability(all_results, ax, time_axis=True):
+def _plot_stability(all_results, ax, time_axis=True):
     """Plot stability."""
     times = _get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
@@ -279,20 +308,20 @@ def plot_stability(all_results, ax, time_axis=True):
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
-def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
+def _plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
     gs.update(hspace=0)
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[0, 0])
-        plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
+        _plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
         ax1 = ax0.twinx()
     else:
         ax1 = plt.subplot(gs[0, 0])
 
     ax1.set_xticks([])
 
-    plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
+    _plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
@@ -300,11 +329,11 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     ax2 = plt.subplot(gs[1, 0])
 
     if "stability" in all_results:
-        plot_stability(all_results, ax=ax2, time_axis=time_axis)
+        _plot_stability(all_results, ax=ax2, time_axis=time_axis)
 
     if "variation_information" in all_results:
         ax3 = ax2.twinx()
-        plot_variation_information(all_results, ax=ax3, time_axis=time_axis)
+        _plot_variation_information(all_results, ax=ax3, time_axis=time_axis)
 
     plt.savefig(figure_name, bbox_inches="tight")
 
@@ -378,7 +407,7 @@ def plot_clustered_adjacency(
 
 
 def plot_sankey(all_results, live=False, filename="communities_sankey.html", time_index=None):
-    """Plot Sankey diagram of communities accros time.
+    """Plot Sankey diagram of communities accros time (plotly only).
 
     Args:
         all_results (dict): results from run function

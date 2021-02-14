@@ -55,10 +55,21 @@ def get_spectral_gap(laplacian):
 
 
 class Constructor:
-    """Parent constructor class."""
+    """Parent constructor class.
+
+    This class encodes method specific construction of quality matrix and null models.
+    Use the method prepare to load and compute time independent quantities, and the method get_data
+    to return quality matrix, null model, and possible global shift (for linearised stability).
+    """
 
     def __init__(self, graph, with_spectral_gap=False, **kwargs):
-        """Initialise constructor."""
+        """The constructor calls te prepare method upon initialisation.
+
+        Args:
+            graph (csgraph): graph for which to run clustering
+            with_spectral_gap (bool): set to True to use spectral gap time rescale if available
+            kwargs (dict): any other properties to pass to the constructor.
+        """
         self.graph = graph
         self.with_spectral_gap = with_spectral_gap
         self.spectral_gap = None

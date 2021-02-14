@@ -116,7 +116,7 @@ def run(
     all_results["run_params"] = run_params
     for time in tqdm(times, disable=tqdm_disable):
         quality_matrix, null_model, global_shift = constructor.get_data(time)
-        louvain_results = run_several_louvains(
+        louvain_results = _run_several_louvains(
             quality_matrix, null_model, global_shift, n_louvain, pool
         )
         communities = _process_louvain_run(time, louvain_results, all_results)
@@ -227,7 +227,7 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality
 
 
-def run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool):
+def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool):
     """Run several louvain on the current quality matrix."""
     quality_indices, quality_values = _to_indices(quality_matrix)
     worker = partial(
