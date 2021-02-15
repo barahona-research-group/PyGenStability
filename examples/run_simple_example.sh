@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 #!/bin/bash
 
 python create_graph.py
@@ -15,12 +14,6 @@ pygenstability run \
 #    sbm_graph.pkl
 
 pygenstability plot_scan --help
-=======
-#!/bin/zsh
-
-python create_graph.py
-pygenstability run --n-time 100 sbm_graph.pkl
->>>>>>> Stashed changes
 pygenstability plot_scan results.pkl
 
 pygenstability plot_communities --help
