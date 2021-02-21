@@ -255,7 +255,7 @@ def plot_communities(
     matplotlib.use(mpl_backend)
 
 
-def _get_times(all_results, time_axis=True):
+def get_times(all_results, time_axis=True):
     """Get the time vector."""
     if not time_axis:
         return np.arange(len(all_results["times"]))
@@ -266,7 +266,7 @@ def _get_times(all_results, time_axis=True):
 
 def _plot_number_comm(all_results, ax, time_axis=True):
     """Plot number of communities."""
-    times = _get_times(all_results, time_axis)
+    times = get_times(all_results, time_axis)
 
     ax.plot(times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
     ax.set_ylabel("Number of clusters", color="C3")
@@ -275,7 +275,7 @@ def _plot_number_comm(all_results, ax, time_axis=True):
 
 def _plot_ttprime(all_results, ax, time_axis):
     """Plot ttprime."""
-    times = _get_times(all_results, time_axis)
+    times = get_times(all_results, time_axis)
 
     ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr_r")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
@@ -286,7 +286,7 @@ def _plot_ttprime(all_results, ax, time_axis):
 
 def _plot_variation_information(all_results, ax, time_axis=True):
     """Plot variation information."""
-    times = _get_times(all_results, time_axis=time_axis)
+    times = get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI")
 
     ax.yaxis.tick_right()
@@ -298,8 +298,8 @@ def _plot_variation_information(all_results, ax, time_axis=True):
 
 def _plot_stability(all_results, ax, time_axis=True):
     """Plot stability."""
-    times = _get_times(all_results, time_axis=time_axis)
-    ax.plot(times, all_results["stability"], "-", label=r"$Q$", c="C0")
+    times = get_times(all_results, time_axis=time_axis)
+    ax.plot(times, all_results["stability"], "-", label=r"Stability", c="C0")
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
@@ -310,6 +310,7 @@ def _plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
     gs.update(hspace=0)
+    ax0 = None
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[0, 0])
         _plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
@@ -320,6 +321,7 @@ def _plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     ax1.set_xticks([])
 
     _plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
+
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
@@ -333,7 +335,10 @@ def _plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
         ax3 = ax2.twinx()
         _plot_variation_information(all_results, ax=ax3, time_axis=time_axis)
 
-    plt.savefig(figure_name, bbox_inches="tight")
+    if figure_name is not None:
+        plt.savefig(figure_name, bbox_inches="tight")
+
+    return ax0, ax1, ax2, ax3
 
 
 def plot_clustered_adjacency(
