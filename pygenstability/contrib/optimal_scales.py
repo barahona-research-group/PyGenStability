@@ -1,8 +1,8 @@
 """Detect optimal scales from a time scan."""
 import logging
 from copy import deepcopy
-import numpy as np
 
+import numpy as np
 
 L = logging.getLogger("contrib.optimal_scales")
 
@@ -62,9 +62,14 @@ def identify_optimal_scales(results, window=2, beta=0.1):
 
 
 def plot_optimal_scales(
-    all_results, time_axis=True, figure_name="scan_results.pdf", use_plotly=False
+    all_results,
+    time_axis=True,
+    figure_name="scan_results.pdf",
+    use_plotly=False,
+    live=True,
+    plotly_filename="scan_results.html",
 ):
-    """Pot scan results witht optitmal scales."""
+    """Plot scan results with optimal scales."""
     if len(all_results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
         L.info(all_results)
@@ -72,26 +77,72 @@ def plot_optimal_scales(
 
     if use_plotly:
         try:
-            plot_optimal_scales_plotly(all_results)
+            plot_optimal_scales_plotly(all_results, live=live, filename=plotly_filename)
         except ImportError:
             L.warning(
                 "Plotly is not installed, please install package with \
                  pip install pygenstabiliy[plotly], using matplotlib instead."
             )
 
-    plot_optimal_scales_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+    else:
+        plot_optimal_scales_plt(all_results, time_axis=time_axis, figure_name=figure_name)
 
 
-def plot_optimal_scales_plotly(all_results, time_axis=True, figure_name="scan_results.pdf"):
-    pass
+def plot_optimal_scales_plotly(all_results, live=False, filename="scan_results.pdf"):
+    """Plot optimal scales on plotly."""
+    from plotly.offline import plot as _plot
+
+    from pygenstability.plotting import get_times
+    from pygenstability.plotting import plot_scan_plotly
+
+    fig, _ = plot_scan_plotly(all_results, live=False, filename=None)
+
+    times = get_times(all_results, time_axis=True)
+
+    fig.add_scatter(
+        x=times,
+        y=all_results["optimal_scale_criterion"],
+        mode="lines+markers",
+        name="Optimal Scale Criterion",
+        yaxis="y5",
+        xaxis="x",
+        marker_color="orange",
+    )
+
+    fig.add_scatter(
+        x=times[all_results["selected_partitions"]],
+        y=all_results["optimal_scale_criterion"][all_results["selected_partitions"]],
+        mode="markers",
+        name="Optimal Scale",
+        yaxis="y5",
+        xaxis="x",
+        marker_color="red",
+    )
+
+    fig.update_layout(
+        yaxis5=dict(
+            titlefont=dict(color="orange"),
+            tickfont=dict(color="orange"),
+            domain=[0.0, 0.28],
+            overlaying="y",
+        )
+    )
+    fig.update_layout(yaxis=dict(title="Stability, Optimal Scale Criterion"))
+    if filename is not None:
+        _plot(fig, filename=filename)
+
+    if live:
+        fig.show()
 
 
 def plot_optimal_scales_plt(all_results, time_axis=True, figure_name="scan_results.pdf"):
-    """Pot scan results witht optitmal scales."""
-    from pygenstability.plotting import plot_scan_plt, get_times
+    """Plot scan results with optimal scales with matplotlib."""
     import matplotlib.pyplot as plt
 
-    ax0, ax1, ax2, ax3 = plot_scan_plt(all_results, time_axis=time_axis, figure_name=None)
+    from pygenstability.plotting import get_times
+    from pygenstability.plotting import plot_scan_plt
+
+    _, _, ax2, _ = plot_scan_plt(all_results, time_axis=time_axis, figure_name=None)
 
     times = get_times(all_results, time_axis=time_axis)
     ax2.plot(
