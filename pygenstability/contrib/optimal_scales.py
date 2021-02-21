@@ -10,9 +10,13 @@ L = logging.getLogger("contrib.optimal_scales")
 def identify_optimal_scales(results, window=2, beta=0.1):
     """Identifies optimal scales in Markov Stability.
 
+    Stable scales are found from the normalized VI(t, t') matrix by searching for large diagonal
+    blocks of uniform low VI values. The parameter 'beta' is used as a threshold to define the
+    blocks, and the 'windows' sets the  size of the moving mean windows.
+
     Args:
         results (dict): the results from a Markov Stability calculation
-        window (int): size of window for moving average
+        window (int): size of window for moving mean
         beta (float): cut-off parameter for identifying plateau
 
     Returns:
