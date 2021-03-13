@@ -94,7 +94,6 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y4",
         text=text,
         marker_color="red",
-
     )
 
     if "ttprime" in all_results:
@@ -180,7 +179,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     )
 
     fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
-    fig.update_layout(xaxis_title='log10(time)')
+    fig.update_layout(xaxis_title="log10(time)")
 
     if filename is not None:
         _plot(fig, filename=filename)
