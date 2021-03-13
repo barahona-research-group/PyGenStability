@@ -84,7 +84,6 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             np.arange(0, len(times)),
         )
     ]
-
     ncom = go.Scatter(
         x=times,
         y=all_results["number_of_communities"],
@@ -95,12 +94,13 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y4",
         text=text,
         marker_color="red",
+
     )
 
     if "ttprime" in all_results:
         z = all_results["ttprime"]
         showscale = True
-        tprime_title = "tprime"
+        tprime_title = "log10(time)"
     else:
         z = np.nan + np.zeros([len(times), len(times)])
         showscale = False
@@ -110,12 +110,12 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         z=z,
         x=times,
         y=times,
-        colorscale="YlOrBr",
+        colorscale="YlOrBr_r",
         yaxis="y2",
         xaxis="x2",
         hoverinfo="skip",
         colorbar=dict(
-            title="ttprime VI",
+            title="VI",
             len=0.2,
             yanchor="middle",
             y=0.5,
@@ -180,6 +180,8 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     )
 
     fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
+    fig.update_layout(xaxis_title='log10(time)')
+
     if filename is not None:
         _plot(fig, filename=filename)
 
