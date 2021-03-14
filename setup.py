@@ -12,7 +12,7 @@ ext_modules = [
     ),
 ]
 plotly_require = ["plotly>=3.6.0"]
-contrib_require = ["scikit-image"]
+contrib_require = ["scikit-image>=0.18.1"]
 
 setup(
     name="pygenstability",
