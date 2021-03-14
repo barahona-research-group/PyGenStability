@@ -13,7 +13,9 @@ def simple_test():
         graph = pickle.load(pickle_file)
 
     all_results = run(graph, n_time=50)
-    all_results = identify_optimal_scales(all_results, window=2, beta=0.1)
+    all_results = identify_optimal_scales(
+        all_results, window_size=5, VI_cutoff=0.1, criterion_threshold=0.9
+    )
 
     plot_optimal_scales(all_results, use_plotly=True)
     plt.show()
