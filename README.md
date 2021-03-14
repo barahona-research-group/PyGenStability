@@ -66,4 +66,5 @@ Contrib
 -------
 
 This module contains various additional tools one can use. Currently it contains:
- - optimal-scales: to find and plot optimal scales accos time
+ - optimal-scales: to find and plot optimal scales accros time
+ - sankey: plot sankey diagrams of clusters accros time
