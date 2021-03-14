@@ -34,7 +34,7 @@ setup(
         "pandas>=1.0.0",
     ],
     zip_safe=False,
-    extras_require={"plotly": ["plotly>=3.6.0"]},
+    extras_require={"plotly": ["plotly>=3.6.0"], "contrib": ["scikit-image"]},
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
     packages=find_packages(),
     include_package_data=True,
