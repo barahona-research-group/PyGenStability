@@ -23,6 +23,16 @@ To use plotly for interacting plos in browser, install this package with
 pip install .[plotly]
 ```
 
+To use contrib module, with additional tools, run
+```
+pip install .[contrib]
+```
+
+To install all dependencies, run
+```
+pip install .[all]
+```
+
 Documentation
 -------------
 
@@ -51,3 +61,10 @@ python simple_example.py
  
  Please see `pygenstability/constructors.py` for some classic examples. 
 
+
+Contrib
+-------
+
+This module contains various additional tools one can use. Currently it contains:
+ - optimal-scales: to find and plot optimal scales accros time
+ - sankey: plot sankey diagrams of clusters accros time

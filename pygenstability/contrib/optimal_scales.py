@@ -1,67 +1,52 @@
 """Detect optimal scales from a time scan."""
 import logging
-from copy import deepcopy
 
 import numpy as np
+from skimage.feature import peak_local_max
 
 L = logging.getLogger("contrib.optimal_scales")
 
 
-def identify_optimal_scales(results, window=2, beta=0.1):
+def identify_optimal_scales(results, VI_cutoff=0.1, criterion_threshold=0.8, window_size=2):
     """Identifies optimal scales in Markov Stability.
 
     Stable scales are found from the normalized VI(t, t') matrix by searching for large diagonal
-    blocks of uniform low VI values. The parameter 'beta' is used as a threshold to define the
-    blocks, and the 'windows' sets the  size of the moving mean windows.
+    blocks of VI below VI_cutoff. A moving average of window size is then applied to smooth the
+    values accros time, and a criterion is computed as the norm between this value and a similarly
+    smoothed version of the normalized VI(t). Optimal scales are then detected using the peak
+    detection algorithm skimage.peak_local_max, with minima under criterion_thresholds are selected.
 
     Args:
         results (dict): the results from a Markov Stability calculation
-        window (int): size of window for moving mean
-        beta (float): cut-off parameter for identifying plateau
+        VI_cutoff (float): cut-off parameter for identifying plateau
+        criterion_threshold (float): maximum value of criterion to be a valid scale
+        window_size (int): size of window for moving mean, to smooth the criterion curve
 
     Returns:
         result dictionary with two new keys: 'selected_partitions' and 'optimal_scale_criterion'
     """
-    results = deepcopy(results)
+    window = np.ones(window_size) / window_size
 
-    # extract ttprime and flip to identify diagonals
-    ttprime_ = np.flipud(results["ttprime"])
-    n_ = ttprime_.shape[0]
+    # compute ttprime criterion
+    _flip = np.flipud(results["ttprime"])
+    _n = results["ttprime"].shape[0]
+    plateau_size = [np.sum(np.diag(_flip, k=shift) < VI_cutoff) for shift in range(-_n + 1, _n, 2)]
+    plateau_moving_average = np.convolve(plateau_size, window, "same")
+    ttprime_metric = 1.0 - plateau_moving_average / plateau_moving_average.max()
+    ttprime_metric = ttprime_metric / ttprime_metric.max()
 
-    # extract diagonals in lower triangular and identify plateaus
-    plateau_size = np.zeros(n_)
-    for i, shift in enumerate(range(-n_ + 1, n_, 2)):
-        diagonal = np.diag(ttprime_, k=shift)
-        plateau_size[i] = np.sum(diagonal < beta)
-
-    # compute normalised ttprime
-    plateau_moving_average = np.convolve(plateau_size, np.ones(window), "valid") / window
-    plateau_moving_average_norm = 1 - (plateau_moving_average / plateau_moving_average.max())
-    ttprime_metric = plateau_moving_average_norm / plateau_moving_average_norm.max()
-    ttprime_metric = np.append(ttprime_metric, 0)
-
-    # compute normalised VI
-    nvi_moving_average = (
-        np.convolve(results["variation_information"], np.ones(window), "valid") / window
-    )
+    # compute normalised VI criterion
+    nvi_moving_average = np.convolve(results["variation_information"], window, "same")
     vi_metric = nvi_moving_average / nvi_moving_average.max()
-    vi_metric = np.append(vi_metric, 0)
 
-    # define criterion
-    criterion = np.sqrt((ttprime_metric ** 2 + vi_metric ** 2) / 2)
-    criterion = criterion / criterion.max()
-
-    # find gradient of criterion function
-    criterion_gradient = np.gradient(criterion)
-
-    # find minima in criterion
-    index_minima = np.where(criterion_gradient[:-1] * criterion_gradient[1:] < 0)[0]
-    index_minima = index_minima[criterion_gradient[index_minima] < 0]
+    # compute final criterion
+    criterion = np.sqrt(ttprime_metric ** 2 + vi_metric ** 2)
+    results["optimal_scale_criterion"] = criterion / criterion.max()
 
     # return with results dict
-    results["selected_partitions"] = index_minima
-    results["optimal_scale_criterion"] = criterion
-
+    results["selected_partitions"] = sorted(
+        peak_local_max(1.0 - criterion, min_distance=2, threshold_abs=criterion_threshold).flatten()
+    )
     return results
 
 
@@ -149,6 +134,7 @@ def plot_optimal_scales_plt(all_results, time_axis=True, figure_name="scan_resul
     _, _, ax2, _ = plot_scan_plt(all_results, time_axis=time_axis, figure_name=None)
 
     times = get_times(all_results, time_axis=time_axis)
+    print(np.shape(times), np.shape(all_results["optimal_scale_criterion"]))
     ax2.plot(
         times,
         all_results["optimal_scale_criterion"],

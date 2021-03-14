@@ -216,5 +216,5 @@ class constructor_directed(Constructor):
     def get_data(self, time):
         """Return quality and null model at given time."""
         exp = apply_expm(time * self.partial_quality_matrix)
-        quality_matrix = sp.diags(self.partial_null_model).dot(exp)
+        quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return quality_matrix, self.partial_null_model, None

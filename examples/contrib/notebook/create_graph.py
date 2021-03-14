@@ -1,5 +1,4 @@
 """create graph for simple example"""
-import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 import networkx as nx
@@ -31,22 +30,11 @@ def create_sbm():
     plt.title("Ground truth communities")
     plt.savefig("ground_truth.png", bbox_inches="tight")
 
-    # save adjacency with pickle
-    adjacency =  nx.adjacency_matrix(graph, weight="weight")
     with open("sbm_graph.pkl", "wb") as pickle_file:
-        pickle.dump(adjacency, pickle_file)
+        pickle.dump(nx.adjacency_matrix(graph, weight="weight"), pickle_file)
 
-    # save .gpickle for community plotting
     nx.write_gpickle(graph, "sbm_graph.gpickle")
 
-    # save with text file as alternative format
-    edges = pd.DataFrame()
-    edges["i"] = [e[0] for e in graph.edges] + [e[1] for e in graph.edges]
-    edges["j"] = [e[1] for e in graph.edges] + [e[0] for e in graph.edges]
-    edges["weight"] = 2 * [graph.edges[e]["weight"] for e in graph.edges]
-    edges.to_csv("edges.csv", index=False)
-
-    return adjacency
 
 if __name__ == "__main__":
     create_sbm()

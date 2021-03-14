@@ -11,6 +11,8 @@ ext_modules = [
         extra_compile_args=["-std=c++11"],
     ),
 ]
+plotly_require = ["plotly>=3.6.0"]
+contrib_require = ["scikit-image>=0.18.1"]
 
 setup(
     name="pygenstability",
@@ -34,7 +36,11 @@ setup(
         "pandas>=1.0.0",
     ],
     zip_safe=False,
-    extras_require={"plotly": ["plotly>=3.6.0"]},
+    extras_require={
+        "plotly": plotly_require,
+        "contrib": contrib_require,
+        "all": plotly_require + contrib_require,
+    },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
     packages=find_packages(),
     include_package_data=True,

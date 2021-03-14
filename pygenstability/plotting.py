@@ -84,7 +84,6 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             np.arange(0, len(times)),
         )
     ]
-
     ncom = go.Scatter(
         x=times,
         y=all_results["number_of_communities"],
@@ -100,7 +99,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     if "ttprime" in all_results:
         z = all_results["ttprime"]
         showscale = True
-        tprime_title = "tprime"
+        tprime_title = "log10(time)"
     else:
         z = np.nan + np.zeros([len(times), len(times)])
         showscale = False
@@ -110,12 +109,12 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         z=z,
         x=times,
         y=times,
-        colorscale="YlOrBr",
+        colorscale="YlOrBr_r",
         yaxis="y2",
         xaxis="x2",
         hoverinfo="skip",
         colorbar=dict(
-            title="ttprime VI",
+            title="VI",
             len=0.2,
             yanchor="middle",
             y=0.5,
@@ -180,6 +179,8 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     )
 
     fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
+    fig.update_layout(xaxis_title="log10(time)")
+
     if filename is not None:
         _plot(fig, filename=filename)
 
@@ -406,60 +407,3 @@ def plot_clustered_adjacency(
     )
 
     plt.savefig(figure_name, bbox_inches="tight")
-
-
-def plot_sankey(all_results, live=False, filename="communities_sankey.html", time_index=None):
-    """Plot Sankey diagram of communities accros time (plotly only).
-
-    Args:
-        all_results (dict): results from run function
-        live (bool): if True, interactive figure will appear in browser
-        filename (str): filename to save the plot
-        time_index (bool): plot time of indices
-    """
-    import plotly.graph_objects as go
-    from plotly.offline import plot as _plot
-
-    sources = []
-    targets = []
-    values = []
-    shift = 0
-
-    if not time_index:
-        all_results["community_id_reduced"] = all_results["community_id"]
-    else:
-        all_results["community_id_reduced"] = [all_results["community_id"][i] for i in time_index]
-
-    for i in range(len(all_results["community_id_reduced"]) - 1):
-        community_source = np.array(all_results["community_id_reduced"][i])
-        community_target = np.array(all_results["community_id_reduced"][i + 1])
-        source_ids = set(community_source)
-        target_ids = set(community_target)
-        for source in source_ids:
-            for target in target_ids:
-                value = sum(community_target[community_source == source] == target)
-                if value > 0:
-                    values.append(value)
-                    sources.append(source + shift)
-                    targets.append(target + len(source_ids) + shift)
-        shift += len(source_ids)
-
-    layout = go.Layout(autosize=True)
-    fig = go.Figure(
-        data=[
-            go.Sankey(
-                node=dict(
-                    pad=1,
-                    thickness=1,
-                    line=dict(color="black", width=0.0),
-                ),
-                link=dict(source=sources, target=targets, value=values),
-            )
-        ],
-        layout=layout,
-    )
-
-    _plot(fig, filename=filename)
-
-    if live:
-        fig.show()
