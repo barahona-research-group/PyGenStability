@@ -142,7 +142,7 @@ def run(
     save_results(all_results, filename=result_file)
     pool.close()
 
-    return all_results
+    return dict(all_results)
 
 
 def _process_louvain_run(time, louvain_results, all_results, variation_information=None):

@@ -196,7 +196,7 @@ class constructor_directed(Constructor):
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-time dependent computations."""
-        alpha = kwargs["alpha"]
+        alpha = kwargs.get("alpha", 0.8)
         n_nodes = self.graph.shape[0]
         ones = np.ones((n_nodes, n_nodes)) / n_nodes
 
