@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from pygenstability import constructors
 import yaml
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_almost_equal
 
 from utils import graph
 
@@ -30,8 +30,8 @@ def test_load_constructor(graph):
         data = _list_data(constructors.load_constructor(constr, graph).get_data(1))
         # yaml.dump(data, open(DATA / f"test_constructor_{constr}.yaml", "w"))
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}.yaml", "r"))
-        assert_array_equal(data[0], expected_data[0])
-        assert_array_equal(data[1], expected_data[1])
+        assert_almost_equal(data[0], expected_data[0])
+        assert_almost_equal(data[1], expected_data[1])
 
 
 def test_load_constructor_gap(graph):
@@ -41,5 +41,5 @@ def test_load_constructor_gap(graph):
         )
         # yaml.dump(data, open(DATA / f"test_constructor_{constr}_gap.yaml", "w"))
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}_gap.yaml", "r"))
-        assert_array_equal(data[0], expected_data[0])
-        assert_array_equal(data[1], expected_data[1])
+        assert_almost_equal(data[0], expected_data[0])
+        assert_almost_equal(data[1], expected_data[1])
