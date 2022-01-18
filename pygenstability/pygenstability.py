@@ -28,9 +28,7 @@ def _graph_checks(graph, dtype=_DTYPE):
     graph = sp.csr_matrix(graph, dtype=dtype)
     if sp.csgraph.connected_components(graph)[0] > 1:
         raise Exception(
-            "Graph not connected, with {} components".format(
-                sp.csgraph.connected_components(graph)[0]
-            )
+            f"Graph not connected, with {sp.csgraph.connected_components(graph)[0]} components"
         )
 
     if sp.linalg.norm(graph - graph.T) > 0:
@@ -109,38 +107,37 @@ def run(
         times=times,
     )
     constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
-    pool = multiprocessing.Pool(n_workers)
+    with multiprocessing.Pool(n_workers) as pool:
 
-    L.info("Start loop over times...")
-    all_results = defaultdict(list)
-    all_results["run_params"] = run_params
-    for time in tqdm(times, disable=tqdm_disable):
-        quality_matrix, null_model, global_shift = constructor.get_data(time)
-        louvain_results = _run_several_louvains(
-            quality_matrix, null_model, global_shift, n_louvain, pool
-        )
-        communities = _process_louvain_run(time, louvain_results, all_results)
-
-        if with_VI:
-            _compute_variation_information(
-                communities,
-                all_results,
-                pool,
-                n_partitions=min(n_louvain_VI, n_louvain),
+        L.info("Start loop over times...")
+        all_results = defaultdict(list)
+        all_results["run_params"] = run_params
+        for time in tqdm(times, disable=tqdm_disable):
+            quality_matrix, null_model, global_shift = constructor.get_data(time)
+            louvain_results = _run_several_louvains(
+                quality_matrix, null_model, global_shift, n_louvain, pool
             )
+            communities = _process_louvain_run(time, louvain_results, all_results)
 
-        save_results(all_results, filename=result_file)
+            if with_VI:
+                _compute_variation_information(
+                    communities,
+                    all_results,
+                    pool,
+                    n_partitions=min(n_louvain_VI, n_louvain),
+                )
 
-    if with_ttprime:
-        L.info("Start computing ttprimes...")
-        compute_ttprime(all_results, pool)
+            save_results(all_results, filename=result_file)
 
-    if with_postprocessing:
-        L.info("Apply postprocessing...")
-        apply_postprocessing(all_results, pool, constructor=constructor)
+        if with_ttprime:
+            L.info("Start computing ttprimes...")
+            compute_ttprime(all_results, pool)
+
+        if with_postprocessing:
+            L.info("Apply postprocessing...")
+            apply_postprocessing(all_results, pool, constructor=constructor)
 
     save_results(all_results, filename=result_file)
-    pool.close()
 
     return dict(all_results)
 

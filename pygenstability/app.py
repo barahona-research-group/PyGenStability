@@ -129,6 +129,7 @@ def run(
             # load text file with edge list
             edges = pd.read_csv(graph_file)
             n_nodes = len(np.unique(edges[edges.columns[:2]].to_numpy().flatten()))
+            # pylint: disable=unsubscriptable-object,no-member
             graph = sp.csr_matrix(
                 (edges[edges.columns[2]], tuple(edges[edges.columns[:2]].to_numpy().T)),
                 shape=(n_nodes, n_nodes),

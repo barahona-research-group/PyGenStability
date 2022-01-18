@@ -3,10 +3,10 @@ import logging
 import os
 
 import matplotlib
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from matplotlib import gridspec
 from matplotlib import patches
 from tqdm import tqdm
 

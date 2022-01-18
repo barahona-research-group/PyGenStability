@@ -17,9 +17,9 @@ def load_constructor(constructor, graph, **kwargs):
         if graph is None:
             raise Exception(f"No graph was provided with a generic constructor {constructor}")
         try:
-            return getattr(sys.modules[__name__], "constructor_%s" % constructor)(graph, **kwargs)
+            return getattr(sys.modules[__name__], f"constructor_{constructor}")(graph, **kwargs)
         except AttributeError as exc:
-            raise Exception("Could not load constructor %s" % constructor) from exc
+            raise Exception(f"Could not load constructor {constructor}") from exc
     if not isinstance(constructor, Constructor):
         raise Exception("Only Constructor class object can be used.")
     return constructor
@@ -50,7 +50,7 @@ def _check_total_degree(degrees):
 def get_spectral_gap(laplacian):
     """Compute spectral gap."""
     spectral_gap = abs(sp.linalg.eigs(laplacian, which="SM", k=2)[0][1])
-    L.info("Spectral gap = 10^{:.1f}".format(np.log10(spectral_gap)))
+    L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
     return spectral_gap
 
 
