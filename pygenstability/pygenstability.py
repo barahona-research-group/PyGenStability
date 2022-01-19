@@ -1,4 +1,5 @@
 """PyGenStability module."""
+import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
@@ -241,10 +242,7 @@ def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool
 
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
-    index_pairs = [
-        [i, j] for i in range(len(all_results["times"])) for j in range(len(all_results["times"]))
-    ]
-
+    index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
     worker = partial(_evaluate_VI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
@@ -252,6 +250,7 @@ def compute_ttprime(all_results, pool):
     all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
+    all_results["ttprime"] += all_results["ttprime"].T
 
 
 def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
