@@ -130,7 +130,7 @@ run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
             py::array_t<double> null_model_input_arr, int num_null_vectors,
             double time) {
 
-  // convert input arrys tto pointers
+  // convert input arrays to pointers
   py::buffer_info info_from = from_arr.request();
   auto from = static_cast<int *>(info_from.ptr);
 
