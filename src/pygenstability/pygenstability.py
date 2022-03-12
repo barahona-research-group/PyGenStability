@@ -18,6 +18,12 @@ from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
 
+try:
+    import leidenalg
+    import igraph as ig
+except ImportError:
+    pass
+
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
 
@@ -107,6 +113,7 @@ def run(
     tqdm_disable=False,
     with_optimal_scales=True,
     optimal_scales_kwargs=None,
+    method="louvain",
 ):
     """Main function to compute clustering at various scales.
 
@@ -130,6 +137,7 @@ def run(
         tqdm_disable (bool): disable progress bars
         with_optimal_scales (bool): apply optimal scale detection algorithm
         optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
+        method (str): optimiation method, louvain or leiden
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -153,8 +161,9 @@ def run(
         all_results["run_params"] = run_params
 
         for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-            # stability optimisation
-            louvain_results = run_several_louvains(constructor_data[i], n_louvain, pool)
+            louvain_results = run_several_louvains(
+                constructor_data[i], n_louvain, pool, method=method
+            )
             communities = _process_louvain_run(t, louvain_results, all_results)
 
             if with_NVI:
@@ -229,17 +238,57 @@ def _to_indices(matrix):
 
 
 @timing
-def evaluate_louvain(_, quality_indices, quality_values, null_model, global_shift):
+def evaluate(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
     """Worker for Louvain runs."""
-    stability, community_id = generalized_louvain.run_louvain(
-        quality_indices[0],
-        quality_indices[1],
-        quality_values,
-        len(quality_values),
-        null_model,
-        np.shape(null_model)[0],
-        1.0,
-    )
+    if method == "louvain":
+        stability, community_id = generalized_louvain.run_louvain(
+            quality_indices[0],
+            quality_indices[1],
+            quality_values,
+            len(quality_values),
+            null_model,
+            np.shape(null_model)[0],
+            1.0,
+        )
+    if method == "leiden":
+        stability, community_id = generalized_louvain.run_louvain(
+            quality_indices[0],
+            quality_indices[1],
+            quality_values,
+            len(quality_values),
+            null_model,
+            np.shape(null_model)[0],
+            1.0,
+        )
+        edges = zip(*quality_indices)
+        G = ig.Graph(edges=edges)
+        nm = null_model.tolist()
+        partition = leidenalg.GeneralizedModularityVertexPartition(
+            G, weights=quality_values, null_model=nm
+        )
+        optimiser = leidenalg.Optimiser()
+        optimiser.set_rng_seed(np.random.randint(0, 10000))
+        optimiser.optimise_partition(partition, n_iterations=-1)
+        stability = partition.modularity
+        community_id = partition.membership
+        print("gen leiden:", stability, community_id)
+
+        _partition = leidenalg.ModularityVertexPartition(G, weights=quality_values)
+        _optimiser = leidenalg.Optimiser()
+        _optimiser.set_rng_seed(np.random.randint(0, 10000))
+        _optimiser.optimise_partition(_partition, n_iterations=-1)
+        _stability = _partition.modularity
+        _community_id = _partition.membership
+        print("mod leiden:", _stability, _community_id)
+
+        # test if quality from louvain == quality from leiden
+        qual = evaluate(
+            community_id,
+            qualities_index=(quality_indices, quality_values),
+            null_model=null_model,
+            global_shift=global_shift,
+        )
+        print(partition.quality() - qual)
     return stability + global_shift, community_id
 
 
@@ -258,15 +307,16 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality + global_shift
 
 
-def run_several_louvains(constructor, n_runs, pool):
+def run_several_louvains(constructor, n_runs, pool, method="louvain"):
     """Run several louvain on the current quality matrix."""
     quality_indices, quality_values = _to_indices(constructor["quality"])
     worker = partial(
-        evaluate_louvain,
+        evaluate,
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],
         global_shift=constructor.get("shift", 0.0),
+        method=method,
     )
 
     chunksize = _get_chunksize(n_runs, pool)
