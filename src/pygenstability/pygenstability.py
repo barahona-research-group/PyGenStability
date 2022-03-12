@@ -20,6 +20,12 @@ from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
 
+try:
+    import leidenalg
+    import igraph as ig
+except ImportError:
+    pass
+
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
 
