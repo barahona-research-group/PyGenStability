@@ -13,7 +13,13 @@ ext_modules = [
 ]
 plotly_require = ["plotly>=3.6.0"]
 contrib_require = ["scikit-image>=0.18.1"]
-test_require = ["pyyaml", "dictdiffer"]
+test_require = [
+    "pyyaml",
+    "dictdiffer",
+    "pytest",
+    "pytest-cov",
+    "pytest-html",
+]
 
 setup(
     name="pygenstability",
