@@ -218,7 +218,7 @@ def _evaluate(_, quality_indices, quality_values, null_model, global_shift, meth
         edges = zip(*quality_indices)
         G = ig.Graph(1, edges, False)
         partition = leidenalg.GeneralizedModularityVertexPartition(
-            G, weights=quality_values, null_model=null_model
+            G, weights=quality_values, null_model=null_model[0].tolist()
         )
         optimiser = leidenalg.Optimiser()
         optimiser.optimise_partition(partition)

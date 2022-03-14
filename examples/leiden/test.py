@@ -53,10 +53,10 @@ if __name__ == "__main__":
     G = ig.Graph.Erdos_Renyi(100, 0.1)
     graph = G.get_adjacency().data
     graph = create_sbm()
-    all_results = run(graph, n_louvain=10, n_time=1, min_time=0, max_time=0)
-    print(all_results)
+    #all_results = run(graph, n_louvain=10, n_time=1, min_time=0, max_time=0)
+    #print(all_results)
     all_results = run(graph, n_louvain=10, n_time=1, min_time=0, max_time=0, method='leiden')
     print(all_results)
 
-    part = leidenalg.find_partition(G, leidenalg.GeneralizedModularityVertexPartition)
-    print(part)
+    #part = leidenalg.find_partition(G, leidenalg.GeneralizedModularityVertexPartition)
+    #print(part)
