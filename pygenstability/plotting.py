@@ -9,6 +9,7 @@ import networkx as nx
 import numpy as np
 from matplotlib import patches
 from tqdm import tqdm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 L = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
 
     text = [
         f"""Number of communities: {n}, <br> Stability: {np.round(s, 3)},
-        <br> Variation Information: {np.round(vi, 3)}, <br> Index: {i}"""
+        <br> Normalised Variation Information: {np.round(vi, 3)}, <br> Index: {i}"""
         for n, s, vi, i in zip(
             all_results["number_of_communities"],
             all_results["stability"],
@@ -138,7 +139,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         mode="lines+markers",
         hovertemplate=hovertemplate,
         text=text,
-        name="Variation information",
+        name="NVI",
         yaxis="y3",
         xaxis="x",
         marker_color="green",
@@ -277,12 +278,24 @@ def _plot_ttprime(all_results, ax, time_axis):
     """Plot ttprime."""
     times = get_times(all_results, time_axis)
 
-    ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr_r")
+    contourf_ = ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr_r")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
     ax.axis([times[0], times[-1], times[0], times[-1]])
+    ax.set_xlabel(r"$log_{10}(t)$")
 
+
+    axins = inset_axes(ax,
+                       width="5%",  # width = 5% of parent_bbox width
+                       height="50%",  # height : 50%
+                       loc='lower left',
+                       bbox_to_anchor=(1.1, 0.25, 1, 1),
+                       bbox_transform=ax.transAxes,
+                       borderpad=0,
+                       )
+
+    plt.colorbar(contourf_, cax=axins, label='NVI(t,t\')')
 
 def _plot_variation_information(all_results, ax, time_axis=True):
     """Plot variation information."""
@@ -291,9 +304,10 @@ def _plot_variation_information(all_results, ax, time_axis=True):
 
     ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
-    ax.set_ylabel(r"Variation information", color="C2")
+    ax.set_ylabel(r"NVI", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
     ax.axis([times[0], times[-1], 0.0, np.max(all_results["variation_information"]) * 1.1])
+    ax.set_xlabel(r"$log_{10}(t)$")
 
 
 def _plot_stability(all_results, ax, time_axis=True):
@@ -303,42 +317,74 @@ def _plot_stability(all_results, ax, time_axis=True):
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
+
+def _plot_optimal_scales(all_results, ax, time_axis=True):
+    """Plot stability."""
+    times = get_times(all_results, time_axis=time_axis)
+    
+    ax.plot(
+        times,
+        all_results["optimal_scale_criterion"],
+        "-",
+        lw=2.0,
+        c="C4",
+        label="optimal scale criterion",
+    )
+    ax.plot(
+        times[all_results["selected_partitions"]],
+        all_results["optimal_scale_criterion"][all_results["selected_partitions"]],
+        "o",
+        lw=2.0,
+        c="C4",
+        label="optimal scales",
+    )
+    
+    #ax.plot(times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0")
+    ax.tick_params("y", colors="C4")
+    ax.set_ylabel("Optimal Scale Criterion", color="C4")
+    ax.yaxis.set_label_position("left")
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
 def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
-    gs = gridspec.GridSpec(2, 1, height_ratios=[1.0, 0.5])
+    gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     ax0 = None
     if "ttprime" in all_results:
-        ax0 = plt.subplot(gs[0, 0])
+        ax0 = plt.subplot(gs[1, 0])
         _plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
         ax1 = ax0.twinx()
     else:
-        ax1 = plt.subplot(gs[0, 0])
-
+        ax1 = plt.subplot(gs[1, 0])
+    
     ax1.set_xticks([])
-
-    _plot_number_comm(all_results, ax=ax1, time_axis=time_axis)
-
+    
+    _plot_variation_information(all_results, ax=ax1, time_axis=time_axis)
+    
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-
-    ax2 = plt.subplot(gs[1, 0])
-
+    
+    ax2 = plt.subplot(gs[0, 0])
+    
     if "stability" in all_results:
         _plot_stability(all_results, ax=ax2, time_axis=time_axis)
-
+    
     if "variation_information" in all_results:
         ax3 = ax2.twinx()
-        _plot_variation_information(all_results, ax=ax3, time_axis=time_axis)
-
+        _plot_number_comm(all_results, ax=ax3, time_axis=time_axis)
+    
+    if "optimal_scale_criterion" in all_results:
+        ax4 = plt.subplot(gs[2, 0])
+        _plot_optimal_scales(all_results, ax=ax4, time_axis=time_axis)
+    
+        
     if figure_name is not None:
         plt.savefig(figure_name, bbox_inches="tight")
 
-    return ax0, ax1, ax2, ax3
+
+    return ax0, ax1, ax2, ax3, ax4
 
 
 def plot_clustered_adjacency(
