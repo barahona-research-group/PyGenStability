@@ -59,3 +59,5 @@ def plot_sankey(all_results, optimal_scales=True, live=False, filename="communit
 
     if live:
         fig.show()
+        
+    return fig
