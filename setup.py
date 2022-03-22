@@ -22,7 +22,7 @@ test_require = [
 ]
 
 setup(
-    name="pygenstability",
+    name="PyGenStability",
     version=__version__,
     author="Alexis Arnaudon",
     author_email="alexis.arnaudon@epfl.ch",
@@ -49,6 +49,6 @@ setup(
         "all": plotly_require + contrib_require + test_require,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
-    packages=find_packages(),
+    packages=find_packages(include=["pygenstability*"]),
     include_package_data=True,
 )
