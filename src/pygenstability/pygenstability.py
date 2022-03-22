@@ -110,7 +110,7 @@ def run(
     constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
     with multiprocessing.Pool(n_workers) as pool:
 
-        L.info("Start loop over times...")
+        L.info("Loop over times...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
         for time in tqdm(times, disable=tqdm_disable):
@@ -131,7 +131,7 @@ def run(
             save_results(all_results, filename=result_file)
 
         if with_ttprime:
-            L.info("Start computing ttprimes...")
+            L.info("Compute ttprimes...")
             compute_ttprime(all_results, pool)
 
         if with_postprocessing:
