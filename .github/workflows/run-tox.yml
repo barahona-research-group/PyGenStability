@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -30,10 +30,10 @@ jobs:
       run: |
         tox
     - name: Upload to codecov
-      if: ${{matrix.python-version == '3.8'}}
+      if: ${{matrix.python-version == '3.9'}}
       uses: codecov/codecov-action@v1
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
         flags: pytest
-        name: "PyGenStability-py38"
+        name: "PyGenStability-py39"
