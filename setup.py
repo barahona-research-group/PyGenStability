@@ -1,22 +1,30 @@
-from setuptools import setup, find_packages
+"""Setup."""
 from pybind11.setup_helpers import Pybind11Extension
+from setuptools import find_packages
+from setuptools import setup
 
 __version__ = "0.0.2"
 
 ext_modules = [
     Pybind11Extension(
         "pygenstability.generalized_louvain",
-        ["pygenstability/generalized_louvain/generalized_louvain.cpp"],
+        ["src/pygenstability/generalized_louvain/generalized_louvain.cpp"],
         include_dirs=["extra"],
         extra_compile_args=["-std=c++11"],
     ),
 ]
 plotly_require = ["plotly>=3.6.0"]
 contrib_require = ["scikit-image>=0.18.1"]
-test_require = ["pyyaml", "dictdiffer"]
+test_require = [
+    "pyyaml",
+    "dictdiffer",
+    "pytest",
+    "pytest-cov",
+    "pytest-html",
+]
 
 setup(
-    name="pygenstability",
+    name="PyGenStability",
     version=__version__,
     author="Alexis Arnaudon",
     author_email="alexis.arnaudon@epfl.ch",
@@ -43,6 +51,7 @@ setup(
         "all": plotly_require + contrib_require + test_require,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
-    packages=find_packages(),
+    packages=find_packages("src", exclude=["tests"]),
     include_package_data=True,
+    package_dir={"": "src"},
 )

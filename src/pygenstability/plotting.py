@@ -8,8 +8,8 @@ import networkx as nx
 import numpy as np
 from matplotlib import gridspec
 from matplotlib import patches
-from tqdm import tqdm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from tqdm import tqdm
 
 L = logging.getLogger(__name__)
 
@@ -285,17 +285,18 @@ def _plot_ttprime(all_results, ax, time_axis):
     ax.axis([times[0], times[-1], times[0], times[-1]])
     ax.set_xlabel(r"$log_{10}(t)$")
 
+    axins = inset_axes(
+        ax,
+        width="5%",  # width = 5% of parent_bbox width
+        height="50%",  # height : 50%
+        loc="lower left",
+        bbox_to_anchor=(1.1, 0.25, 1, 1),
+        bbox_transform=ax.transAxes,
+        borderpad=0,
+    )
 
-    axins = inset_axes(ax,
-                       width="5%",  # width = 5% of parent_bbox width
-                       height="50%",  # height : 50%
-                       loc='lower left',
-                       bbox_to_anchor=(1.1, 0.25, 1, 1),
-                       bbox_transform=ax.transAxes,
-                       borderpad=0,
-                       )
+    plt.colorbar(contourf_, cax=axins, label="NVI(t,t')")
 
-    plt.colorbar(contourf_, cax=axins, label='NVI(t,t\')')
 
 def _plot_variation_information(all_results, ax, time_axis=True):
     """Plot variation information."""
@@ -318,10 +319,11 @@ def _plot_stability(all_results, ax, time_axis=True):
     ax.set_ylabel("Stability", color="C0")
     ax.yaxis.set_label_position("left")
 
+
 def _plot_optimal_scales(all_results, ax, time_axis=True):
     """Plot stability."""
     times = get_times(all_results, time_axis=time_axis)
-    
+
     ax.plot(
         times,
         all_results["optimal_scale_criterion"],
@@ -338,8 +340,10 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
         c="C4",
         label="optimal scales",
     )
-    
-    #ax.plot(times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0")
+
+    ax.plot(
+        times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0"
+    )
     ax.tick_params("y", colors="C4")
     ax.set_ylabel("Optimal Scale Criterion", color="C4")
     ax.yaxis.set_label_position("left")
@@ -357,32 +361,30 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
         ax1 = ax0.twinx()
     else:
         ax1 = plt.subplot(gs[1, 0])
-    
+
     ax1.set_xticks([])
-    
+
     _plot_variation_information(all_results, ax=ax1, time_axis=time_axis)
-    
+
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-    
+
     ax2 = plt.subplot(gs[0, 0])
-    
+
     if "stability" in all_results:
         _plot_stability(all_results, ax=ax2, time_axis=time_axis)
-    
+
     if "variation_information" in all_results:
         ax3 = ax2.twinx()
         _plot_number_comm(all_results, ax=ax3, time_axis=time_axis)
-    
+
     if "optimal_scale_criterion" in all_results:
         ax4 = plt.subplot(gs[2, 0])
         _plot_optimal_scales(all_results, ax=ax4, time_axis=time_axis)
-    
-        
+
     if figure_name is not None:
         plt.savefig(figure_name, bbox_inches="tight")
-
 
     return ax0, ax1, ax2, ax3, ax4
 

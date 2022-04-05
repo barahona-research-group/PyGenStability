@@ -1,10 +1,11 @@
 """Test main pygenstability module."""
 from pathlib import Path
-from dictdiffer import diff
+
 import numpy as np
-from pygenstability import pygenstability as pgs
 import yaml
-from utils import graph
+from dictdiffer import diff
+
+from pygenstability import pygenstability as pgs
 
 DATA = Path(__file__).absolute().parent / "data"
 

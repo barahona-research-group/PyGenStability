@@ -1,3 +1,4 @@
+"""Conf."""
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -12,6 +13,7 @@
 #
 import os
 import sys
+
 import alabaster
 
 sys.path.insert(0, os.path.abspath("../../"))
@@ -65,4 +67,4 @@ autoclass_content = "both"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ["_static"]
+# html_static_path = ["_static"]

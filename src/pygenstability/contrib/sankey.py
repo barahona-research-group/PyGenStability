@@ -1,16 +1,25 @@
+"""Sankey diagram plots."""
 import numpy as np
+import plotly.graph_objects as go
+from plotly.offline import plot
 
-def plot_sankey(all_results, optimal_scales=True, live=False, filename="communities_sankey.html", time_index=None):
+
+def plot_sankey(
+    all_results,
+    optimal_scales=True,
+    live=False,
+    filename="communities_sankey.html",
+    time_index=None,
+):
     """Plot Sankey diagram of communities accros time (plotly only).
+
     Args:
         all_results (dict): results from run function
+        optimal_scales (bool): use optimal scales or not
         live (bool): if True, interactive figure will appear in browser
         filename (str): filename to save the plot
         time_index (bool): plot time of indices
     """
-    import plotly.graph_objects as go
-    from plotly.offline import plot as _plot
-
     sources = []
     targets = []
     values = []
@@ -22,9 +31,8 @@ def plot_sankey(all_results, optimal_scales=True, live=False, filename="communit
         all_results["community_id_reduced"] = [all_results["community_id"][i] for i in time_index]
 
     community_ids = all_results["community_id_reduced"]
-    if optimal_scales and ('selected_partitions' in all_results.keys()):
-        community_ids = [community_ids[u] for u in all_results['selected_partitions']]
-
+    if optimal_scales and ("selected_partitions" in all_results.keys()):
+        community_ids = [community_ids[u] for u in all_results["selected_partitions"]]
 
     for i in range(len(community_ids) - 1):
         community_source = np.array(community_ids[i])
@@ -55,9 +63,9 @@ def plot_sankey(all_results, optimal_scales=True, live=False, filename="communit
         layout=layout,
     )
 
-    _plot(fig, filename=filename)
+    plot(fig, filename=filename)
 
     if live:
         fig.show()
-        
+
     return fig

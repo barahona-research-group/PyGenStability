@@ -131,10 +131,10 @@ def plot_optimal_scales_plt(all_results, time_axis=True, figure_name="scan_resul
     from pygenstability.plotting import get_times
     from pygenstability.plotting import plot_scan_plt
 
-    _, _, ax2, _ = plot_scan_plt(all_results, time_axis=time_axis, figure_name=None)
+    ax2 = plot_scan_plt(all_results, time_axis=time_axis, figure_name=None)[2]
 
     times = get_times(all_results, time_axis=time_axis)
-    print(np.shape(times), np.shape(all_results["optimal_scale_criterion"]))
+
     ax2.plot(
         times,
         all_results["optimal_scale_criterion"],
