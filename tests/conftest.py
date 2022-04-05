@@ -2,6 +2,8 @@
 import pytest
 import networkx as nx
 
+collect_ignore = ["setup.py"]
+
 @pytest.fixture()
 def graph():
     """Create barbell graph."""
