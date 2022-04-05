@@ -1,6 +1,7 @@
 """Setup."""
-from setuptools import setup, find_packages
 from pybind11.setup_helpers import Pybind11Extension
+from setuptools import find_packages
+from setuptools import setup
 
 __version__ = "0.0.2"
 
@@ -50,7 +51,7 @@ setup(
         "all": plotly_require + contrib_require + test_require,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
-    packages=find_packages('src', exclude=['tests']),
+    packages=find_packages("src", exclude=["tests"]),
     include_package_data=True,
     package_dir={"": "src"},
 )

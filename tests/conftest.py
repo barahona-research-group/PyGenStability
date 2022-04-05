@@ -1,6 +1,6 @@
 """Utils for tests."""
-import pytest
 import networkx as nx
+import pytest
 
 
 @pytest.fixture()

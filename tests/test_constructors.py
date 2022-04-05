@@ -1,9 +1,11 @@
 """Test constructor module."""
 from pathlib import Path
+
 import numpy as np
-from pygenstability import constructors
 import yaml
 from numpy.testing import assert_almost_equal
+
+from pygenstability import constructors
 
 CONSTRUCTORS = [
     "linearized",
