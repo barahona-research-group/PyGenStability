@@ -341,7 +341,9 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
         label="optimal scales",
     )
 
-    # ax.plot(times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0")
+    ax.plot(
+        times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0"
+    )
     ax.tick_params("y", colors="C4")
     ax.set_ylabel("Optimal Scale Criterion", color="C4")
     ax.yaxis.set_label_position("left")
