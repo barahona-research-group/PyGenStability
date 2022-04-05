@@ -20,7 +20,6 @@ def plot_sankey(
         filename (str): filename to save the plot
         time_index (bool): plot time of indices
     """
-
     sources = []
     targets = []
     values = []
