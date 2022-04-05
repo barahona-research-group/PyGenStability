@@ -5,8 +5,6 @@ from pygenstability import constructors
 import yaml
 from numpy.testing import assert_almost_equal
 
-from utils import graph
-
 CONSTRUCTORS = [
     "linearized",
     "continuous_combinatorial",

@@ -4,7 +4,6 @@ from dictdiffer import diff
 import numpy as np
 from pygenstability import pygenstability as pgs
 import yaml
-from utils import graph
 
 DATA = Path(__file__).absolute().parent / "data"
 
