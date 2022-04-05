@@ -49,6 +49,6 @@ setup(
         "all": plotly_require + contrib_require + test_require,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
-    packages=find_packages(include=["pygenstability*"]),
+    packages=find_packages(),
     include_package_data=True,
 )
