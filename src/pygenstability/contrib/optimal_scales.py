@@ -40,7 +40,7 @@ def identify_optimal_scales(results, VI_cutoff=0.1, criterion_threshold=0.8, win
     vi_metric = nvi_moving_average / nvi_moving_average.max()
 
     # compute final criterion
-    criterion = np.sqrt(ttprime_metric ** 2 + vi_metric ** 2)
+    criterion = np.sqrt(ttprime_metric**2 + vi_metric**2)
     results["optimal_scale_criterion"] = criterion / criterion.max()
 
     # return with results dict
