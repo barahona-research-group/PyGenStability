@@ -1,4 +1,7 @@
+"""Sankey diagram plots."""
 import numpy as np
+import plotly.graph_objects as go
+from plotly.offline import plot
 
 
 def plot_sankey(
@@ -9,14 +12,14 @@ def plot_sankey(
     time_index=None,
 ):
     """Plot Sankey diagram of communities accros time (plotly only).
+
     Args:
         all_results (dict): results from run function
+        optimal_scales (bool): use optimal scales or not
         live (bool): if True, interactive figure will appear in browser
         filename (str): filename to save the plot
         time_index (bool): plot time of indices
     """
-    import plotly.graph_objects as go
-    from plotly.offline import plot as _plot
 
     sources = []
     targets = []
@@ -61,7 +64,7 @@ def plot_sankey(
         layout=layout,
     )
 
-    _plot(fig, filename=filename)
+    plot(fig, filename=filename)
 
     if live:
         fig.show()
