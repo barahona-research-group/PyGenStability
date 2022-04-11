@@ -352,7 +352,12 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
 
 def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
-    gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
+    
+    if "optimal_scale_criterion" in all_results:  
+        gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
+    else:
+        gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 1.0])
+ 
     gs.update(hspace=0)
     ax0 = None
     if "ttprime" in all_results:
@@ -382,7 +387,10 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     if "optimal_scale_criterion" in all_results:
         ax4 = plt.subplot(gs[2, 0])
         _plot_optimal_scales(all_results, ax=ax4, time_axis=time_axis)
-
+    else:
+        ax4 = None
+   
+        
     if figure_name is not None:
         plt.savefig(figure_name, bbox_inches="tight")
 
