@@ -375,7 +375,12 @@ def _plot_optimal_scales(all_results, ax, scales):
 def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     scales = get_scales(all_results, scale_axis=scale_axis)
-    gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
+
+    if "optimal_scale_criterion" in all_results:
+        gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
+    else:
+        gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 1.0])
+
     gs.update(hspace=0)
     ax0 = None
     axes = [ax0]
