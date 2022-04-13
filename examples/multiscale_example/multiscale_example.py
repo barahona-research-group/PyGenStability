@@ -14,7 +14,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-def block(n, th):
+def block(n, th, seed):
     rng = np.random.RandomState(seed)
     A = rng.uniform(0, 1, (n, n))
     A[A < th] = 0.0
