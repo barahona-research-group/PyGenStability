@@ -5,9 +5,11 @@ import pickle
 
 from multiprocessing import cpu_count
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 
+from pathlib import Path
 from scipy.linalg import block_diag
 import logging
 
@@ -25,6 +27,9 @@ def block(n, th, seed):
 
 if __name__ == "__main__":
 
+    # define root for storing figures
+    root = str(Path.cwd())+'/examples/multiscale_example/'
+    
     # define size and strength of multiscale structure
     n0 = 270
     th0 = 0.995
@@ -62,7 +67,7 @@ if __name__ == "__main__":
     # plot matrix
     plt.figure()
     plt.imshow(A)
-    plt.savefig("adajcency_matrix.pdf")
+    plt.savefig(root + "adajcency_matrix.pdf", bbox_inches='tight')
 
     # Multiscale structure
     coarse_scale_id = np.zeros(n0)
@@ -124,6 +129,8 @@ if __name__ == "__main__":
     )
     axes[2].set(title=r"Coarse scale, n=3")
 
+    plt.savefig(root + 'multiscale_structure.pdf', bbox_inches='tight')
+
     # converting to csgraph
     G = sp.csgraph.csgraph_from_dense(A)
 
@@ -137,7 +144,10 @@ if __name__ == "__main__":
         constructor="continuous_combinatorial",
         n_workers=min(cpu_count(), 10),
     )
-    results = optimal_scales.identify_optimal_scales(results)
-    plotting.plot_scan(results)
 
-    pickle.dump(results, open("example_scan_results.pkl", "wb"))
+    # obtain optimal scales
+    results = optimal_scales.identify_optimal_scales(results,criterion_threshold=0.2)
+    plotting.plot_scan(results)
+    plt.savefig(root + 'MS_scan.pdf', bbox_inches='tight')
+
+    pickle.dump(results, open(root + "example_scan_results.pkl", "wb"))
