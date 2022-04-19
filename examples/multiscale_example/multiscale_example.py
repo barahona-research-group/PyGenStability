@@ -162,8 +162,6 @@ if __name__ == "__main__":
     n_time = results['run_params']['n_time']
     log_times = np.linspace(min_time,max_time,n_time)
 
-    print('Number of partitions is ',len(results['community_id']), 'and does not match number of Markov scales 100.')
-
     # compare MS partitions to ground truth with NVI
     NVI_scores_fine = np.array([_evaluate_NVI([0,i], [fine_scale_id]+results['community_id']) for i in range(1,n_time+1)])
     NVI_scores_middle = np.array([_evaluate_NVI([0,i], [middle_scale_id]+results['community_id']) for i in range(1,n_time+1)])
