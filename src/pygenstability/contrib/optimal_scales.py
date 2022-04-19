@@ -7,7 +7,7 @@ from skimage.feature import peak_local_max
 L = logging.getLogger("contrib.optimal_scales")
 
 
-def identify_optimal_scales(results, VI_cutoff=0.1, criterion_threshold=0.8, window_size=2):
+def identify_optimal_scales(results, NVI_cutoff=0.1, criterion_threshold=0.2, window_size=2):
     """Identifies optimal scales in Markov Stability.
 
     Stable scales are found from the normalized VI(t, t') matrix by searching for large diagonal
@@ -30,7 +30,7 @@ def identify_optimal_scales(results, VI_cutoff=0.1, criterion_threshold=0.8, win
     # compute ttprime criterion
     _flip = np.flipud(results["ttprime"])
     _n = results["ttprime"].shape[0]
-    plateau_size = [np.sum(np.diag(_flip, k=shift) < VI_cutoff) for shift in range(-_n + 1, _n, 2)]
+    plateau_size = [np.sum(np.diag(_flip, k=shift) < NVI_cutoff) for shift in range(-_n + 1, _n, 2)]
     plateau_moving_average = np.convolve(plateau_size, window, "same")
     ttprime_metric = 1.0 - plateau_moving_average / plateau_moving_average.max()
     ttprime_metric = ttprime_metric / ttprime_metric.max()

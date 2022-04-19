@@ -14,6 +14,7 @@ from tqdm import tqdm
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
+from pygenstability.contrib.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
@@ -76,6 +77,7 @@ def run(
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
+    with_optimal_scales = True,
 ):
     """Main function to compute clustering at various time scales.
 
@@ -137,6 +139,10 @@ def run(
         if with_postprocessing:
             L.info("Apply postprocessing...")
             apply_postprocessing(all_results, pool, constructor=constructor)
+
+            if with_optimal_scales:
+                L.info("Identify optimal scales...")
+                all_results = identify_optimal_scales(all_results,window_size = int(0.1*n_time))
 
     save_results(all_results, filename=result_file)
 
