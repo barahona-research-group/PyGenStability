@@ -135,7 +135,7 @@ if __name__ == "__main__":
     # converting to csgraph
     G = sp.csgraph.csgraph_from_dense(A)
 
-    # run markov stability
+    # run markov stability and identify optimal scales
     results = pgs.run(
         G,
         min_time=-1.5,
@@ -146,8 +146,7 @@ if __name__ == "__main__":
         n_workers=min(cpu_count(), 10),
     )
 
-    # obtain optimal scales
-    results = optimal_scales.identify_optimal_scales(results,criterion_threshold=0.2)
+    # plots results
     plotting.plot_scan(results)
     plt.savefig(root + 'MS_scan.pdf', bbox_inches='tight')
 
