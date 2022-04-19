@@ -164,7 +164,7 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
     """Compute an information measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(_evaluate_VI, top_partitions=selected_partitions)
+    worker = partial(_evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["variation_information"].append(
@@ -172,8 +172,8 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
     )
 
 
-def _evaluate_VI(index_pair, top_partitions):
-    """Worker for VI evaluations."""
+def _evaluate_NVI(index_pair, top_partitions):
+    """Worker for NVI evaluations."""
     MI = mutual_info_score(
         top_partitions[index_pair[0]],
         top_partitions[index_pair[1]],
@@ -243,7 +243,7 @@ def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
-    worker = partial(_evaluate_VI, top_partitions=all_results["community_id"])
+    worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
