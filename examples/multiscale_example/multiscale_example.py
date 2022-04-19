@@ -1,6 +1,7 @@
 import pygenstability as pgs
 from pygenstability import plotting
 from pygenstability.contrib import optimal_scales
+from pygenstability.pygenstability import _evaluate_NVI
 import pickle
 
 from multiprocessing import cpu_count
@@ -151,3 +152,45 @@ if __name__ == "__main__":
     plt.savefig(root + 'MS_scan.pdf', bbox_inches='tight')
 
     pickle.dump(results, open(root + "example_scan_results.pkl", "wb"))
+
+    # with open(root + "example_scan_results.pkl", 'rb') as handle:
+    #     results = pickle.load(handle)
+
+    # get log times for x-axis
+    min_time = results['run_params']['min_time']
+    max_time = results['run_params']['max_time']
+    n_time = results['run_params']['n_time']
+    log_times = np.linspace(min_time,max_time,n_time)
+
+    print('Number of partitions is ',len(results['community_id']), 'and does not match number of Markov scales 100.')
+
+    # compare MS partitions to ground truth with NVI
+    NVI_scores_fine = np.array([_evaluate_NVI([0,i], [fine_scale_id]+results['community_id']) for i in range(1,n_time+1)])
+    NVI_scores_middle = np.array([_evaluate_NVI([0,i], [middle_scale_id]+results['community_id']) for i in range(1,n_time+1)])
+    NVI_scores_coarse = np.array([_evaluate_NVI([0,i], [coarse_scale_id]+results['community_id']) for i in range(1,n_time+1)])
+    
+    # plot NVI scores
+    fig, ax = plt.subplots(1,figsize =(15,3.5))
+    ax.plot(log_times,NVI_scores_fine, label = 'Fine')
+    ax.plot(log_times,NVI_scores_middle, label = 'Middle')
+    ax.plot(log_times,NVI_scores_coarse, label = 'Coarse')
+
+    # plot minima of NVI scores
+    ax.scatter(log_times[np.argmin(NVI_scores_fine)],NVI_scores_fine.min(),marker='.',s=300)
+    ax.scatter(log_times[np.argmin(NVI_scores_middle)],NVI_scores_middle.min(),marker='.',s=300)
+    ax.scatter(log_times[np.argmin(NVI_scores_coarse)],NVI_scores_coarse.min(),marker='.',s=300)
+
+    # plot selected partitions
+    selected_partitions = results['selected_partitions']
+
+    for i in range(len(selected_partitions)):
+        if i == 0:
+            ax.axvline(x = log_times[selected_partitions[i]], ls="--", color = 'red', label = 'Selected Markov scales')
+        else:
+            ax.axvline(x = log_times[selected_partitions[i]], ls="--", color = 'red')
+
+    ax.set(xlabel = r"$log_{10}(t)$",ylabel = 'NVI') #yticks = [0.2,0.4,0.6,0.8] ) 
+    ax.legend(loc=3)
+    plt.savefig(root + 'NVI_comparison.pdf', bbox_inches='tight')
+
+ 
