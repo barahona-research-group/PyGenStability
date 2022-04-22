@@ -77,7 +77,8 @@ def run(
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
-    with_optimal_scales = True,
+    with_optimal_scales=True,
+    optimal_scales_kwargs=None,
 ):
     """Main function to compute clustering at various time scales.
 
@@ -99,6 +100,7 @@ def run(
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
+        with_optimal_scales (bool): appky optimal scale detection algorithm
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -142,7 +144,9 @@ def run(
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
-                all_results = identify_optimal_scales(all_results,window_size = int(0.1*n_time))
+                if optimal_scales_kwargs is None:
+                    optimal_scales_kwargs = {"window_size": int(0.1 * n_time)}
+                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
 
