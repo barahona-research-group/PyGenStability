@@ -142,11 +142,6 @@ if __name__ == "__main__":
     plotting.plot_scan(results)
     plt.savefig("MS_scan.pdf", bbox_inches="tight")
 
-    pickle.dump(results, open("example_scan_results.pkl", "wb"))
-
-    # with open(root + "example_scan_results.pkl", 'rb') as handle:
-    #     results = pickle.load(handle)
-
     # get log times for x-axis
     min_time = results["run_params"]["min_time"]
     max_time = results["run_params"]["max_time"]
@@ -180,9 +175,21 @@ if __name__ == "__main__":
     ax.plot(log_times, NVI_scores_coarse, label="Coarse")
 
     # plot minima of NVI scores
-    ax.scatter(log_times[np.argmin(NVI_scores_fine)], NVI_scores_fine.min(), marker=".", s=300)
-    ax.scatter(log_times[np.argmin(NVI_scores_middle)], NVI_scores_middle.min(), marker=".", s=300)
-    ax.scatter(log_times[np.argmin(NVI_scores_coarse)], NVI_scores_coarse.min(), marker=".", s=300)
+    ax.scatter(
+        log_times[np.argmin(NVI_scores_fine)], NVI_scores_fine.min(), marker=".", s=300
+    )
+    ax.scatter(
+        log_times[np.argmin(NVI_scores_middle)],
+        NVI_scores_middle.min(),
+        marker=".",
+        s=300,
+    )
+    ax.scatter(
+        log_times[np.argmin(NVI_scores_coarse)],
+        NVI_scores_coarse.min(),
+        marker=".",
+        s=300,
+    )
 
     # plot selected partitions
     selected_partitions = results["selected_partitions"]
@@ -199,6 +206,6 @@ if __name__ == "__main__":
             ax.axvline(x=log_times[selected_partitions[i]], ls="--", color="red")
 
     ax.set(xlabel=r"$log_{10}(t)$", ylabel="NVI")  # yticks = [0.2,0.4,0.6,0.8] )
-    plt.axhline(0, c='k', ls='--')
+    plt.axhline(0, c="k", ls="--")
     ax.legend(loc=3)
     plt.savefig("NVI_comparison.pdf", bbox_inches="tight")
