@@ -100,7 +100,8 @@ def run(
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
-        with_optimal_scales (bool): appky optimal scale detection algorithm
+        with_optimal_scales (bool): apply optimal scale detection algorithm
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
