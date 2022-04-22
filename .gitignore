@@ -117,4 +117,5 @@ test/data/
 
 .DS_Store
 
-#
+# vscode
+.vscode/
