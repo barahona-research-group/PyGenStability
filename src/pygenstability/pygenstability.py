@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
+from pygenstability.contrib.optimal_scales import identify_optimal_scales
 from pygenstability.io import save_results
 
 L = logging.getLogger(__name__)
@@ -76,6 +77,8 @@ def run(
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
+    with_optimal_scales=True,
+    optimal_scales_kwargs=None,
 ):
     """Main function to compute clustering at various time scales.
 
@@ -97,6 +100,8 @@ def run(
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
+        with_optimal_scales (bool): apply optimal scale detection algorithm
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -110,7 +115,7 @@ def run(
     constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
     with multiprocessing.Pool(n_workers) as pool:
 
-        L.info("Start loop over times...")
+        L.info("Loop over times...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
         for time in tqdm(times, disable=tqdm_disable):
@@ -131,12 +136,18 @@ def run(
             save_results(all_results, filename=result_file)
 
         if with_ttprime:
-            L.info("Start computing ttprimes...")
+            L.info("Compute ttprimes...")
             compute_ttprime(all_results, pool)
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
             apply_postprocessing(all_results, pool, constructor=constructor)
+
+            if with_optimal_scales:
+                L.info("Identify optimal scales...")
+                if optimal_scales_kwargs is None:
+                    optimal_scales_kwargs = {"window_size": int(0.1 * n_time)}
+                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
 
@@ -164,7 +175,7 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
     """Compute an information measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(_evaluate_VI, top_partitions=selected_partitions)
+    worker = partial(_evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["variation_information"].append(
@@ -172,8 +183,8 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
     )
 
 
-def _evaluate_VI(index_pair, top_partitions):
-    """Worker for VI evaluations."""
+def _evaluate_NVI(index_pair, top_partitions):
+    """Worker for NVI evaluations."""
     MI = mutual_info_score(
         top_partitions[index_pair[0]],
         top_partitions[index_pair[1]],
@@ -243,7 +254,7 @@ def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
-    worker = partial(_evaluate_VI, top_partitions=all_results["community_id"])
+    worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 

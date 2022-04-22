@@ -2,6 +2,8 @@
 *.gpickle
 *.svg
 *.png
+*.pdf
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -115,4 +117,5 @@ test/data/
 
 .DS_Store
 
-#
+# vscode
+.vscode/

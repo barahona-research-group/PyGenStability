@@ -355,6 +355,8 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     ax0 = None
+    axes = [ax0]
+
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[1, 0])
         _plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
@@ -362,6 +364,7 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     else:
         ax1 = plt.subplot(gs[1, 0])
 
+    axes.append(ax1)
     ax1.set_xticks([])
 
     _plot_variation_information(all_results, ax=ax1, time_axis=time_axis)
@@ -374,19 +377,22 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
 
     if "stability" in all_results:
         _plot_stability(all_results, ax=ax2, time_axis=time_axis)
+        axes.append(ax2)
 
     if "variation_information" in all_results:
         ax3 = ax2.twinx()
         _plot_number_comm(all_results, ax=ax3, time_axis=time_axis)
+        axes.append(ax3)
 
     if "optimal_scale_criterion" in all_results:
         ax4 = plt.subplot(gs[2, 0])
         _plot_optimal_scales(all_results, ax=ax4, time_axis=time_axis)
+        axes.append(ax4)
 
     if figure_name is not None:
         plt.savefig(figure_name, bbox_inches="tight")
 
-    return ax0, ax1, ax2, ax3, ax4
+    return axes
 
 
 def plot_clustered_adjacency(
