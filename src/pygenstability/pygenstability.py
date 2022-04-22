@@ -13,8 +13,8 @@ from tqdm import tqdm
 
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
-from pygenstability.io import save_results
 from pygenstability.contrib.optimal_scales import identify_optimal_scales
+from pygenstability.io import save_results
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
@@ -100,7 +100,8 @@ def run(
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
-        with_optimal_scales (bool): appky optimal scale detection algorithm
+        with_optimal_scales (bool): apply optimal scale detection algorithm
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
