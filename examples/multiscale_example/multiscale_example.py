@@ -51,12 +51,6 @@ if __name__ == "__main__":
     # remove self-loops
     A -= np.diag(np.diag(A))
 
-    # binarized
-    A[A > 0] = 1
-
-    # remove self-loops
-    A -= np.diag(np.diag(A))
-
     # plot matrix
     plt.figure()
     plt.imshow(A)
