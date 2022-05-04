@@ -138,12 +138,11 @@ def run(
         if with_postprocessing:
             L.info("Apply postprocessing...")
             apply_postprocessing(all_results, pool, constructor=constructor)
-        
-        if with_ttprime:
+
+        if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
             compute_ttprime(all_results, pool)
 
-            # optimal scale selection can only be applied when ttprime is computed
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
                 if optimal_scales_kwargs is None:
