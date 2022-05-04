@@ -146,7 +146,7 @@ def run(
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
                 if optimal_scales_kwargs is None:
-                    optimal_scales_kwargs = {"window_size": int(0.1 * n_time)}
+                    optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_time))}
                 all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
