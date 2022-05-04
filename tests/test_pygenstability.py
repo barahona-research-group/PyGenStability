@@ -22,25 +22,31 @@ def _to_list(data):
 
 def test_run(graph):
     # test run with default params
-    results = pgs.run(graph)
+    results = pgs.run(graph, with_optimal_scales=False)
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
     diff(expected_results, results)
 
-    results = pgs.run(graph, with_spectral_gap=True)
+    results = pgs.run(graph, with_spectral_gap=True, with_optimal_scales=False)
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
     diff(expected_results, results)
 
-    results = pgs.run(graph, with_VI=False, with_postprocessing=False, with_ttprime=False)
+    results = pgs.run(
+        graph,
+        with_VI=False,
+        with_postprocessing=False,
+        with_ttprime=False,
+        with_optimal_scales=False,
+    )
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     diff(expected_results, results)
 
-    results = pgs.run(graph, times=[1, 2, 3, 4], log_time=False)
+    results = pgs.run(graph, times=[1, 2, 3, 4], log_time=False, with_optimal_scales=False)
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
