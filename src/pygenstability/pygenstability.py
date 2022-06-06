@@ -113,13 +113,22 @@ def run(
         times=times,
     )
     constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
+
     with multiprocessing.Pool(n_workers) as pool:
 
-        L.info("Loop over times...")
+        L.info("Precompute constructors...")
+        precomputed_constructors = list(tqdm(pool.imap(constructor.get_data,times), total = n_time, disable=tqdm_disable))
+
+        L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
-        for time in tqdm(times, disable=tqdm_disable):
-            quality_matrix, null_model, global_shift = constructor.get_data(time)
+        
+        for i, time in tqdm(enumerate(times), total = n_time, disable=tqdm_disable):
+            # retrieve precomputed constructor
+            quality_matrix = precomputed_constructors[i][0]
+            null_model = precomputed_constructors[i][1]
+            global_shift = precomputed_constructors[i][2]
+            # stability optimisation
             louvain_results = _run_several_louvains(
                 quality_matrix, null_model, global_shift, n_louvain, pool
             )
