@@ -140,6 +140,7 @@ def run(
         log_time=log_time,
         times=times,
     )
+
     with multiprocessing.Pool(n_workers) as pool:
         constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
 
