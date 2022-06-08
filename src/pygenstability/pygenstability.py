@@ -146,7 +146,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor=constructor)
+            apply_postprocessing(all_results, pool, precomputed_constructors)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -273,7 +273,7 @@ def compute_ttprime(all_results, pool):
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
+def apply_postprocessing(all_results, pool, precomputed_constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -282,7 +282,12 @@ def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
         total=len(all_results["times"]),
         disable=tqdm_disable,
     ):
-        quality_matrix, null_model, global_shift = constructor.get_data(time)
+        # retrieve precomputed constructor
+        quality_matrix = precomputed_constructors[i][0]
+        null_model = precomputed_constructors[i][1]
+        global_shift = precomputed_constructors[i][2]
+
+        # define worker function
         worker = partial(
             _evaluate_quality,
             qualities_index=_to_indices(quality_matrix),
