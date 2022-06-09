@@ -173,13 +173,15 @@ def run(
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool)
+            compute_ttprime(all_results, pool, tqdm_disable)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
                 if optimal_scales_kwargs is None:
                     optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_time))}
-                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
+                all_results = identify_optimal_scales(
+                    all_results, **optimal_scales_kwargs
+                )
 
     save_results(all_results, filename=result_file)
 
@@ -281,9 +283,15 @@ def compute_ttprime(all_results, pool):
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
     worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
-    ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
+    ttprime_list = tqdm(
+        pool.imap(worker, index_pairs, chunksize=chunksize),
+        total=len(index_pairs),
+        disable=tqdm_disable,
+    )
 
-    all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
+    all_results["ttprime"] = np.zeros(
+        [len(all_results["times"]), len(all_results["times"])]
+    )
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
@@ -308,13 +316,18 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
                 pool.map(
                     worker,
                     all_results_raw["community_id"],
-                    chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
+                    chunksize=_get_chunksize(
+                        len(all_results_raw["community_id"]), pool
+                    ),
                 )
             )
         )
 
-        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
-        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
+        all_results["community_id"][i] = all_results_raw["community_id"][
             best_quality_id
         ]
+        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        all_results["number_of_communities"][i] = all_results_raw[
+            "number_of_communities"
+        ][best_quality_id]
+
