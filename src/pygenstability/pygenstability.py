@@ -279,12 +279,16 @@ def run_several_louvains(constructor, n_runs, pool):
 
 
 @timing
-def compute_ttprime(all_results, pool):
+def compute_ttprime(all_results, pool, tqdm_disable=False):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
     worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
-    ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
+    ttprime_list = tqdm(
+        pool.imap(worker, index_pairs, chunksize=chunksize),
+        total=len(index_pairs),
+        disable=tqdm_disable,
+    )
 
     all_results["ttprime"] = np.zeros(
         [len(all_results["times"]), len(all_results["times"])]
