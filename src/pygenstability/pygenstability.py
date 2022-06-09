@@ -112,18 +112,26 @@ def run(
         log_time=log_time,
         times=times,
     )
-    constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
+    constructor = load_constructor(
+        constructor, graph, with_spectral_gap=with_spectral_gap
+    )
 
     with multiprocessing.Pool(n_workers) as pool:
 
         L.info("Precompute constructors...")
-        precomputed_constructors = list(tqdm(pool.imap(constructor.get_data,times), total = n_time, disable=tqdm_disable))
+        precomputed_constructors = list(
+            tqdm(
+                pool.imap(constructor.get_data, times),
+                total=n_time,
+                disable=tqdm_disable,
+            )
+        )
 
         L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
-        
-        for i, time in tqdm(enumerate(times), total = n_time, disable=tqdm_disable):
+
+        for i, time in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
             # retrieve precomputed constructor
             quality_matrix = precomputed_constructors[i][0]
             null_model = precomputed_constructors[i][1]
@@ -146,24 +154,30 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, precomputed_constructors)
+            apply_postprocessing(
+                all_results, pool, precomputed_constructors, tqdm_disable
+            )
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool)
+            compute_ttprime(all_results, pool, tqdm_disable)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
                 if optimal_scales_kwargs is None:
                     optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_time))}
-                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
+                all_results = identify_optimal_scales(
+                    all_results, **optimal_scales_kwargs
+                )
 
     save_results(all_results, filename=result_file)
 
     return dict(all_results)
 
 
-def _process_louvain_run(time, louvain_results, all_results, variation_information=None):
+def _process_louvain_run(
+    time, louvain_results, all_results, variation_information=None
+):
     """Convert the louvain outputs to useful data and save it."""
     stabilities = np.array([res[0] for res in louvain_results])
     communities = np.array([res[1] for res in louvain_results])
@@ -195,8 +209,7 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
 def _evaluate_NVI(index_pair, top_partitions):
     """Worker for NVI evaluations."""
     MI = mutual_info_score(
-        top_partitions[index_pair[0]],
-        top_partitions[index_pair[1]],
+        top_partitions[index_pair[0]], top_partitions[index_pair[1]],
     )
     Ex = entropy(top_partitions[index_pair[0]])
     Ey = entropy(top_partitions[index_pair[1]])
@@ -260,20 +273,28 @@ def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool
     return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
-def compute_ttprime(all_results, pool):
+def compute_ttprime(all_results, pool, tqdm_disable=False):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
     worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
-    ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
+    ttprime_list = tqdm(
+        pool.imap(worker, index_pairs, chunksize=chunksize),
+        total=len(index_pairs),
+        disable=tqdm_disable,
+    )
 
-    all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
+    all_results["ttprime"] = np.zeros(
+        [len(all_results["times"]), len(all_results["times"])]
+    )
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-def apply_postprocessing(all_results, pool, precomputed_constructors, tqdm_disable=False):
+def apply_postprocessing(
+    all_results, pool, precomputed_constructors, tqdm_disable=False
+):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -299,13 +320,18 @@ def apply_postprocessing(all_results, pool, precomputed_constructors, tqdm_disab
                 pool.map(
                     worker,
                     all_results_raw["community_id"],
-                    chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
+                    chunksize=_get_chunksize(
+                        len(all_results_raw["community_id"]), pool
+                    ),
                 )
             )
         )
 
-        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
-        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
+        all_results["community_id"][i] = all_results_raw["community_id"][
             best_quality_id
         ]
+        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        all_results["number_of_communities"][i] = all_results_raw[
+            "number_of_communities"
+        ][best_quality_id]
+
