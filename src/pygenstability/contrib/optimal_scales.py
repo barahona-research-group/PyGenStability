@@ -2,12 +2,14 @@
 import logging
 
 import numpy as np
-from skimage.feature import peak_local_max
+# from skimage.feature import peak_local_max
+import pandas as pd
+from scipy.misc import derivative
 
 L = logging.getLogger("contrib.optimal_scales")
 
 
-def identify_optimal_scales(results, NVI_cutoff=0.1, criterion_threshold=0.2, window_size=2):
+def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     """Identifies optimal scales in Markov Stability.
 
     Stable scales are found from the normalized VI(t, t') matrix by searching for large diagonal
@@ -25,33 +27,55 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, criterion_threshold=0.2, wi
     Returns:
         result dictionary with two new keys: 'selected_partitions' and 'optimal_scale_criterion'
     """
-    window = np.ones(window_size) / window_size
+   
+    # get diagonals of ttprime matrix
+    ttprime = results["ttprime"]
+    ttprime_diagonals = []
+    n = len(ttprime)
+    ttprime_flipped = np.rot90(ttprime)
+    for i in range(1, 2 * n, 2):
+        ttprime_diagonals.append(np.diagonal(ttprime_flipped, offset=i - n, axis1=0))
 
-    # compute ttprime criterion
-    _flip = np.flipud(results["ttprime"])
-    _n = results["ttprime"].shape[0]
-    plateau_size = [np.sum(np.diag(_flip, k=shift) < NVI_cutoff) for shift in range(-_n + 1, _n, 2)]
-    plateau_moving_average = np.convolve(plateau_size, window, "same")
-    ttprime_metric = 1.0 - plateau_moving_average / plateau_moving_average.max()
-    ttprime_metric = ttprime_metric / ttprime_metric.max()
+    # ttprime_metric is size of diagonal plateau using NVI_cutoff
+    ttprime_metric = np.asarray([np.sum(diagonal < NVI_cutoff) for diagonal in ttprime_diagonals])
 
-    # compute normalised VI criterion
-    nvi_moving_average = np.convolve(results["variation_information"], window, "same")
-    vi_metric = nvi_moving_average / nvi_moving_average.max()
-
-    # compute final criterion
-    criterion = np.sqrt(ttprime_metric**2 + vi_metric**2)
-    results["optimal_scale_criterion"] = criterion / criterion.max()
-
-    # return with results dict
-    results["selected_partitions"] = sorted(
-        peak_local_max(1.0 - criterion, min_distance=2, threshold_abs=criterion_threshold).flatten()
+    # apply moving mean of given window size and normalise
+    ttprime_metric = pd.Series(ttprime_metric)
+    ttprime_metric = np.roll(
+        np.asarray(ttprime_metric.rolling(window=window_size, win_type="triang").mean()),
+        -int(window_size / 2),
     )
+    ttprime_metric = 1 - ttprime_metric / np.max(np.nan_to_num(ttprime_metric))
+    ttprime_metric = ttprime_metric / np.max(np.nan_to_num(ttprime_metric))
+
+    # nvi_metric is moving mean of NVI(t)
+    nvi_metric = pd.Series(results["variation_information"])
+    nvi_metric = np.roll(
+        np.asarray(nvi_metric.rolling(window=window_size, win_type="triang").mean()),
+        -int(window_size / 2),
+    )
+    nvi_metric = nvi_metric / np.max(np.nan_to_num(nvi_metric))
+
+    # compute final criterion and normalise
+    criterion = np.sqrt((ttprime_metric**2 + nvi_metric**2) / 2)
+    criterion = criterion / np.max(np.nan_to_num(criterion))
+    results["optimal_scale_criterion"] = criterion
+
+    # selected scales are local minima of criterion
+    criterion_gradient = np.gradient(criterion)
+    selected_partitions = []
+    for i in range(len(criterion_gradient) - 1):
+        if np.sign(criterion_gradient)[i] == -1 and np.sign(criterion_gradient)[i + 1] == 1:
+            selected_partitions.append(i)
+    
+    # return with results dict
+    results["selected_partitions"] = selected_partitions
+
     return results
 
 
 def plot_optimal_scales(
-    all_results,
+    results,
     time_axis=True,
     figure_name="scan_results.pdf",
     use_plotly=False,
@@ -59,14 +83,14 @@ def plot_optimal_scales(
     plotly_filename="scan_results.html",
 ):
     """Plot scan results with optimal scales."""
-    if len(all_results["times"]) == 1:
+    if len(results["times"]) == 1:
         L.info("Cannot plot the results if only one time point, we display the result instead:")
-        L.info(all_results)
+        L.info(results)
         return
 
     if use_plotly:
         try:
-            plot_optimal_scales_plotly(all_results, live=live, filename=plotly_filename)
+            plot_optimal_scales_plotly(results, live=live, filename=plotly_filename)
         except ImportError:
             L.warning(
                 "Plotly is not installed, please install package with \
@@ -74,23 +98,23 @@ def plot_optimal_scales(
             )
 
     else:
-        plot_optimal_scales_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+        plot_optimal_scales_plt(results, time_axis=time_axis, figure_name=figure_name)
 
 
-def plot_optimal_scales_plotly(all_results, live=False, filename="scan_results.pdf"):
+def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf"):
     """Plot optimal scales on plotly."""
     from plotly.offline import plot as _plot
 
     from pygenstability.plotting import get_times
     from pygenstability.plotting import plot_scan_plotly
 
-    fig, _ = plot_scan_plotly(all_results, live=False, filename=None)
+    fig, _ = plot_scan_plotly(results, live=False, filename=None)
 
-    times = get_times(all_results, time_axis=True)
+    times = get_times(results, time_axis=True)
 
     fig.add_scatter(
         x=times,
-        y=all_results["optimal_scale_criterion"],
+        y=results["optimal_scale_criterion"],
         mode="lines+markers",
         name="Optimal Scale Criterion",
         yaxis="y5",
@@ -99,8 +123,8 @@ def plot_optimal_scales_plotly(all_results, live=False, filename="scan_results.p
     )
 
     fig.add_scatter(
-        x=times[all_results["selected_partitions"]],
-        y=all_results["optimal_scale_criterion"][all_results["selected_partitions"]],
+        x=times[results["selected_partitions"]],
+        y=results["optimal_scale_criterion"][results["selected_partitions"]],
         mode="markers",
         name="Optimal Scale",
         yaxis="y5",
@@ -124,28 +148,28 @@ def plot_optimal_scales_plotly(all_results, live=False, filename="scan_results.p
         fig.show()
 
 
-def plot_optimal_scales_plt(all_results, time_axis=True, figure_name="scan_results.pdf"):
+def plot_optimal_scales_plt(results, time_axis=True, figure_name="scan_results.pdf"):
     """Plot scan results with optimal scales with matplotlib."""
     import matplotlib.pyplot as plt
 
     from pygenstability.plotting import get_times
     from pygenstability.plotting import plot_scan_plt
 
-    ax2 = plot_scan_plt(all_results, time_axis=time_axis, figure_name=None)[2]
+    ax2 = plot_scan_plt(results, time_axis=time_axis, figure_name=None)[2]
 
-    times = get_times(all_results, time_axis=time_axis)
+    times = get_times(results, time_axis=time_axis)
 
     ax2.plot(
         times,
-        all_results["optimal_scale_criterion"],
+        results["optimal_scale_criterion"],
         "-",
         lw=2.0,
         c="C4",
         label="optimal scale criterion",
     )
     ax2.plot(
-        times[all_results["selected_partitions"]],
-        all_results["optimal_scale_criterion"][all_results["selected_partitions"]],
+        times[results["selected_partitions"]],
+        results["optimal_scale_criterion"][results["selected_partitions"]],
         "o",
         lw=2.0,
         c="C4",
