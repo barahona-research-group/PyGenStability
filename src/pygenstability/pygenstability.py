@@ -163,7 +163,7 @@ def run(
     return dict(all_results)
 
 
-def _process_louvain_run(time, louvain_results, all_results, variation_information=None):
+def _process_louvain_run(time, louvain_results, all_results):
     """Convert the louvain outputs to useful data and save it."""
     stabilities = np.array([res[0] for res in louvain_results])
     communities = np.array([res[1] for res in louvain_results])
@@ -173,9 +173,6 @@ def _process_louvain_run(time, louvain_results, all_results, variation_informati
     all_results["number_of_communities"].append(np.max(communities[best_run_id]) + 1)
     all_results["stability"].append(stabilities[best_run_id])
     all_results["community_id"].append(communities[best_run_id])
-
-    if variation_information is not None:
-        all_results["variation_information"].append(variation_information)
 
     return communities
 

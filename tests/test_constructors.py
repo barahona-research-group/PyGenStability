@@ -51,3 +51,9 @@ def test_load_constructor(graph):
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}_gap.yaml", "r"))
         assert_almost_equal(data["quality"], expected_data["quality"])
         assert_almost_equal(data["null_model"], expected_data["null_model"])
+
+
+def test__total_degree():
+    """Test check total degree."""
+    with pytest.raises(Exception):
+        constructors._check_total_degree(np.array([1, 1, -2]))
