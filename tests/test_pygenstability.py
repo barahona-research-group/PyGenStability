@@ -33,7 +33,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results = pgs.run(graph_signed)
 
     constructor = load_constructor("continuous_combinatorial", graph)
-    results = pgs.run(graph_signed, constructor)
+    results = pgs.run(graph_signed, constructor=constructor)
 
     results = pgs.run(graph, with_optimal_scales=False)
     results = _to_list(results)
