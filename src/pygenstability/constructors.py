@@ -49,7 +49,7 @@ def _check_total_degree(degrees):
 
 def get_spectral_gap(laplacian):
     """Compute spectral gap."""
-    spectral_gap = abs(sp.linalg.eigs(laplacian, which="SM", k=2)[0][1])
+    spectral_gap = max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0]))
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
     return spectral_gap
 
@@ -110,7 +110,7 @@ class constructor_linearized(Constructor):
         return {
             "quality": time * self.partial_quality_matrix,
             "null_model": self.partial_null_model,
-            "shift": 1 - time,
+            "shift": float(1 - time),
         }
 
 

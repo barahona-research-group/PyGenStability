@@ -55,7 +55,7 @@ def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None
 def _get_params(all_locals):
     """Get run paramters from the local variables."""
     del all_locals["graph"]
-    if callable(all_locals["constructor"]):
+    if hasattr(all_locals["constructor"], "get_data"):
         all_locals["constructor"] = "custom constructor"
     return all_locals
 
@@ -163,7 +163,7 @@ def run(
     return dict(all_results)
 
 
-def _process_louvain_run(time, louvain_results, all_results, variation_information=None):
+def _process_louvain_run(time, louvain_results, all_results):
     """Convert the louvain outputs to useful data and save it."""
     stabilities = np.array([res[0] for res in louvain_results])
     communities = np.array([res[1] for res in louvain_results])
@@ -173,9 +173,6 @@ def _process_louvain_run(time, louvain_results, all_results, variation_informati
     all_results["number_of_communities"].append(np.max(communities[best_run_id]) + 1)
     all_results["stability"].append(stabilities[best_run_id])
     all_results["community_id"].append(communities[best_run_id])
-
-    if variation_information is not None:
-        all_results["variation_information"].append(variation_information)
 
     return communities
 
@@ -223,9 +220,7 @@ def _evaluate_louvain(_, quality_indices, quality_values, null_model, global_shi
         np.shape(null_model)[0],
         1.0,
     )
-    if global_shift is not None:
-        return stability + global_shift, community_id
-    return stability, community_id
+    return stability + global_shift, community_id
 
 
 def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
@@ -240,9 +235,7 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
         1.0,
         partition_id,
     )
-    if global_shift is not None:
-        return quality + global_shift
-    return quality
+    return quality + global_shift
 
 
 def _run_several_louvains(constructor, n_runs, pool):
@@ -253,7 +246,7 @@ def _run_several_louvains(constructor, n_runs, pool):
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],
-        global_shift=constructor.get("shift"),
+        global_shift=constructor.get("shift", 0.0),
     )
 
     chunksize = _get_chunksize(n_runs, pool)
@@ -284,7 +277,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
             _evaluate_quality,
             qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
-            global_shift=constructor.get("shift"),
+            global_shift=constructor.get("shift", 0.0),
         )
         best_quality_id = np.argmax(
             list(
