@@ -30,7 +30,7 @@ def test_load_constructor(graph):
         constructors.load_constructor(CONSTRUCTORS[0], None)
 
     with pytest.raises(Exception):
-        constructors.load_constructor("WRONG", None)
+        constructors.load_constructor("WRONG", graph)
 
     with pytest.raises(Exception):
         constructors.load_constructor([1, 2, 3], graph)
