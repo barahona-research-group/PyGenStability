@@ -27,10 +27,13 @@ def _list_data(data):
 def test_load_constructor(graph):
     """Test load constructors."""
     with pytest.raises(Exception):
-        constructors.load_constructor(CONSTRUCTORS[0], None).get_data(1)
+        constructors.load_constructor(CONSTRUCTORS[0], None)
 
     with pytest.raises(Exception):
-        constructors.load_constructor([1, 2, 3], graph).get_data(1)
+        constructors.load_constructor("WRONG", None)
+
+    with pytest.raises(Exception):
+        constructors.load_constructor([1, 2, 3], graph)
 
     constructor = constructors.load_constructor(CONSTRUCTORS[0], graph)
 
@@ -56,4 +59,4 @@ def test_load_constructor(graph):
 def test__total_degree():
     """Test check total degree."""
     with pytest.raises(Exception):
-        constructors._check_total_degree(np.array([1, 1, -2]))
+        constructors._check_total_degree(np.array([1, 1, -3]))
