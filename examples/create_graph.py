@@ -32,7 +32,7 @@ def create_sbm():
     plt.savefig("ground_truth.png", bbox_inches="tight")
 
     # save adjacency with pickle
-    adjacency =  nx.adjacency_matrix(graph, weight="weight")
+    adjacency = nx.to_numpy_matrix(graph, weight="weight")
     with open("sbm_graph.pkl", "wb") as pickle_file:
         pickle.dump(adjacency, pickle_file)
 
@@ -47,6 +47,7 @@ def create_sbm():
     edges.to_csv("edges.csv", index=False)
 
     return adjacency
+
 
 if __name__ == "__main__":
     create_sbm()

@@ -117,7 +117,7 @@ def run(
     with multiprocessing.Pool(n_workers) as pool:
 
         L.info("Precompute constructors...")
-        precomputed_constructors = list(
+        constructors = list(
             tqdm(
                 pool.imap(constructor.get_data, times),
                 total=n_time,
@@ -130,14 +130,8 @@ def run(
         all_results["run_params"] = run_params
 
         for i, time in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
-            # retrieve precomputed constructor
-            quality_matrix = precomputed_constructors[i][0]
-            null_model = precomputed_constructors[i][1]
-            global_shift = precomputed_constructors[i][2]
             # stability optimisation
-            louvain_results = _run_several_louvains(
-                quality_matrix, null_model, global_shift, n_louvain, pool
-            )
+            louvain_results = _run_several_louvains(constructors[i], n_louvain, pool)
             communities = _process_louvain_run(time, louvain_results, all_results)
 
             if with_VI:
@@ -152,11 +146,11 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, precomputed_constructors, tqdm_disable)
+            apply_postprocessing(all_results, pool, constructors, tqdm_disable)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool, tqdm_disable)
+            compute_ttprime(all_results, pool)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
@@ -251,22 +245,22 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality
 
 
-def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool):
+def _run_several_louvains(constructor, n_runs, pool):
     """Run several louvain on the current quality matrix."""
-    quality_indices, quality_values = _to_indices(quality_matrix)
+    quality_indices, quality_values = _to_indices(constructor["quality"])
     worker = partial(
         _evaluate_louvain,
         quality_indices=quality_indices,
         quality_values=quality_values,
-        null_model=null_model,
-        global_shift=global_shift,
+        null_model=constructor["null"],
+        global_shift=constructor.get("shift"),
     )
 
     chunksize = _get_chunksize(n_runs, pool)
     return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
-def compute_ttprime(all_results, pool, tqdm_disable=False):
+def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
     worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
@@ -279,26 +273,18 @@ def compute_ttprime(all_results, pool, tqdm_disable=False):
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-def apply_postprocessing(all_results, pool, precomputed_constructors, tqdm_disable=False):
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
-    for i, time in tqdm(
-        enumerate(all_results["times"]),
-        total=len(all_results["times"]),
-        disable=tqdm_disable,
+    for i, constructor in tqdm(
+        enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
-        # retrieve precomputed constructor
-        quality_matrix = precomputed_constructors[i][0]
-        null_model = precomputed_constructors[i][1]
-        global_shift = precomputed_constructors[i][2]
-
-        # define worker function
         worker = partial(
             _evaluate_quality,
-            qualities_index=_to_indices(quality_matrix),
-            null_model=null_model,
-            global_shift=global_shift,
+            qualities_index=_to_indices(constructor["quality"]),
+            null_model=constructor["null"],
+            global_shift=constructor.get("shift"),
         )
         best_quality_id = np.argmax(
             list(
