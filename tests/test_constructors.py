@@ -18,20 +18,18 @@ DATA = Path(__file__).absolute().parent / "data"
 
 
 def _list_data(data):
-    data = list(data)
-    data[0] = np.array(data[0].toarray(), dtype=float).tolist()
-    data[1] = np.array(data[1], dtype=float).tolist()
-    data[2] = float(data[2]) if data[2] is not None else None
+    data["quality"] = np.array(data["quality"].toarray(), dtype=float).tolist()
+    data["null_model"] = np.array(data["null_model"], dtype=float).tolist()
     return data
 
 
 def test_load_constructor(graph):
     for constr in CONSTRUCTORS:
         data = _list_data(constructors.load_constructor(constr, graph).get_data(1))
-        # yaml.dump(data, open(DATA / f"test_constructor_{constr}.yaml", "w"))
+        yaml.dump(data, open(DATA / f"test_constructor_{constr}.yaml", "w"))
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}.yaml", "r"))
-        assert_almost_equal(data[0], expected_data[0])
-        assert_almost_equal(data[1], expected_data[1])
+        assert_almost_equal(data["quality"], expected_data["quality"])
+        assert_almost_equal(data["null_model"], expected_data["null_model"])
 
 
 def test_load_constructor_gap(graph):
@@ -39,7 +37,7 @@ def test_load_constructor_gap(graph):
         data = _list_data(
             constructors.load_constructor(constr, graph, spectral_gap=True).get_data(1)
         )
-        # yaml.dump(data, open(DATA / f"test_constructor_{constr}_gap.yaml", "w"))
+        yaml.dump(data, open(DATA / f"test_constructor_{constr}_gap.yaml", "w"))
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}_gap.yaml", "r"))
-        assert_almost_equal(data[0], expected_data[0])
-        assert_almost_equal(data[1], expected_data[1])
+        assert_almost_equal(data["quality"], expected_data["quality"])
+        assert_almost_equal(data["null_model"], expected_data["null_model"])

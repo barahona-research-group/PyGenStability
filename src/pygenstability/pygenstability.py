@@ -113,16 +113,25 @@ def run(
         times=times,
     )
     constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
+
     with multiprocessing.Pool(n_workers) as pool:
 
-        L.info("Loop over times...")
+        L.info("Precompute constructors...")
+        constructors = list(
+            tqdm(
+                pool.imap(constructor.get_data, times),
+                total=n_time,
+                disable=tqdm_disable,
+            )
+        )
+
+        L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
-        for time in tqdm(times, disable=tqdm_disable):
-            quality_matrix, null_model, global_shift = constructor.get_data(time)
-            louvain_results = _run_several_louvains(
-                quality_matrix, null_model, global_shift, n_louvain, pool
-            )
+
+        for i, time in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
+            # stability optimisation
+            louvain_results = _run_several_louvains(constructors[i], n_louvain, pool)
             communities = _process_louvain_run(time, louvain_results, all_results)
 
             if with_VI:
@@ -137,7 +146,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor=constructor)
+            apply_postprocessing(all_results, pool, constructors, tqdm_disable)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -236,15 +245,15 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality
 
 
-def _run_several_louvains(quality_matrix, null_model, global_shift, n_runs, pool):
+def _run_several_louvains(constructor, n_runs, pool):
     """Run several louvain on the current quality matrix."""
-    quality_indices, quality_values = _to_indices(quality_matrix)
+    quality_indices, quality_values = _to_indices(constructor["quality"])
     worker = partial(
         _evaluate_louvain,
         quality_indices=quality_indices,
         quality_values=quality_values,
-        null_model=null_model,
-        global_shift=global_shift,
+        null_model=constructor["null_model"],
+        global_shift=constructor.get("shift"),
     )
 
     chunksize = _get_chunksize(n_runs, pool)
@@ -264,21 +273,18 @@ def compute_ttprime(all_results, pool):
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
-    for i, time in tqdm(
-        enumerate(all_results["times"]),
-        total=len(all_results["times"]),
-        disable=tqdm_disable,
+    for i, constructor in tqdm(
+        enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
-        quality_matrix, null_model, global_shift = constructor.get_data(time)
         worker = partial(
             _evaluate_quality,
-            qualities_index=_to_indices(quality_matrix),
-            null_model=null_model,
-            global_shift=global_shift,
+            qualities_index=_to_indices(constructor["quality"]),
+            null_model=constructor["null_model"],
+            global_shift=constructor.get("shift"),
         )
         best_quality_id = np.argmax(
             list(
