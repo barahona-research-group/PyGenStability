@@ -252,7 +252,7 @@ def _run_several_louvains(constructor, n_runs, pool):
         _evaluate_louvain,
         quality_indices=quality_indices,
         quality_values=quality_values,
-        null_model=constructor["null"],
+        null_model=constructor["null_model"],
         global_shift=constructor.get("shift"),
     )
 
@@ -283,7 +283,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
         worker = partial(
             _evaluate_quality,
             qualities_index=_to_indices(constructor["quality"]),
-            null_model=constructor["null"],
+            null_model=constructor["null_model"],
             global_shift=constructor.get("shift"),
         )
         best_quality_id = np.argmax(

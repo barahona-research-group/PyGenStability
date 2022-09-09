@@ -109,7 +109,7 @@ class constructor_linearized(Constructor):
             time /= self.spectral_gap
         return {
             "quality": time * self.partial_quality_matrix,
-            "null": self.partial_null_model,
+            "null_model": self.partial_null_model,
             "shift": 1 - time,
         }
 
@@ -134,7 +134,7 @@ class constructor_continuous_combinatorial(Constructor):
             time /= self.spectral_gap
         exp = apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return {"quality": quality_matrix, "null": self.partial_null_model}
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
 class constructor_continuous_normalized(Constructor):
@@ -159,7 +159,7 @@ class constructor_continuous_normalized(Constructor):
             time /= self.spectral_gap
         exp = apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return {"quality": quality_matrix, "null": self.partial_null_model}
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
 class constructor_signed_modularity(Constructor):
@@ -192,7 +192,10 @@ class constructor_signed_modularity(Constructor):
 
     def get_data(self, time):
         """Return quality and null model at given time."""
-        return {"quality": time * self.partial_quality_matrix, "null": self.partial_null_model}
+        return {
+            "quality": time * self.partial_quality_matrix,
+            "null_model": self.partial_null_model,
+        }
 
 
 class constructor_directed(Constructor):
@@ -221,4 +224,4 @@ class constructor_directed(Constructor):
         """Return quality and null model at given time."""
         exp = apply_expm(time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return {"quality": quality_matrix, "null": self.partial_null_model}
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
