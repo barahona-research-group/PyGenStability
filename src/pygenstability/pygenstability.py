@@ -4,6 +4,8 @@ import logging
 import multiprocessing
 from collections import defaultdict
 from functools import partial
+from functools import wraps
+from time import time
 
 import numpy as np
 import scipy.sparse as sp
@@ -18,6 +20,24 @@ from pygenstability.io import save_results
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
+
+
+def timing(f):  # pragma: no cover
+    """Use as decorator to time a function excecution if logging is in DEBUG mode."""
+
+    @wraps(f)
+    def wrap(*args, **kw):
+        if logging.root.level == logging.DEBUG:
+            t_start = time()
+            result = f(*args, **kw)
+            t_end = time()
+            with open("timing.csv", "a", encoding="utf-8") as file:
+                print(f"{f.__name__}, {t_start - t_end}", file=file)
+        else:
+            result = f(*args, **kw)
+        return result
+
+    return wrap
 
 
 def _get_chunksize(n_comp, pool):
@@ -60,6 +80,14 @@ def _get_params(all_locals):
     return all_locals
 
 
+@timing
+def _get_constructor_data(constructor, times, pool, tqdm_disable=False):
+    return list(
+        tqdm(pool.imap(constructor.get_data, times), total=len(times), disable=tqdm_disable)
+    )
+
+
+@timing
 def run(
     graph=None,
     constructor="linearized",
@@ -112,27 +140,22 @@ def run(
         log_time=log_time,
         times=times,
     )
-    constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
-
     with multiprocessing.Pool(n_workers) as pool:
+        constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
 
         L.info("Precompute constructors...")
-        constructors = list(
-            tqdm(
-                pool.imap(constructor.get_data, times),
-                total=n_time,
-                disable=tqdm_disable,
-            )
+        constructor_data = _get_constructor_data(
+            constructor, times, pool, tqdm_disable=tqdm_disable
         )
 
         L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
 
-        for i, time in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
+        for i, t in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
             # stability optimisation
-            louvain_results = _run_several_louvains(constructors[i], n_louvain, pool)
-            communities = _process_louvain_run(time, louvain_results, all_results)
+            louvain_results = _run_several_louvains(constructor_data[i], n_louvain, pool)
+            communities = _process_louvain_run(t, louvain_results, all_results)
 
             if with_VI:
                 _compute_variation_information(
@@ -146,7 +169,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructors, tqdm_disable)
+            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -177,6 +200,7 @@ def _process_louvain_run(time, louvain_results, all_results):
     return communities
 
 
+@timing
 def _compute_variation_information(communities, all_results, pool, n_partitions=10):
     """Compute an information measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
@@ -209,6 +233,7 @@ def _to_indices(matrix):
     return (rows, cols), values
 
 
+@timing
 def _evaluate_louvain(_, quality_indices, quality_values, null_model, global_shift):
     """Worker for Louvain runs."""
     stability, community_id = generalized_louvain.run_louvain(
@@ -253,6 +278,7 @@ def _run_several_louvains(constructor, n_runs, pool):
     return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
+@timing
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
@@ -266,6 +292,7 @@ def compute_ttprime(all_results, pool):
     all_results["ttprime"] += all_results["ttprime"].T
 
 
+@timing
 def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()

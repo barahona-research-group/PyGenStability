@@ -7,7 +7,7 @@ import scipy.sparse as sp
 
 L = logging.getLogger(__name__)
 _USE_CACHE = True
-THRESHOLD = 1e-12
+THRESHOLD = 1e-8
 DTYPE = "float128"
 
 
