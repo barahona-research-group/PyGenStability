@@ -23,14 +23,15 @@ _DTYPE = np.float64
 
 
 def timing(f):
+    """Use as decorator to time a function excecution if logging is in DEBUG mode."""
     @wraps(f)
     def wrap(*args, **kw):
         if logging.root.level == logging.DEBUG:
-            ts = time()
+            t_start = time()
             result = f(*args, **kw)
-            te = time()
+            t_end = time()
             with open("timing.csv", "a") as file:
-                print(f"{f.__name__}, {te - ts}", file=file)
+                print(f"{f.__name__}, {t_start - t_end}", file=file)
         else:
             result = f(*args, **kw)
         return result
