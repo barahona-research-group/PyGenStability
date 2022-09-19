@@ -1,11 +1,11 @@
 """PyGenStability module."""
-from time import time
-from functools import wraps
 import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
 from functools import partial
+from functools import wraps
+from time import time
 
 import numpy as np
 import scipy.sparse as sp
