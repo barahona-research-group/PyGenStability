@@ -22,8 +22,9 @@ L = logging.getLogger(__name__)
 _DTYPE = np.float64
 
 
-def timing(f):
+def timing(f):  # pragma: no cover
     """Use as decorator to time a function excecution if logging is in DEBUG mode."""
+
     @wraps(f)
     def wrap(*args, **kw):
         if logging.root.level == logging.DEBUG:
