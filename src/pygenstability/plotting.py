@@ -16,6 +16,7 @@ L = logging.getLogger(__name__)
 # pylint: disable=import-outside-toplevel
 
 
+# pylint: disable=inconsistent-return-statements
 def plot_scan(
     all_results,
     time_axis=True,
@@ -42,11 +43,10 @@ def plot_scan(
     if use_plotly:
         try:
             return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
-        except ImportError:
-            L.warning(
-                "Plotly is not installed, please install package with \
-                 pip install pygenstabiliy[plotly], using matplotlib instead."
-            )
+        except ImportError as exc:
+            raise Exception(
+                "Plotly is not installed, install with: pip install pygenstabiliy[plotly]"
+            ) from exc
     return plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
 
 
