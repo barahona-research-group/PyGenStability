@@ -41,14 +41,13 @@ def plot_scan(
 
     if use_plotly:
         try:
-            plot_scan_plotly(all_results, live=live, filename=plotly_filename)
+            return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
         except ImportError:
             L.warning(
                 "Plotly is not installed, please install package with \
                  pip install pygenstabiliy[plotly], using matplotlib instead."
             )
-    else:
-        plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+    return plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
 
 
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
@@ -265,19 +264,15 @@ def get_times(all_results, time_axis=True):
     return all_results["times"]
 
 
-def _plot_number_comm(all_results, ax, time_axis=True):
+def _plot_number_comm(all_results, ax, times):
     """Plot number of communities."""
-    times = get_times(all_results, time_axis)
-
     ax.plot(times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
     ax.set_ylabel("Number of clusters", color="C3")
     ax.tick_params("y", colors="C3")
 
 
-def _plot_ttprime(all_results, ax, time_axis):
+def _plot_ttprime(all_results, ax, times):
     """Plot ttprime."""
-    times = get_times(all_results, time_axis)
-
     contourf_ = ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr_r")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
@@ -298,9 +293,8 @@ def _plot_ttprime(all_results, ax, time_axis):
     plt.colorbar(contourf_, cax=axins, label="NVI(t,t')")
 
 
-def _plot_variation_information(all_results, ax, time_axis=True):
+def _plot_variation_information(all_results, ax, times):
     """Plot variation information."""
-    times = get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI")
 
     ax.yaxis.tick_right()
@@ -311,19 +305,17 @@ def _plot_variation_information(all_results, ax, time_axis=True):
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
-def _plot_stability(all_results, ax, time_axis=True):
+def _plot_stability(all_results, ax, times):
     """Plot stability."""
-    times = get_times(all_results, time_axis=time_axis)
     ax.plot(times, all_results["stability"], "-", label=r"Stability", c="C0")
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
+    ax.set_ylim(0, 1.1 * max(all_results["stability"]))
     ax.yaxis.set_label_position("left")
 
 
-def _plot_optimal_scales(all_results, ax, time_axis=True):
+def _plot_optimal_scales(all_results, ax, times):
     """Plot stability."""
-    times = get_times(all_results, time_axis=time_axis)
-
     ax.plot(
         times,
         all_results["optimal_scale_criterion"],
@@ -341,9 +333,6 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
         label="optimal scales",
     )
 
-    ax.plot(
-        times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0"
-    )
     ax.tick_params("y", colors="C4")
     ax.set_ylabel("Optimal Scale Criterion", color="C4")
     ax.yaxis.set_label_position("left")
@@ -352,6 +341,7 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
 
 def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
+    times = get_times(all_results, time_axis=time_axis)
     gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     ax0 = None
@@ -359,7 +349,7 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
 
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[1, 0])
-        _plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
+        _plot_ttprime(all_results, ax=ax0, times=times)
         ax1 = ax0.twinx()
     else:
         ax1 = plt.subplot(gs[1, 0])
@@ -367,7 +357,7 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     axes.append(ax1)
     ax1.set_xticks([])
 
-    _plot_variation_information(all_results, ax=ax1, time_axis=time_axis)
+    _plot_variation_information(all_results, ax=ax1, times=times)
 
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
@@ -376,21 +366,22 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     ax2 = plt.subplot(gs[0, 0])
 
     if "stability" in all_results:
-        _plot_stability(all_results, ax=ax2, time_axis=time_axis)
+        _plot_stability(all_results, ax=ax2, times=times)
+        ax2.set_xticks([])
         axes.append(ax2)
 
     if "variation_information" in all_results:
         ax3 = ax2.twinx()
-        _plot_number_comm(all_results, ax=ax3, time_axis=time_axis)
+        _plot_number_comm(all_results, ax=ax3, times=times)
         axes.append(ax3)
 
     if "optimal_scale_criterion" in all_results:
         ax4 = plt.subplot(gs[2, 0])
-        _plot_optimal_scales(all_results, ax=ax4, time_axis=time_axis)
+        _plot_optimal_scales(all_results, ax=ax4, times=times)
         axes.append(ax4)
 
     if figure_name is not None:
-        plt.savefig(figure_name, bbox_inches="tight")
+        plt.savefig(figure_name)
 
     return axes
 
