@@ -23,6 +23,7 @@ from pygenstability.optimal_scales import identify_optimal_scales
 L = logging.getLogger(__name__)
 
 
+# pylint: disable=inconsistent-return-statements
 def plot_scan(
     all_results,
     scale_axis=True,
