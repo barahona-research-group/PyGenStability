@@ -72,6 +72,6 @@ def test__get_times():
     assert_almost_equal(pgs._get_times(n_time=3, log_time=False), [-2.0, -0.75, 0.5])
 
 
-def test__evaluate_NVI():
-    """Test _evaluatae_NVI."""
-    assert pgs._evaluate_NVI([0, 1], [[1, 1, 1, 1], [1, 1, 1, 1]]) == 0.0
+def test_evaluate_NVI():
+    """Test evaluate_NVI."""
+    assert pgs.evaluate_NVI([0, 1], [[1, 1, 1, 1], [1, 1, 1, 1]]) == 0.0
