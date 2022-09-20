@@ -154,7 +154,7 @@ def run(
 
         for i, t in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
             # stability optimisation
-            louvain_results = _run_several_louvains(constructor_data[i], n_louvain, pool)
+            louvain_results = run_several_louvains(constructor_data[i], n_louvain, pool)
             communities = _process_louvain_run(t, louvain_results, all_results)
 
             if with_VI:
@@ -205,7 +205,7 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
     """Compute an information measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(_evaluate_NVI, top_partitions=selected_partitions)
+    worker = partial(evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["variation_information"].append(
@@ -213,7 +213,7 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
     )
 
 
-def _evaluate_NVI(index_pair, top_partitions):
+def evaluate_NVI(index_pair, top_partitions):
     """Worker for NVI evaluations."""
     MI = mutual_info_score(
         top_partitions[index_pair[0]],
@@ -234,7 +234,7 @@ def _to_indices(matrix):
 
 
 @timing
-def _evaluate_louvain(_, quality_indices, quality_values, null_model, global_shift):
+def evaluate_louvain(_, quality_indices, quality_values, null_model, global_shift):
     """Worker for Louvain runs."""
     stability, community_id = generalized_louvain.run_louvain(
         quality_indices[0],
@@ -248,7 +248,7 @@ def _evaluate_louvain(_, quality_indices, quality_values, null_model, global_shi
     return stability + global_shift, community_id
 
 
-def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
+def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     """Worker for Louvain runs."""
     quality = generalized_louvain.evaluate_quality(
         qualities_index[0][0],
@@ -263,11 +263,11 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality + global_shift
 
 
-def _run_several_louvains(constructor, n_runs, pool):
+def run_several_louvains(constructor, n_runs, pool):
     """Run several louvain on the current quality matrix."""
     quality_indices, quality_values = _to_indices(constructor["quality"])
     worker = partial(
-        _evaluate_louvain,
+        evaluate_louvain,
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],
@@ -282,7 +282,7 @@ def _run_several_louvains(constructor, n_runs, pool):
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
-    worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
+    worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
@@ -301,7 +301,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
         enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
         worker = partial(
-            _evaluate_quality,
+            evaluate_quality,
             qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
