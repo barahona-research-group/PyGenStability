@@ -140,7 +140,6 @@ def run(
         log_time=log_time,
         times=times,
     )
-
     with multiprocessing.Pool(n_workers) as pool:
         constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
 
@@ -174,7 +173,7 @@ def run(
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool, tqdm_disable)
+            compute_ttprime(all_results, pool)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
@@ -280,7 +279,7 @@ def run_several_louvains(constructor, n_runs, pool):
 
 
 @timing
-def compute_ttprime(all_results, pool, tqdm_disable=False):
+def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
     worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
