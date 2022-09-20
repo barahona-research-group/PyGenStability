@@ -70,6 +70,7 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
                 and np.sign(criterion_gradient)[i + 2] == 1
             ):
                 selected_partitions.append(i + 1)
+
     # return with results dict
     results["selected_partitions"] = selected_partitions
 
