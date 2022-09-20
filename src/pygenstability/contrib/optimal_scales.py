@@ -26,7 +26,6 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     Returns:
         result dictionary with two new keys: 'selected_partitions' and 'optimal_scale_criterion'
     """
-
     # get diagonals of ttprime matrix
     ttprime = results["ttprime"]
     ttprime_diagonals = []
