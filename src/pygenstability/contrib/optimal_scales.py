@@ -2,9 +2,8 @@
 import logging
 
 import numpy as np
-# from skimage.feature import peak_local_max
+
 import pandas as pd
-from scipy.misc import derivative
 
 L = logging.getLogger("contrib.optimal_scales")
 
@@ -27,7 +26,6 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     Returns:
         result dictionary with two new keys: 'selected_partitions' and 'optimal_scale_criterion'
     """
-   
     # get diagonals of ttprime matrix
     ttprime = results["ttprime"]
     ttprime_diagonals = []
@@ -67,7 +65,6 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     for i in range(len(criterion_gradient) - 1):
         if np.sign(criterion_gradient)[i] == -1 and np.sign(criterion_gradient)[i + 1] == 1:
             selected_partitions.append(i)
-    
     # return with results dict
     results["selected_partitions"] = selected_partitions
 
