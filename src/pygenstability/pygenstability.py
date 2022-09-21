@@ -173,7 +173,7 @@ def run(
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool, tqdm_disable)
+            compute_ttprime(all_results, pool)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")

@@ -19,7 +19,7 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
 
     Args:
         results (dict): the results from a Markov Stability calculation
-        VI_cutoff (float): cut-off parameter for identifying plateau
+        NVI_cutoff (float): cut-off parameter for identifying plateau
         criterion_threshold (float): maximum value of criterion to be a valid scale
         window_size (int): size of window for moving mean, to smooth the criterion curve
 
@@ -59,12 +59,15 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     criterion = criterion / np.max(np.nan_to_num(criterion))
     results["optimal_scale_criterion"] = criterion
 
-    # selected scales are local minima of criterion
+    # selected scales are local minima of criterion computed via gradient
     criterion_gradient = np.gradient(criterion)
     selected_partitions = []
     for i in range(len(criterion_gradient) - 1):
         if np.sign(criterion_gradient)[i] == -1 and np.sign(criterion_gradient)[i + 1] == 1:
             selected_partitions.append(i)
+        elif i < len(criterion_gradient) - 2:
+            if np.sign(criterion_gradient)[i] == -1 and np.sign(criterion_gradient)[i + 1] == 0 and np.sign(criterion_gradient)[i + 2] == 1:
+                selected_partitions.append(i+1)
     # return with results dict
     results["selected_partitions"] = selected_partitions
 
