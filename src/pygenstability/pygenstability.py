@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
-from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
+from pygenstability.io import save_results
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
@@ -179,9 +179,7 @@ def run(
                 L.info("Identify optimal scales...")
                 if optimal_scales_kwargs is None:
                     optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_time))}
-                all_results = identify_optimal_scales(
-                    all_results, **optimal_scales_kwargs
-                )
+                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
 
@@ -285,9 +283,7 @@ def compute_ttprime(all_results, pool):
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
-    all_results["ttprime"] = np.zeros(
-        [len(all_results["times"]), len(all_results["times"])]
-    )
+    all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
@@ -312,18 +308,13 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
                 pool.map(
                     worker,
                     all_results_raw["community_id"],
-                    chunksize=_get_chunksize(
-                        len(all_results_raw["community_id"]), pool
-                    ),
+                    chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
                 )
             )
         )
 
-        all_results["community_id"][i] = all_results_raw["community_id"][
+        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
+        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
             best_quality_id
         ]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
-        all_results["number_of_communities"][i] = all_results_raw[
-            "number_of_communities"
-        ][best_quality_id]
-
