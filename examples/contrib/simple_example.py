@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 from pygenstability import run, plotting
-from pygenstability.contrib.optimal_scales import identify_optimal_scales, plot_optimal_scales
+from pygenstability.optimal_scales import identify_optimal_scales, plot_optimal_scales
 from create_graph import create_sbm
 
 
