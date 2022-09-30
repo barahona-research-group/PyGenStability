@@ -5,9 +5,9 @@ python create_graph.py
 pygenstability run --help
 pygenstability run \
     --constructor continuous_normalized \
-    --min-time -2 \
-    --max-time 0\
-    --n-time 50 \
+    --min-scale -2 \
+    --max-scale 0\
+    --n-scale 50 \
     --n-louvain 100 \
     --n-workers 40 \
     edges.csv

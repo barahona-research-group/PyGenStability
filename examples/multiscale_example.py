@@ -121,9 +121,9 @@ if __name__ == "__main__":
     # run markov stability and identify optimal scales
     results = pgs.run(
         sp.csgraph.csgraph_from_dense(A),
-        min_time=-1.5,
-        max_time=0.5,
-        n_time=50,
+        min_scale=-1.5,
+        max_scale=0.5,
+        n_scale=50,
         n_louvain=20,
         constructor="continuous_combinatorial",
         n_workers=4,
@@ -149,30 +149,30 @@ if __name__ == "__main__":
     def _get_NVI(ref_ids):
         return [
             evaluate_NVI([0, i + 1], [ref_ids] + results["community_id"])
-            for i in range(len(results["times"]))
+            for i in range(len(results["scales"]))
         ]
 
     NVI_scores_fine = _get_NVI(fine_scale_id)
     NVI_scores_middle = _get_NVI(middle_scale_id)
     NVI_scores_coarse = _get_NVI(coarse_scale_id)
-    times = results["times"]
+    scales = results["scales"]
 
     # plot NVI scores
     fig, ax = plt.subplots(1, figsize=(7, 4))
-    ax.plot(times, NVI_scores_fine, label="Fine")
-    ax.plot(times, NVI_scores_middle, label="Middle")
-    ax.plot(times, NVI_scores_coarse, label="Coarse")
+    ax.plot(scales, NVI_scores_fine, label="Fine")
+    ax.plot(scales, NVI_scores_middle, label="Middle")
+    ax.plot(scales, NVI_scores_coarse, label="Coarse")
 
     # plot selected partitions
     selected_partitions = results["selected_partitions"]
     ax.axvline(
-        x=results["times"][selected_partitions[0]],
+        x=results["scales"][selected_partitions[0]],
         ls="--",
         color="red",
         label="Selected Markov scales",
     )
     for i in selected_partitions[1:]:
-        ax.axvline(x=results["times"][i], ls="--", color="red")
+        ax.axvline(x=results["scales"][i], ls="--", color="red")
 
     ax.set(xlabel=r"$log_{10}(t)$", ylabel="NVI")
     plt.axhline(0, c="k", ls="--")
