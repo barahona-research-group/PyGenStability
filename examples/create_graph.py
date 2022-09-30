@@ -46,7 +46,7 @@ def create_sbm():
     edges["weight"] = 2 * [graph.edges[e]["weight"] for e in graph.edges]
     edges.to_csv("edges.csv", index=False)
 
-    return adjacency
+    return graph, adjacency
 
 
 if __name__ == "__main__":
