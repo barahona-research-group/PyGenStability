@@ -11,6 +11,8 @@ from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from tqdm import tqdm
 
+from pygenstability.optimal_scales import identify_optimal_scales
+
 L = logging.getLogger(__name__)
 
 # pylint: disable=import-outside-toplevel
@@ -227,15 +229,31 @@ def plot_single_partition(
     )
 
 def plot_optimal_partitions(
-    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
+    graph, all_results, edge_color="0.5", edge_width=0.5
 ):
-    """Plot the community structures at each optimal scale in a composed figure.
+    """Plot the community structures at each optimal scale.
     Args:
         graph (networkx.Graph): graph to plot
         all_results (dict): results of pygenstability scan
         edge_color (str): color of edges
         edge_width (float): width of edgs
     """
+
+    try: 
+        selected_scales = all_results['selected_partitions']
+    except:
+        identify_optimal_scales(all_results)
+        selected_scales = all_results['selected_partitions']
+
+    n_selected_scales = len(selected_scales)
+
+    if n_selected_scales == 0:
+        return
+
+    else:
+        for i, optimal_scale_id in enumerate(selected_scales):
+            plot_single_partition(graph,all_results,optimal_scale_id,edge_color=edge_color, edge_width=edge_width)
+            plt.show()
 
 
 
