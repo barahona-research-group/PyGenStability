@@ -63,13 +63,13 @@ def _graph_checks(graph, dtype=_DTYPE):
     return graph
 
 
-def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None):
-    """Get the time vectors."""
-    if times is not None:
-        return times
-    if log_time:
-        return np.logspace(min_time, max_time, n_time)
-    return np.linspace(min_time, max_time, n_time)
+def _get_scales(min_scale=-2.0, max_scale=0.5, n_scale=20, log_scale=True, scales=None):
+    """Get the scale vectors."""
+    if scales is not None:
+        return scales
+    if log_scale:
+        return np.logspace(min_scale, max_scale, n_scale)
+    return np.linspace(min_scale, max_scale, n_scale)
 
 
 def _get_params(all_locals):
@@ -81,9 +81,9 @@ def _get_params(all_locals):
 
 
 @timing
-def _get_constructor_data(constructor, times, pool, tqdm_disable=False):
+def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     return list(
-        tqdm(pool.imap(constructor.get_data, times), total=len(times), disable=tqdm_disable)
+        tqdm(pool.imap(constructor.get_data, scales), total=len(scales), disable=tqdm_disable)
     )
 
 
@@ -91,11 +91,11 @@ def _get_constructor_data(constructor, times, pool, tqdm_disable=False):
 def run(
     graph=None,
     constructor="linearized",
-    min_time=-2.0,
-    max_time=0.5,
-    n_time=20,
-    log_time=True,
-    times=None,
+    min_scale=-2.0,
+    max_scale=0.5,
+    n_scale=20,
+    log_scale=True,
+    scales=None,
     n_louvain=100,
     with_VI=True,
     n_louvain_VI=20,
@@ -108,23 +108,23 @@ def run(
     with_optimal_scales=True,
     optimal_scales_kwargs=None,
 ):
-    """Main function to compute clustering at various time scales.
+    """Main function to compute clustering at various scales.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
         constructor (str/function): name of the quality constructor,
-            or custom constructor function. It must have two arguments, graph and time.
-        min_time (float): minimum Markov time
-        max_time (float): maximum Markov time
-        n_time (int): number of time steps
-        log_time (bool): use linear or log scales for times
-        times (array): custom time vector, if provided, it will override the other time arguments
+            or custom constructor function. It must have two arguments, graph and scale.
+        min_scale (float): minimum Markov scale
+        max_scale (float): maximum Markov scale
+        n_scale (int): number of scale steps
+        log_scale (bool): use linear or log scales for scales
+        scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_louvain (int): number of Louvain evaluations
         with_VI (bool): compute the variation of information between Louvain runs
         n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
-        with_spectral_gap (bool): normalise time by spectral gap
+        with_spectral_gap (bool): normalise scale by spectral gap
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
@@ -133,26 +133,26 @@ def run(
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
-    times = _get_times(
-        min_time=min_time,
-        max_time=max_time,
-        n_time=n_time,
-        log_time=log_time,
-        times=times,
+    scales = _get_scales(
+        min_scale=min_scale,
+        max_scale=max_scale,
+        n_scale=n_scale,
+        log_scale=log_scale,
+        scales=scales,
     )
     with multiprocessing.Pool(n_workers) as pool:
         constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
 
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
-            constructor, times, pool, tqdm_disable=tqdm_disable
+            constructor, scales, pool, tqdm_disable=tqdm_disable
         )
 
         L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
 
-        for i, t in tqdm(enumerate(times), total=n_time, disable=tqdm_disable):
+        for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
             # stability optimisation
             louvain_results = run_several_louvains(constructor_data[i], n_louvain, pool)
             communities = _process_louvain_run(t, louvain_results, all_results)
@@ -178,7 +178,7 @@ def run(
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
                 if optimal_scales_kwargs is None:
-                    optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_time))}
+                    optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_scale))}
                 all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
@@ -186,13 +186,13 @@ def run(
     return dict(all_results)
 
 
-def _process_louvain_run(time, louvain_results, all_results):
+def _process_louvain_run(scale, louvain_results, all_results):
     """Convert the louvain outputs to useful data and save it."""
     stabilities = np.array([res[0] for res in louvain_results])
     communities = np.array([res[1] for res in louvain_results])
 
     best_run_id = np.argmax(stabilities)
-    all_results["times"].append(time)
+    all_results["scales"].append(scale)
     all_results["number_of_communities"].append(np.max(communities[best_run_id]) + 1)
     all_results["stability"].append(stabilities[best_run_id])
     all_results["community_id"].append(communities[best_run_id])
@@ -278,12 +278,12 @@ def run_several_louvains(constructor, n_runs, pool):
 @timing
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
-    index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
+    index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
     worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
-    all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
+    all_results["ttprime"] = np.zeros([len(all_results["scales"]), len(all_results["scales"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
