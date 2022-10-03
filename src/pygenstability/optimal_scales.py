@@ -1,11 +1,9 @@
 """Detect optimal scales from a time scan."""
 import logging
-
 import numpy as np
-
 import pandas as pd
 
-L = logging.getLogger("contrib.optimal_scales")
+L = logging.getLogger(__name__)
 
 
 def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
@@ -56,8 +54,7 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
 
     # compute final criterion and normalise
     criterion = np.sqrt((ttprime_metric**2 + nvi_metric**2) / 2)
-    criterion = criterion / np.max(np.nan_to_num(criterion))
-    results["optimal_scale_criterion"] = criterion
+    results["optimal_scale_criterion"] = criterion / np.max(np.nan_to_num(criterion))
 
     # selected scales are local minima of criterion computed via gradient
     criterion_gradient = np.gradient(criterion)
@@ -66,8 +63,12 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
         if np.sign(criterion_gradient)[i] == -1 and np.sign(criterion_gradient)[i + 1] == 1:
             selected_partitions.append(i)
         elif i < len(criterion_gradient) - 2:
-            if np.sign(criterion_gradient)[i] == -1 and np.sign(criterion_gradient)[i + 1] == 0 and np.sign(criterion_gradient)[i + 2] == 1:
-                selected_partitions.append(i+1)
+            if (
+                np.sign(criterion_gradient)[i] == -1
+                and np.sign(criterion_gradient)[i + 1] == 0
+                and np.sign(criterion_gradient)[i + 2] == 1
+            ):
+                selected_partitions.append(i + 1)
     # return with results dict
     results["selected_partitions"] = selected_partitions
 
