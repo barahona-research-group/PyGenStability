@@ -126,7 +126,8 @@ if __name__ == "__main__":
         n_scale=50,
         n_louvain=20,
         constructor="continuous_combinatorial",
-        n_workers=4,
+        n_workers=8,
+        #method="leiden",
     )
 
     # plots results
