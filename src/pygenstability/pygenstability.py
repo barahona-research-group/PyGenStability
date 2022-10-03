@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
-from pygenstability.contrib.optimal_scales import identify_optimal_scales
 from pygenstability.io import save_results
+from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
@@ -215,10 +215,7 @@ def _compute_variation_information(communities, all_results, pool, n_partitions=
 
 def evaluate_NVI(index_pair, top_partitions):
     """Worker for NVI evaluations."""
-    MI = mutual_info_score(
-        top_partitions[index_pair[0]],
-        top_partitions[index_pair[1]],
-    )
+    MI = mutual_info_score(top_partitions[index_pair[0]], top_partitions[index_pair[1]])
     Ex = entropy(top_partitions[index_pair[0]])
     Ey = entropy(top_partitions[index_pair[1]])
     JE = Ex + Ey - MI
