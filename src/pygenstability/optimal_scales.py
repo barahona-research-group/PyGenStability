@@ -1,5 +1,6 @@
 """Detect optimal scales from a time scan."""
 import logging
+
 import numpy as np
 import pandas as pd
 
