@@ -102,9 +102,9 @@ def run(
     n_scale=20,
     log_scale=True,
     scales=None,
-    n_louvain=100,
+    n_tries=100,
     with_NVI=True,
-    n_louvain_NVI=20,
+    n_NVI=20,
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
@@ -126,9 +126,9 @@ def run(
         n_scale (int): number of scale steps
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
-        n_louvain (int): number of Louvain evaluations
-        with_NVI (bool): compute the normalized variation of information (NVI) between Louvain runs
-        n_louvain_NVI (int): number of randomly chosen Louvain run to estimate NVI
+        n_tries (int): number of modularity optimisation evaluations
+        with_VI (bool): compute the variation of information between Louvain runs
+        n_NVI (int): number of randomly chosen Louvain run to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         with_spectral_gap (bool): normalise scale by spectral gap
@@ -161,17 +161,12 @@ def run(
         all_results["run_params"] = run_params
 
         for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-            louvain_results = run_several_louvains(
-                constructor_data[i], n_louvain, pool, method=method
-            )
-            communities = _process_louvain_run(t, louvain_results, all_results)
+            results = run_optimisations(constructor_data[i], n_tries, pool, method)
+            communities = _process_runs(t, results, all_results)
 
             if with_NVI:
                 _compute_NVI(
-                    communities,
-                    all_results,
-                    pool,
-                    n_partitions=min(n_louvain_NVI, n_louvain),
+                    communities, all_results, pool, n_partitions=min(n_NVI, n_tries)
                 )
 
             save_results(all_results, filename=result_file)
@@ -195,10 +190,10 @@ def run(
     return dict(all_results)
 
 
-def _process_louvain_run(scale, louvain_results, all_results):
-    """Convert the louvain outputs to useful data and save it."""
-    stabilities = np.array([res[0] for res in louvain_results])
-    communities = np.array([res[1] for res in louvain_results])
+def _process_runs(scale, results, all_results):
+    """Convert the optimisation outputs to useful data and save it."""
+    stabilities = np.array([res[0] for res in results])
+    communities = np.array([res[1] for res in results])
 
     best_run_id = np.argmax(stabilities)
     all_results["scales"].append(scale)
@@ -233,12 +228,12 @@ def evaluate_NVI(index_pair, top_partitions):
 
 def _to_indices(matrix):
     """Convert a sparse matrix to indices and values."""
-    rows, cols, values = sp.find(sp.tril(matrix))
+    rows, cols, values = sp.find(matrix)
     return (rows, cols), values
 
 
 @timing
-def evaluate(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+def optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
     """Worker for Louvain runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
@@ -251,6 +246,7 @@ def evaluate(_, quality_indices, quality_values, null_model, global_shift, metho
             1.0,
         )
     if method == "leiden":
+        """
         stability, community_id = generalized_louvain.run_louvain(
             quality_indices[0],
             quality_indices[1],
@@ -260,35 +256,27 @@ def evaluate(_, quality_indices, quality_values, null_model, global_shift, metho
             np.shape(null_model)[0],
             1.0,
         )
-        edges = zip(*quality_indices)
-        G = ig.Graph(edges=edges)
-        nm = null_model.tolist()
+        """
+        G = ig.Graph(edges=zip(*quality_indices), directed=True)
         partition = leidenalg.GeneralizedModularityVertexPartition(
-            G, weights=quality_values, null_model=nm
+            G,
+            weights=quality_values,
+            null_model=null_model.tolist(),
+            #initial_membership=community_id,
         )
+        q = partition.quality()
+        diff = partition.diff_move(0, 10)
+        #print(stability, q, diff)
+        #print(partition.membership)
+        #partition.move_node(0, 10)
+        #print(partition.membership)
+        #q1 = partition.quality()
+        #print('comparison:', q1, q+diff, q1 -q-diff)
         optimiser = leidenalg.Optimiser()
-        optimiser.set_rng_seed(np.random.randint(0, 10000))
-        optimiser.optimise_partition(partition, n_iterations=-1)
+        optimiser.set_rng_seed(np.random.randint(1e8))
+        optimiser.optimise_partition(partition)
         stability = partition.modularity
         community_id = partition.membership
-        print("gen leiden:", stability, community_id)
-
-        _partition = leidenalg.ModularityVertexPartition(G, weights=quality_values)
-        _optimiser = leidenalg.Optimiser()
-        _optimiser.set_rng_seed(np.random.randint(0, 10000))
-        _optimiser.optimise_partition(_partition, n_iterations=-1)
-        _stability = _partition.modularity
-        _community_id = _partition.membership
-        print("mod leiden:", _stability, _community_id)
-
-        # test if quality from louvain == quality from leiden
-        qual = evaluate(
-            community_id,
-            qualities_index=(quality_indices, quality_values),
-            null_model=null_model,
-            global_shift=global_shift,
-        )
-        print(partition.quality() - qual)
     return stability + global_shift, community_id
 
 
@@ -307,11 +295,11 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality + global_shift
 
 
-def run_several_louvains(constructor, n_runs, pool, method="louvain"):
+def run_optimisations(constructor, n_runs, pool, method="louvain"):
     """Run several louvain on the current quality matrix."""
     quality_indices, quality_values = _to_indices(constructor["quality"])
     worker = partial(
-        evaluate,
+        optimise,
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],

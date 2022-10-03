@@ -7,7 +7,7 @@ import scipy.sparse as sp
 
 L = logging.getLogger(__name__)
 _USE_CACHE = True
-THRESHOLD = 1e-8
+THRESHOLD = 1e-4
 DTYPE = "float128"
 
 
@@ -26,8 +26,8 @@ def load_constructor(constructor, graph, **kwargs):
 
 
 def threshold_matrix(matrix, threshold=THRESHOLD):
-    """Threshold a matrix to remove small numbers for Louvain speed up."""
-    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0
+    """Threshold a matrix to remove small numbers for speed up."""
+    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0.0
     matrix.eliminate_zeros()
 
 
