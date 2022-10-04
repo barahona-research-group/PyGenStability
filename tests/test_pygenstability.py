@@ -59,17 +59,17 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     diff(expected_results, results)
 
-    results = pgs.run(graph, times=[1, 2, 3, 4], log_time=False, with_optimal_scales=False)
+    results = pgs.run(graph, scales=[1, 2, 3, 4], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     diff(expected_results, results)
 
 
-def test__get_times():
-    """Test _get_time."""
-    assert_almost_equal(pgs._get_times(n_time=3, log_time=True), [0.01, 0.17782794, 3.16227766])
-    assert_almost_equal(pgs._get_times(n_time=3, log_time=False), [-2.0, -0.75, 0.5])
+def test__get_scales():
+    """Test _get_scales."""
+    assert_almost_equal(pgs._get_scales(n_scale=3, log_scale=True), [0.01, 0.17782794, 3.16227766])
+    assert_almost_equal(pgs._get_scales(n_scale=3, log_scale=False), [-2.0, -0.75, 0.5])
 
 
 def test_evaluate_NVI():
