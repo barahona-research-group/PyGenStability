@@ -228,9 +228,8 @@ def plot_single_partition(
         + " communities"
     )
 
-def plot_optimal_partitions(
-    graph, all_results, edge_color="0.5", edge_width=0.5
-):
+
+def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5):
     """Plot the community structures at each optimal scale.
     Args:
         graph (networkx.Graph): graph to plot
@@ -239,11 +238,11 @@ def plot_optimal_partitions(
         edge_width (float): width of edgs
     """
 
-    try: 
-        selected_scales = all_results['selected_partitions']
+    try:
+        selected_scales = all_results["selected_partitions"]
     except:
         identify_optimal_scales(all_results)
-        selected_scales = all_results['selected_partitions']
+        selected_scales = all_results["selected_partitions"]
 
     n_selected_scales = len(selected_scales)
 
@@ -252,9 +251,10 @@ def plot_optimal_partitions(
 
     else:
         for i, optimal_scale_id in enumerate(selected_scales):
-            plot_single_partition(graph,all_results,optimal_scale_id,edge_color=edge_color, edge_width=edge_width)
+            plot_single_partition(
+                graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
+            )
             plt.show()
-
 
 
 def plot_all_partitions(

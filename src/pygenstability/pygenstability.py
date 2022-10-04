@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
-from pygenstability.optimal_scales import identify_optimal_scales
 from pygenstability.io import save_results
+from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
