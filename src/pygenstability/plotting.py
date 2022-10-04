@@ -231,7 +231,6 @@ def plot_single_partition(
 
 def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5):
     """Plot the community structures at each optimal scale.
-    
     Args:
         graph (networkx.Graph): graph to plot
         all_results (dict): results of pygenstability scan
