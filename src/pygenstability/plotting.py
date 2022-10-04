@@ -237,12 +237,9 @@ def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5
         edge_color (str): color of edges
         edge_width (float): width of edgs
     """
-
-    try:
-        selected_scales = all_results["selected_partitions"]
-    except:
+    if "selected_partitions" not in all_results:
         identify_optimal_scales(all_results)
-        selected_scales = all_results["selected_partitions"]
+    selected_scales = all_results["selected_partitions"]
 
     n_selected_scales = len(selected_scales)
 
