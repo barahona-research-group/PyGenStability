@@ -240,22 +240,20 @@ def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5
     """
     if "selected_partitions" not in all_results:
         identify_optimal_scales(all_results)
-    selected_scales = all_results["selected_partitions"]
 
+    selected_scales = all_results["selected_partitions"]
     n_selected_scales = len(selected_scales)
 
     if n_selected_scales == 0:
         return
 
-    else:
-        for i, optimal_scale_id in enumerate(selected_scales):
-            plot_single_partition(
-                graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
-            )
-            plt.show()
+    for optimal_scale_id in selected_scales:
+        plot_single_partition(
+            graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
+        )
 
 
-def plot_all_partitions(
+def plot_communities(
     graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
 ):
     """Plot the community structures at each scale in a folder.

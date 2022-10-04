@@ -1,8 +1,14 @@
-"""Detect optimal scales from a time scan."""
+"""Detect optimal scales from a scale scan."""
 import logging
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from plotly.offline import plot as _plot
+
+from pygenstability.plotting import get_scales
+from pygenstability.plotting import plot_scan_plotly
+from pygenstability.plotting import plot_scan_plt
 
 L = logging.getLogger(__name__)
 
@@ -12,7 +18,7 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
 
     Stable scales are found from the normalized VI(t, t') matrix by searching for large diagonal
     blocks of VI below VI_cutoff. A moving average of window size is then applied to smooth the
-    values accros time, and a criterion is computed as the norm between this value and a similarly
+    values accros scales, and a criterion is computed as the norm between this value and a similarly
     smoothed version of the normalized VI(t). Optimal scales are then detected using the peak
     detection algorithm skimage.peak_local_max, with minima under criterion_thresholds are selected.
 
@@ -79,15 +85,15 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
 
 def plot_optimal_scales(
     results,
-    time_axis=True,
+    scale_axis=True,
     figure_name="scan_results.pdf",
     use_plotly=False,
     live=True,
     plotly_filename="scan_results.html",
 ):
     """Plot scan results with optimal scales."""
-    if len(results["times"]) == 1:
-        L.info("Cannot plot the results if only one time point, we display the result instead:")
+    if len(results["scales"]) == 1:
+        L.info("Cannot plot the results if only one scalae point, we display the result instead:")
         L.info(results)
         return
 
@@ -101,22 +107,17 @@ def plot_optimal_scales(
             )
 
     else:
-        plot_optimal_scales_plt(results, time_axis=time_axis, figure_name=figure_name)
+        plot_optimal_scales_plt(results, scale_axis=scale_axis, figure_name=figure_name)
 
 
 def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf"):
     """Plot optimal scales on plotly."""
-    from plotly.offline import plot as _plot
-
-    from pygenstability.plotting import get_times
-    from pygenstability.plotting import plot_scan_plotly
-
     fig, _ = plot_scan_plotly(results, live=False, filename=None)
 
-    times = get_times(results, time_axis=True)
+    scales = get_scales(results, scale_axis=True)
 
     fig.add_scatter(
-        x=times,
+        x=scales,
         y=results["optimal_scale_criterion"],
         mode="lines+markers",
         name="Optimal Scale Criterion",
@@ -126,7 +127,7 @@ def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf")
     )
 
     fig.add_scatter(
-        x=times[results["selected_partitions"]],
+        x=scales[results["selected_partitions"]],
         y=results["optimal_scale_criterion"][results["selected_partitions"]],
         mode="markers",
         name="Optimal Scale",
@@ -151,19 +152,13 @@ def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf")
         fig.show()
 
 
-def plot_optimal_scales_plt(results, time_axis=True, figure_name="scan_results.pdf"):
+def plot_optimal_scales_plt(results, scale_axis=True, figure_name="scan_results.pdf"):
     """Plot scan results with optimal scales with matplotlib."""
-    import matplotlib.pyplot as plt
-
-    from pygenstability.plotting import get_times
-    from pygenstability.plotting import plot_scan_plt
-
-    ax2 = plot_scan_plt(results, time_axis=time_axis, figure_name=None)[2]
-
-    times = get_times(results, time_axis=time_axis)
+    ax2 = plot_scan_plt(results, scale_axis=scale_axis, figure_name=None)[2]
+    scales = get_scales(results, scale_axis=scale_axis)
 
     ax2.plot(
-        times,
+        scales,
         results["optimal_scale_criterion"],
         "-",
         lw=2.0,
@@ -171,7 +166,7 @@ def plot_optimal_scales_plt(results, time_axis=True, figure_name="scan_results.p
         label="optimal scale criterion",
     )
     ax2.plot(
-        times[results["selected_partitions"]],
+        scales[results["selected_partitions"]],
         results["optimal_scale_criterion"][results["selected_partitions"]],
         "o",
         lw=2.0,
