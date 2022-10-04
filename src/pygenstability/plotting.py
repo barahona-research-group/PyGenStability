@@ -11,14 +11,18 @@ from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from tqdm import tqdm
 
+try:
+    import plotly.graph_objects as go
+    from plotly.offline import plot as _plot
+except ImportError:
+    pass
+
+
 from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 
-# pylint: disable=import-outside-toplevel
 
-
-# pylint: disable=inconsistent-return-statements
 def plot_scan(
     all_results,
     scale_axis=True,
@@ -40,15 +44,10 @@ def plot_scan(
     if len(all_results["scales"]) == 1:
         L.info("Cannot plot the results if only one scale point, we display the result instead:")
         L.info(all_results)
-        return
+        return None
 
     if use_plotly:
-        try:
-            return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
-        except ImportError as exc:
-            raise Exception(
-                "Plotly is not installed, install with: pip install pygenstabiliy[plotly]"
-            ) from exc
+        return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
     return plot_scan_plt(all_results, scale_axis=scale_axis, figure_name=figure_name)
 
 
@@ -58,9 +57,6 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     filename="clusters.html",
 ):
     """Plot results of pygenstability with plotly."""
-    import plotly.graph_objects as go
-    from plotly.offline import plot as _plot
-
     scales = get_scales(all_results, scale_axis=True)
 
     hovertemplate = str("<b>scale</b>: %{x:.2f}, <br>%{text}<extra></extra>")
@@ -478,3 +474,100 @@ def plot_clustered_adjacency(
     )
 
     plt.savefig(figure_name, bbox_inches="tight")
+
+
+def plot_optimal_scales(
+    results,
+    scale_axis=True,
+    figure_name="scan_results.pdf",
+    use_plotly=False,
+    live=True,
+    plotly_filename="scan_results.html",
+):
+    """Plot scan results with optimal scales."""
+    if len(results["scales"]) == 1:
+        L.info("Cannot plot the results if only one scalae point, we display the result instead:")
+        L.info(results)
+        return
+
+    if use_plotly:
+        try:
+            plot_optimal_scales_plotly(results, live=live, filename=plotly_filename)
+        except ImportError:
+            L.warning(
+                "Plotly is not installed, please install package with \
+                 pip install pygenstabiliy[plotly], using matplotlib instead."
+            )
+
+    else:
+        plot_optimal_scales_plt(results, scale_axis=scale_axis, figure_name=figure_name)
+
+
+def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf"):
+    """Plot optimal scales on plotly."""
+    fig, _ = plot_scan_plotly(results, live=False, filename=None)
+
+    scales = get_scales(results, scale_axis=True)
+
+    fig.add_scatter(
+        x=scales,
+        y=results["optimal_scale_criterion"],
+        mode="lines+markers",
+        name="Optimal Scale Criterion",
+        yaxis="y5",
+        xaxis="x",
+        marker_color="orange",
+    )
+
+    fig.add_scatter(
+        x=scales[results["selected_partitions"]],
+        y=results["optimal_scale_criterion"][results["selected_partitions"]],
+        mode="markers",
+        name="Optimal Scale",
+        yaxis="y5",
+        xaxis="x",
+        marker_color="red",
+    )
+
+    fig.update_layout(
+        yaxis5=dict(
+            titlefont=dict(color="orange"),
+            tickfont=dict(color="orange"),
+            domain=[0.0, 0.28],
+            overlaying="y",
+        )
+    )
+    fig.update_layout(yaxis=dict(title="Stability, Optimal Scale Criterion"))
+    if filename is not None:
+        _plot(fig, filename=filename)
+
+    if live:
+        fig.show()
+
+
+def plot_optimal_scales_plt(results, scale_axis=True, figure_name="scan_results.pdf"):
+    """Plot scan results with optimal scales with matplotlib."""
+    ax2 = plot_scan_plt(results, scale_axis=scale_axis, figure_name=None)[2]
+    scales = get_scales(results, scale_axis=scale_axis)
+
+    ax2.plot(
+        scales,
+        results["optimal_scale_criterion"],
+        "-",
+        lw=2.0,
+        c="C4",
+        label="optimal scale criterion",
+    )
+    ax2.plot(
+        scales[results["selected_partitions"]],
+        results["optimal_scale_criterion"][results["selected_partitions"]],
+        "o",
+        lw=2.0,
+        c="C4",
+        label="optimal scales",
+    )
+
+    ax2.set_ylabel(r"Stability, Optimal scales", color="k")
+    ax2.legend()
+    if figure_name is not None:
+        plt.savefig(figure_name, bbox_inches="tight")
