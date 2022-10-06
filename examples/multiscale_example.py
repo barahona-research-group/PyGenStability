@@ -127,7 +127,7 @@ if __name__ == "__main__":
         n_louvain=20,
         constructor="continuous_combinatorial",
         n_workers=8,
-        #method="leiden",
+        method="leiden",
     )
 
     # plots results
