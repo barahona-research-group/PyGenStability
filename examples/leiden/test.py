@@ -12,9 +12,9 @@ def create_sbm():
     sizes = [25, 35, 30]
     probs = [[0.7, 0.08, 0.10], [0.08, 0.8, 0.02], [0.10, 0.02, 0.80]]
 
-    graph = nx.stochastic_block_model(sizes, probs, seed=0)
-    graph = nx.erdos_renyi_graph(100, 0.5)
-    #graph = nx.karate_club_graph()
+    #graph = nx.stochastic_block_model(sizes, probs, seed=0)
+    #graph = nx.erdos_renyi_graph(100, 0.5)
+    graph = nx.karate_club_graph()
 
     # need to set the weights to 1
     for i, j in graph.edges():

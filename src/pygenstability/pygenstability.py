@@ -246,32 +246,10 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
             1.0,
         )
     if method == "leiden":
-        """
-        stability, community_id = generalized_louvain.run_louvain(
-            quality_indices[0],
-            quality_indices[1],
-            quality_values,
-            len(quality_values),
-            null_model,
-            np.shape(null_model)[0],
-            1.0,
-        )
-        """
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
         partition = leidenalg.GeneralizedModularityVertexPartition(
-            G,
-            weights=quality_values,
-            null_model=null_model.tolist(),
-            #initial_membership=community_id,
+            G, weights=quality_values, null_model=null_model.tolist()
         )
-        q = partition.quality()
-        diff = partition.diff_move(0, 10)
-        #print(stability, q, diff)
-        #print(partition.membership)
-        #partition.move_node(0, 10)
-        #print(partition.membership)
-        #q1 = partition.quality()
-        #print('comparison:', q1, q+diff, q1 -q-diff)
         optimiser = leidenalg.Optimiser()
         optimiser.set_rng_seed(np.random.randint(1e8))
         optimiser.optimise_partition(partition)
