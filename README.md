@@ -1,5 +1,5 @@
 # *PyGenStability*
-This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network at different scales (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
+This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
 We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic detection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
 
 <p align="center">
@@ -41,7 +41,7 @@ pip install .[all]
 
 ## Using the code
 
-The code is simple to run with the default settings, we can simply import the run and plotting functions, input our graph (of type scipy.csgraph), and then plot the results.
+The code is simple to run with the default settings. We can import the run and plotting functions, input our graph (of type scipy.csgraph), and then plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with indication of optimal scales.
 
 ```
 from pygenstability import run, plotting
@@ -53,22 +53,36 @@ There are a variety of further choices that user can make that will impact the p
 - Constructor: Generalized modularity requires the user to input a quality matrix and associated null models. We provide an object oriented module to write user-defined constructors for these objects, with several already implemented (see `pygenstability/constructors.py` for some classic examples).
 - Generalized modularity maximizers: To maximize the NP-hard optimal generalized modularity we interface with two algorithms: (i) Louvain and (ii) Leiden.
 
+While Louvain is defined as the default due to its familiarity within the research community, Leiden is known to produce better partitions and can be used by specifying the run function.
+
+```
+results = run(graph, method = "leiden")
+```
+
 There are also additional postprocessing and analysis functions, including:
 - Plotting via matplotlib and plotly (interactive).
 - Automated optimal scale detection.
+
+Optimal scale detection is performed by default with the run function but can be repeated with different parameters if needed. The optimial network partitions can then be plotted given a NetworkX nx_graph.
+
+```
+from pygenstability import optimal_scales
+results  = identify_optimal_scales(results, window_size = 2)
+plotting.plot_optimal_partitions(nx_graph, results)
+```
 
 ## Custom constructors
  
 For those of you that wish to implement their own constructor, you will need to design a function with the following properties:
 
-- take a networkx `graph` and a float `time` as argument
+- take a scipy.csgraph `graph` and a float `time` as argument
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
 
 Please see `pygenstability/constructors.py` for the existing implemented constructors. 
 
 ## Documentation
 
-Documentation is here: https://barahona-research-group.github.io/PyGenStability/
+A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/
 
 ## Contributers
 
@@ -110,10 +124,10 @@ In the `example` folder, a demo script with stochastic block model can be tried 
 ```
 python simple_example.py
 ```
- or using the click app:
- ```
- ./run_simple_example.sh
- ```
+or using the click app:
+```
+./run_simple_example.sh
+```
 
 
 
@@ -149,9 +163,6 @@ If you are interested in trying our other packages, see the below list:
 [6] D. Schindler, J. Clarke, and M. Barahona, ‘Multiscale mobility patterns and the restriction of human mobility under lockdown’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2022.Available: https://arxiv.org/abs/2201.06323
 
 [7] Preprint incoming ...
-
-
-
 
 ## Licence
 
