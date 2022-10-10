@@ -251,7 +251,7 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
             G, weights=quality_values, null_model=null_model.tolist()
         )
         optimiser = leidenalg.Optimiser()
-        optimiser.set_rng_seed(np.random.randint(1e8))
+        optimiser.set_rng_seed(42)#np.random.randint(1e8))
         optimiser.optimise_partition(partition)
         stability = partition.modularity
         community_id = partition.membership
