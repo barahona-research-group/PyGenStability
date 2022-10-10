@@ -97,8 +97,8 @@ def run(
     log_scale=True,
     scales=None,
     n_louvain=100,
-    with_VI=True,
-    n_louvain_VI=20,
+    with_NVI=True,
+    n_louvain_NVI=20,
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
@@ -120,8 +120,8 @@ def run(
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_louvain (int): number of Louvain evaluations
-        with_VI (bool): compute the variation of information between Louvain runs
-        n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
+        with_NVI (bool): compute the normalized variation of information (NVI) between Louvain runs
+        n_louvain_BVI (int): number of randomly chosen Louvain run to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         with_spectral_gap (bool): normalise scale by spectral gap
@@ -157,12 +157,12 @@ def run(
             louvain_results = run_several_louvains(constructor_data[i], n_louvain, pool)
             communities = _process_louvain_run(t, louvain_results, all_results)
 
-            if with_VI:
-                _compute_variation_information(
+            if with_NVI:
+                _compute_NVI(
                     communities,
                     all_results,
                     pool,
-                    n_partitions=min(n_louvain_VI, n_louvain),
+                    n_partitions=min(n_louvain_NVI, n_louvain),
                 )
 
             save_results(all_results, filename=result_file)
@@ -201,14 +201,14 @@ def _process_louvain_run(scale, louvain_results, all_results):
 
 
 @timing
-def _compute_variation_information(communities, all_results, pool, n_partitions=10):
-    """Compute an information measure between the first n_partitions."""
+def _compute_NVI(communities, all_results, pool, n_partitions=10):
+    """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
     worker = partial(evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["variation_information"].append(
+    all_results["NVI"].append(
         np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
     )
 

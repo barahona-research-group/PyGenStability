@@ -45,7 +45,7 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     ttprime_metric = ttprime_metric / np.max(np.nan_to_num(ttprime_metric))
 
     # nvi_metric is moving mean of NVI(t)
-    nvi_metric = pd.Series(results["variation_information"])
+    nvi_metric = pd.Series(results["NVI"])
     nvi_metric = np.roll(
         np.asarray(nvi_metric.rolling(window=window_size, win_type="triang").mean()),
         -int(window_size / 2),
