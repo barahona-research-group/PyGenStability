@@ -12,8 +12,8 @@ def create_sbm():
     sizes = [25, 35, 30]
     probs = [[0.7, 0.08, 0.10], [0.08, 0.8, 0.02], [0.10, 0.02, 0.80]]
 
-    #graph = nx.stochastic_block_model(sizes, probs, seed=0)
-    #graph = nx.erdos_renyi_graph(100, 0.5)
+    # graph = nx.stochastic_block_model(sizes, probs, seed=0)
+    # graph = nx.erdos_renyi_graph(100, 0.5)
     graph = nx.karate_club_graph()
 
     # need to set the weights to 1
@@ -60,9 +60,19 @@ if __name__ == "__main__":
     # all_results = run(graph, n_louvain=10, n_time=1, min_time=0, max_time=0)
     # print(all_results)
     all_results = run(
-        graph, n_tries=1, n_time=1, min_time=0, max_time=0, method="leiden", n_workers=1
+        graph, n_tries=5, n_time=5, min_time=-1, max_time=0, method="leiden", n_workers=1
     )
-    # print(all_results)
 
-    # part = leidenalg.find_partition(G, leidenalg.GeneralizedModularityVertexPartition)
-    # print(part)
+    print(all_results["stability"])
+    print(
+        np.array(all_results["stability"])
+        - np.array(
+            [
+                1.2391683103221567,
+                1.2391683103221567,
+                1.2391683103221567,
+                1.2391683103221567,
+                1.2391683103221567,
+            ]
+        )
+    )
