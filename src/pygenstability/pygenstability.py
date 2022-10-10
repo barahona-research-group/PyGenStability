@@ -121,7 +121,7 @@ def run(
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_louvain (int): number of Louvain evaluations
         with_NVI (bool): compute the normalized variation of information (NVI) between Louvain runs
-        n_louvain_BVI (int): number of randomly chosen Louvain run to estimate NVI
+        n_louvain_NVI (int): number of randomly chosen Louvain run to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         with_spectral_gap (bool): normalise scale by spectral gap
@@ -208,9 +208,7 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     worker = partial(evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["NVI"].append(
-        np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
-    )
+    all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
 
 
 def evaluate_NVI(index_pair, top_partitions):

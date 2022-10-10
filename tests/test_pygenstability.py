@@ -49,7 +49,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(
         graph,
-        with_VI=False,
+        with_NVI=False,
         with_postprocessing=False,
         with_ttprime=False,
         with_optimal_scales=False,
