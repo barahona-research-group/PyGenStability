@@ -1,5 +1,5 @@
 # *PyGenStability*
-This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes. Whilst primarily built for MS, the internal architecture of has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
+This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network at different scales (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
 We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic detection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
 
 <p align="center">
@@ -135,6 +135,21 @@ If you are interested in trying our other packages, see the below list:
 * [StEP](https://github.com/barahona-research-group/StEP) :  Spatial-temporal Epidemiological Proximity: Characterising contact in disease outbreaks via a network model of spatial-temporal proximity.
 
 ## References
+
+[1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, ‘Stability of graph communities across time scales’, *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010, doi: 10.1073/pnas.0903215107.
+
+[2] R. Lambiotte, J.-C. Delvenne, and M. Barahona, ‘Random Walks, Markov Processes and the Multiscale Modular Organization of Complex Networks’, *IEEE Trans. Netw. Sci. Eng.*, vol. 1, no. 2, pp. 76–90, Jul. 2014, doi: 10.1109/TNSE.2015.2391998.
+
+[3] M. T. Schaub, J.-C. Delvenne, R. Lambiotte, and M. Barahona, ‘Multiscale dynamical embeddings of complex networks’, *Phys. Rev. E*, vol. 99, no. 6, Jun. 2019, doi: 10.1103/PhysRevE.99.062308.
+
+[4] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, ‘Fast unfolding of communities in large networks’, *J. Stat. Mech.*, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.
+
+[5] V. A. Traag, L. Waltman, and N. J. van Eck, ‘From Louvain to Leiden: guaranteeing well-connected communities’, *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
+
+[6] D. Schindler, J. Clarke, and M. Barahona, ‘Multiscale mobility patterns and the restriction of human mobility under lockdown’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2022.Available: https://arxiv.org/abs/2201.06323
+
+[7] Preprint incoming ...
+
 
 
 
