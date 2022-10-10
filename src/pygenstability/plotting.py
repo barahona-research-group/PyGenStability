@@ -61,16 +61,16 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
 
     hovertemplate = str("<b>scale</b>: %{x:.2f}, <br>%{text}<extra></extra>")
 
-    if "variation_information" in all_results:
-        vi_data = all_results["variation_information"]
-        vi_opacity = 1.0
-        vi_title = "Variation of information"
-        vi_ticks = True
+    if "NVI" in all_results:
+        nvi_data = all_results["NVI"]
+        nvi_opacity = 1.0
+        nvi_title = "Variation of information"
+        nvi_ticks = True
     else:
-        vi_data = np.zeros(len(scales))
-        vi_opacity = 0.0
-        vi_title = None
-        vi_ticks = False
+        nvi_data = np.zeros(len(scales))
+        nvi_opacity = 0.0
+        nvi_title = None
+        nvi_ticks = False
 
     text = [
         f"""Number of communities: {n}, <br> Stability: {np.round(s, 3)},
@@ -78,7 +78,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         for n, s, vi, i in zip(
             all_results["number_of_communities"],
             all_results["stability"],
-            vi_data,
+            nvi_data,
             np.arange(0, len(scales)),
         )
     ]
@@ -132,7 +132,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
 
     vi = go.Scatter(
         x=scales,
-        y=vi_data,
+        y=nvi_data,
         mode="lines+markers",
         hovertemplate=hovertemplate,
         text=text,
@@ -140,7 +140,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y3",
         xaxis="x",
         marker_color="green",
-        opacity=vi_opacity,
+        opacity=nvi_opacity,
     )
 
     layout = go.Layout(
@@ -159,10 +159,10 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             range=[scales[0], scales[-1]],
         ),
         yaxis3=dict(
-            title=vi_title,
+            title=nvi_title,
             titlefont=dict(color="green"),
             tickfont=dict(color="green"),
-            showticklabels=vi_ticks,
+            showticklabels=nvi_ticks,
             overlaying="y",
             side="right",
         ),
@@ -315,15 +315,15 @@ def _plot_ttprime(all_results, ax, scales):
     plt.colorbar(contourf_, cax=axins, label="NVI(t,t')")
 
 
-def _plot_variation_information(all_results, ax, scales):
+def _plot_NVI(all_results, ax, scales):
     """Plot variation information."""
-    ax.plot(scales, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI")
+    ax.plot(scales, all_results["NVI"], "-", lw=2.0, c="C2", label="VI")
 
     ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
     ax.set_ylabel(r"NVI", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis([scales[0], scales[-1], 0.0, np.max(all_results["variation_information"]) * 1.1])
+    ax.axis([scales[0], scales[-1], 0.0, np.max(all_results["NVI"]) * 1.1])
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
@@ -379,7 +379,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     axes.append(ax1)
     ax1.set_xticks([])
 
-    _plot_variation_information(all_results, ax=ax1, scales=scales)
+    _plot_NVI(all_results, ax=ax1, scales=scales)
 
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
@@ -392,7 +392,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
         ax2.set_xticks([])
         axes.append(ax2)
 
-    if "variation_information" in all_results:
+    if "NVI" in all_results:
         ax3 = ax2.twinx()
         _plot_number_comm(all_results, ax=ax3, scales=scales)
         axes.append(ax3)

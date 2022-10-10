@@ -10,16 +10,15 @@ L = logging.getLogger(__name__)
 def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     """Identifies optimal scales in Markov Stability.
 
-    Stable scales are found from the normalized VI(t, t') matrix by searching for large diagonal
-    blocks of VI below VI_cutoff. A moving average of window size is then applied to smooth the
+    Stable scales are found from the NVI(t, t') matrix by searching for large diagonal
+    blocks of NVI below NVI_cutoff. A moving average of window size is then applied to smooth the
     values accros scales, and a criterion is computed as the norm between this value and a similarly
-    smoothed version of the normalized VI(t). Optimal scales are then detected using the peak
-    detection algorithm skimage.peak_local_max, with minima under criterion_thresholds are selected.
+    smoothed version of the NVI(t). Optimal scales are then detected as the local minima of this
+    criterion.
 
     Args:
         results (dict): the results from a Markov Stability calculation
         NVI_cutoff (float): cut-off parameter for identifying plateau
-        criterion_threshold (float): maximum value of criterion to be a valid scale
         window_size (int): size of window for moving mean, to smooth the criterion curve
 
     Returns:
@@ -46,7 +45,7 @@ def identify_optimal_scales(results, NVI_cutoff=0.1, window_size=2):
     ttprime_metric = ttprime_metric / np.max(np.nan_to_num(ttprime_metric))
 
     # nvi_metric is moving mean of NVI(t)
-    nvi_metric = pd.Series(results["variation_information"])
+    nvi_metric = pd.Series(results["NVI"])
     nvi_metric = np.roll(
         np.asarray(nvi_metric.rolling(window=window_size, win_type="triang").mean()),
         -int(window_size / 2),
