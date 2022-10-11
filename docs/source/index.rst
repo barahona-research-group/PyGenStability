@@ -1,4 +1,4 @@
-.. mdinclude:: ../../README.md
+.. mdinclude:: ../index_readme.md
     :start-line: 0
 
 API documentation
