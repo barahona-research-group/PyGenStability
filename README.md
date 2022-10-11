@@ -3,7 +3,7 @@
 This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
 We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic detection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
 
-![illustration](../artwork/diffusion_schematic.png)
+![illustration](docs/artwork/diffusion_schematic.png)
 
 
 ## Installation
