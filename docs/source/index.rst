@@ -9,10 +9,11 @@ Documentation of the API of *PyGenStability*.
 .. toctree::
    :maxdepth: 2
 
-   app
    pygenstability
    constructors
+   app
    plotting
+   optimal_scales
    io
  
 
