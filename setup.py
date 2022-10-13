@@ -22,6 +22,7 @@ test_require = [
     "pytest-cov",
     "pytest-html",
     "diff-pdf-visually",
+    "pdftocairo",
 ]
 
 setup(
