@@ -21,6 +21,7 @@ test_require = [
     "pytest",
     "pytest-cov",
     "pytest-html",
+    "diff-pdf-visually",
 ]
 
 setup(
