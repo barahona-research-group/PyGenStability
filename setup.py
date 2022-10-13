@@ -22,7 +22,7 @@ test_require = [
     "pytest-cov",
     "pytest-html",
     "diff-pdf-visually",
-    "imagemagick",
+    "pdf2image",
 ]
 
 setup(
