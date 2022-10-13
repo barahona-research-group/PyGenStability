@@ -252,7 +252,7 @@ def plot_optimal_partitions(
     selected_scales = all_results["selected_partitions"]
     n_selected_scales = len(selected_scales)
 
-    if n_selected_scales == 0:
+    if n_selected_scales == 0:  # pragma: no cover
         return
 
     for optimal_scale_id in selected_scales:

@@ -3,10 +3,10 @@ import pickle
 from pathlib import Path
 
 import click
+import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy import sparse as sp
-import networkx as nx
 
 from pygenstability import load_results
 from pygenstability import run as _run

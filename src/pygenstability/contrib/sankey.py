@@ -3,6 +3,8 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.offline import plot
 
+# pragma: no cover
+
 
 def plot_sankey(
     all_results,
