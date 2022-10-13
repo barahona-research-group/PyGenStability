@@ -12,9 +12,10 @@ def graph_nx():
     graph = nx.barbell_graph(10, 2)
     pos = nx.spring_layout(graph)
     for u in graph:
-        graph.nodes[u]['pos'] = pos[u]
+        graph.nodes[u]["pos"] = pos[u]
 
     return graph
+
 
 @pytest.fixture()
 def graph(graph_nx):
@@ -23,8 +24,9 @@ def graph(graph_nx):
 
 
 @pytest.fixture()
-def graph_non_connected(graph_nx):
+def graph_non_connected():
     """Create barbell graph."""
+    graph_nx = nx.barbell_graph(10, 2)
     graph_nx.add_node(len(graph_nx))
     return nx.to_scipy_sparse_matrix(graph_nx, dtype=float)
 
@@ -36,8 +38,9 @@ def graph_directed():
 
 
 @pytest.fixture()
-def graph_signed(graph_nx):
+def graph_signed():
     """Create barbell graph."""
+    graph_nx = nx.barbell_graph(10, 2)
     graph_nx[0][1]["weight"] = -1
     return nx.to_scipy_sparse_matrix(graph_nx, dtype=float)
 
