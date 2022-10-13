@@ -18,7 +18,7 @@ def _load_graph(graph_file):
     try:
         # load pickle file
         if Path(graph_file).suffix == ".pkl":
-            with open(graph_file, "rb") as pickle_file:
+            with open(graph_file, "rb") as pickle_file:  # pragma: no cover
                 graph = pickle.load(pickle_file)
         else:
             # load text file with edge list
@@ -29,7 +29,7 @@ def _load_graph(graph_file):
                 (edges[edges.columns[2]], tuple(edges[edges.columns[:2]].to_numpy().T)),
                 shape=(n_nodes, n_nodes),
             )
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         raise Exception("Could not load the graph file.") from exc
     return graph
 

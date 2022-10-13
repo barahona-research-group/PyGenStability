@@ -3,8 +3,6 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.offline import plot
 
-# pragma: no cover
-
 
 def plot_sankey(
     all_results,
@@ -12,7 +10,7 @@ def plot_sankey(
     live=False,
     filename="communities_sankey.html",
     time_index=None,
-):
+):  # pragma: no cover
     """Plot Sankey diagram of communities accros time (plotly only).
 
     Args:
