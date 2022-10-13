@@ -22,7 +22,6 @@ test_require = [
     "pytest-cov",
     "pytest-html",
     "diff-pdf-visually",
-    "poppler",
 ]
 
 setup(
