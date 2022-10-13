@@ -9,12 +9,7 @@ from pygenstability import pygenstability as pgs
 @pytest.fixture()
 def graph_nx():
     """Create barbell graph."""
-    graph = nx.barbell_graph(10, 2)
-    pos = nx.spring_layout(graph)
-    for u in graph:
-        graph.nodes[u]["pos"] = pos[u]
-
-    return graph
+    return nx.barbell_graph(10, 2)
 
 
 @pytest.fixture()

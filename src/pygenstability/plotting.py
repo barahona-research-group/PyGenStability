@@ -202,6 +202,11 @@ def plot_single_partition(
         node_size (float): size of nodes
         ext (str): extension of figures files
     """
+    if any("pos" not in graph.nodes[u] for u in graph):
+        pos = nx.spring_layout(graph)
+        for u in graph:
+            graph.nodes[u]["pos"] = pos[u]
+
     pos = {u: graph.nodes[u]["pos"] for u in graph}
 
     node_color = all_results["community_id"][scale_id]
