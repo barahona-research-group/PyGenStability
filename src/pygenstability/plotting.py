@@ -14,7 +14,7 @@ from tqdm import tqdm
 try:
     import plotly.graph_objects as go
     from plotly.offline import plot as _plot
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 
@@ -41,7 +41,7 @@ def plot_scan(
         live (bool): for plotly backend, open browser with pot
         plotly_filename (str): filename of .html figure from plotly
     """
-    if len(all_results["scales"]) == 1:
+    if len(all_results["scales"]) == 1:  # pragma: no cover
         L.info("Cannot plot the results if only one scale point, we display the result instead:")
         L.info(all_results)
         return None
@@ -66,7 +66,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         nvi_opacity = 1.0
         nvi_title = "Variation of information"
         nvi_ticks = True
-    else:
+    else:  # pragma: no cover
         nvi_data = np.zeros(len(scales))
         nvi_opacity = 0.0
         nvi_title = None
@@ -98,7 +98,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         z = all_results["ttprime"]
         showscale = True
         tprime_title = "log10(scale)"
-    else:
+    else:  # pragma: no cover
         z = np.nan + np.zeros([len(scales), len(scales)])
         showscale = False
         tprime_title = None
@@ -182,7 +182,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     if filename is not None:
         _plot(fig, filename=filename)
 
-    if live:
+    if live:  # pragma: no cover
         fig.show()
     return fig, layout
 
@@ -202,6 +202,11 @@ def plot_single_partition(
         node_size (float): size of nodes
         ext (str): extension of figures files
     """
+    if any("pos" not in graph.nodes[u] for u in graph):
+        pos = nx.spring_layout(graph)
+        for u in graph:
+            graph.nodes[u]["pos"] = pos[u]
+
     pos = {u: graph.nodes[u]["pos"] for u in graph}
 
     node_color = all_results["community_id"][scale_id]
@@ -225,7 +230,9 @@ def plot_single_partition(
     )
 
 
-def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5):
+def plot_optimal_partitions(
+    graph, all_results, edge_color="0.5", edge_width=0.5, folder="optimal_partitions", ext=".pdf"
+):
     """Plot the community structures at each optimal scale.
 
     Args:
@@ -233,20 +240,26 @@ def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5
         all_results (dict): results of pygenstability scan
         edge_color (str): color of edges
         edge_width (float): width of edgs
+        folder (str): folder to save figures
+        ext (str): extension of figures files
     """
-    if "selected_partitions" not in all_results:
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+    if "selected_partitions" not in all_results:  # pragma: no cover
         identify_optimal_scales(all_results)
 
     selected_scales = all_results["selected_partitions"]
     n_selected_scales = len(selected_scales)
 
-    if n_selected_scales == 0:
+    if n_selected_scales == 0:  # pragma: no cover
         return
 
     for optimal_scale_id in selected_scales:
         plot_single_partition(
             graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
         )
+        plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
 
 
 def plot_communities(
@@ -279,11 +292,11 @@ def plot_communities(
 
 def get_scales(all_results, scale_axis=True):
     """Get the scale vector."""
-    if not scale_axis:
+    if not scale_axis:  # pragma: no cover
         return np.arange(len(all_results["scales"]))
     if all_results["run_params"]["log_scale"]:
         return np.log10(all_results["scales"])
-    return all_results["scales"]
+    return all_results["scales"]  # pragma: no cover
 
 
 def _plot_number_comm(all_results, ax, scales):
@@ -373,7 +386,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
         ax0 = plt.subplot(gs[1, 0])
         _plot_ttprime(all_results, ax=ax0, scales=scales)
         ax1 = ax0.twinx()
-    else:
+    else:  # pragma: no cover
         ax1 = plt.subplot(gs[1, 0])
 
     axes.append(ax1)
@@ -438,7 +451,7 @@ def plot_clustered_adjacency(
     adjacency[adjacency == 0] = np.nan
 
     plt.figure(figsize=figsize)
-    plt.imshow(adjacency, aspect="auto", origin="auto", cmap=cmap)
+    plt.imshow(adjacency, aspect="auto", cmap=cmap)
 
     ax = plt.gca()
 
@@ -458,7 +471,7 @@ def plot_clustered_adjacency(
     ax.set_xticks(np.arange(len(adjacency)))
     ax.set_yticks(np.arange(len(adjacency)))
 
-    if labels is not None:
+    if labels is not None:  # pragma: no cover
         labels_plot = [labels[i] for i in node_ids]
         ax.set_xticklabels(labels_plot)
         ax.set_yticklabels(labels_plot)
@@ -474,100 +487,3 @@ def plot_clustered_adjacency(
     )
 
     plt.savefig(figure_name, bbox_inches="tight")
-
-
-def plot_optimal_scales(
-    results,
-    scale_axis=True,
-    figure_name="scan_results.pdf",
-    use_plotly=False,
-    live=True,
-    plotly_filename="scan_results.html",
-):
-    """Plot scan results with optimal scales."""
-    if len(results["scales"]) == 1:
-        L.info("Cannot plot the results if only one scalae point, we display the result instead:")
-        L.info(results)
-        return
-
-    if use_plotly:
-        try:
-            plot_optimal_scales_plotly(results, live=live, filename=plotly_filename)
-        except ImportError:
-            L.warning(
-                "Plotly is not installed, please install package with \
-                 pip install pygenstabiliy[plotly], using matplotlib instead."
-            )
-
-    else:
-        plot_optimal_scales_plt(results, scale_axis=scale_axis, figure_name=figure_name)
-
-
-def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf"):
-    """Plot optimal scales on plotly."""
-    fig, _ = plot_scan_plotly(results, live=False, filename=None)
-
-    scales = get_scales(results, scale_axis=True)
-
-    fig.add_scatter(
-        x=scales,
-        y=results["optimal_scale_criterion"],
-        mode="lines+markers",
-        name="Optimal Scale Criterion",
-        yaxis="y5",
-        xaxis="x",
-        marker_color="orange",
-    )
-
-    fig.add_scatter(
-        x=scales[results["selected_partitions"]],
-        y=results["optimal_scale_criterion"][results["selected_partitions"]],
-        mode="markers",
-        name="Optimal Scale",
-        yaxis="y5",
-        xaxis="x",
-        marker_color="red",
-    )
-
-    fig.update_layout(
-        yaxis5=dict(
-            titlefont=dict(color="orange"),
-            tickfont=dict(color="orange"),
-            domain=[0.0, 0.28],
-            overlaying="y",
-        )
-    )
-    fig.update_layout(yaxis=dict(title="Stability, Optimal Scale Criterion"))
-    if filename is not None:
-        _plot(fig, filename=filename)
-
-    if live:
-        fig.show()
-
-
-def plot_optimal_scales_plt(results, scale_axis=True, figure_name="scan_results.pdf"):
-    """Plot scan results with optimal scales with matplotlib."""
-    ax2 = plot_scan_plt(results, scale_axis=scale_axis, figure_name=None)[2]
-    scales = get_scales(results, scale_axis=scale_axis)
-
-    ax2.plot(
-        scales,
-        results["optimal_scale_criterion"],
-        "-",
-        lw=2.0,
-        c="C4",
-        label="optimal scale criterion",
-    )
-    ax2.plot(
-        scales[results["selected_partitions"]],
-        results["optimal_scale_criterion"][results["selected_partitions"]],
-        "o",
-        lw=2.0,
-        c="C4",
-        label="optimal scales",
-    )
-
-    ax2.set_ylabel(r"Stability, Optimal scales", color="k")
-    ax2.legend()
-    if figure_name is not None:
-        plt.savefig(figure_name, bbox_inches="tight")
