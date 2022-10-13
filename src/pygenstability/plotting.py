@@ -182,7 +182,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     if filename is not None:
         _plot(fig, filename=filename)
 
-    if live:  # pragma: no-cover
+    if live:  # pragma: no cover
         fig.show()
     return fig, layout
 
@@ -225,7 +225,9 @@ def plot_single_partition(
     )
 
 
-def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5):
+def plot_optimal_partitions(
+    graph, all_results, edge_color="0.5", edge_width=0.5, folder="optimal_partitions", ext=".pdf"
+):
     """Plot the community structures at each optimal scale.
 
     Args:
@@ -233,8 +235,13 @@ def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5
         all_results (dict): results of pygenstability scan
         edge_color (str): color of edges
         edge_width (float): width of edgs
+        folder (str): folder to save figures
+        ext (str): extension of figures files
     """
-    if "selected_partitions" not in all_results:
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+    if "selected_partitions" not in all_results:  # pragma: no cover
         identify_optimal_scales(all_results)
 
     selected_scales = all_results["selected_partitions"]
@@ -247,6 +254,7 @@ def plot_optimal_partitions(graph, all_results, edge_color="0.5", edge_width=0.5
         plot_single_partition(
             graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
         )
+        plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
 
 
 def plot_communities(
@@ -458,7 +466,7 @@ def plot_clustered_adjacency(
     ax.set_xticks(np.arange(len(adjacency)))
     ax.set_yticks(np.arange(len(adjacency)))
 
-    if labels is not None:
+    if labels is not None:  # pragma: no cover
         labels_plot = [labels[i] for i in node_ids]
         ax.set_xticklabels(labels_plot)
         ax.set_yticklabels(labels_plot)
@@ -474,100 +482,3 @@ def plot_clustered_adjacency(
     )
 
     plt.savefig(figure_name, bbox_inches="tight")
-
-
-def plot_optimal_scales(
-    results,
-    scale_axis=True,
-    figure_name="scan_results.pdf",
-    use_plotly=False,
-    live=True,
-    plotly_filename="scan_results.html",
-):
-    """Plot scan results with optimal scales."""
-    if len(results["scales"]) == 1:
-        L.info("Cannot plot the results if only one scalae point, we display the result instead:")
-        L.info(results)
-        return
-
-    if use_plotly:
-        try:
-            plot_optimal_scales_plotly(results, live=live, filename=plotly_filename)
-        except ImportError:
-            L.warning(
-                "Plotly is not installed, please install package with \
-                 pip install pygenstabiliy[plotly], using matplotlib instead."
-            )
-
-    else:
-        plot_optimal_scales_plt(results, scale_axis=scale_axis, figure_name=figure_name)
-
-
-def plot_optimal_scales_plotly(results, live=False, filename="scan_results.pdf"):
-    """Plot optimal scales on plotly."""
-    fig, _ = plot_scan_plotly(results, live=False, filename=None)
-
-    scales = get_scales(results, scale_axis=True)
-
-    fig.add_scatter(
-        x=scales,
-        y=results["optimal_scale_criterion"],
-        mode="lines+markers",
-        name="Optimal Scale Criterion",
-        yaxis="y5",
-        xaxis="x",
-        marker_color="orange",
-    )
-
-    fig.add_scatter(
-        x=scales[results["selected_partitions"]],
-        y=results["optimal_scale_criterion"][results["selected_partitions"]],
-        mode="markers",
-        name="Optimal Scale",
-        yaxis="y5",
-        xaxis="x",
-        marker_color="red",
-    )
-
-    fig.update_layout(
-        yaxis5=dict(
-            titlefont=dict(color="orange"),
-            tickfont=dict(color="orange"),
-            domain=[0.0, 0.28],
-            overlaying="y",
-        )
-    )
-    fig.update_layout(yaxis=dict(title="Stability, Optimal Scale Criterion"))
-    if filename is not None:
-        _plot(fig, filename=filename)
-
-    if live:
-        fig.show()
-
-
-def plot_optimal_scales_plt(results, scale_axis=True, figure_name="scan_results.pdf"):
-    """Plot scan results with optimal scales with matplotlib."""
-    ax2 = plot_scan_plt(results, scale_axis=scale_axis, figure_name=None)[2]
-    scales = get_scales(results, scale_axis=scale_axis)
-
-    ax2.plot(
-        scales,
-        results["optimal_scale_criterion"],
-        "-",
-        lw=2.0,
-        c="C4",
-        label="optimal scale criterion",
-    )
-    ax2.plot(
-        scales[results["selected_partitions"]],
-        results["optimal_scale_criterion"][results["selected_partitions"]],
-        "o",
-        lw=2.0,
-        c="C4",
-        label="optimal scales",
-    )
-
-    ax2.set_ylabel(r"Stability, Optimal scales", color="k")
-    ax2.legend()
-    if figure_name is not None:
-        plt.savefig(figure_name, bbox_inches="tight")

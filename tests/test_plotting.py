@@ -28,3 +28,9 @@ def test_plot_clustered_adjacency(graph, results, tmp_path):
 def test_plot_communities(graph_nx, results, tmp_path):
     plotting.plot_communities(graph_nx, results, tmp_path / "communities")
     pdfdiff(DATA / "scale_0.pdf", tmp_path / "communities/scale_0.pdf")
+
+
+def test_plot_optimal_partitions(graph_nx, results, tmp_path):
+    results["selected_partitions"] = [1]
+    plotting.plot_optimal_partitions(graph_nx, results, folder=tmp_path / "partitions")
+    pdfdiff(DATA / "scale_0.pdf", tmp_path / "partitions/scale_1.pdf")
