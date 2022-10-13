@@ -438,7 +438,7 @@ def plot_clustered_adjacency(
     adjacency[adjacency == 0] = np.nan
 
     plt.figure(figsize=figsize)
-    plt.imshow(adjacency, aspect="auto", origin="auto", cmap=cmap)
+    plt.imshow(adjacency, aspect="auto", cmap=cmap)
 
     ax = plt.gca()
 
