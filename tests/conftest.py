@@ -25,7 +25,7 @@ def graph(graph_nx):
 @pytest.fixture()
 def graph_non_connected(graph_nx):
     """Create barbell graph."""
-    graph_nx.add_node(len(graph))
+    graph_nx.add_node(len(graph_nx))
     return nx.to_scipy_sparse_matrix(graph_nx, dtype=float)
 
 

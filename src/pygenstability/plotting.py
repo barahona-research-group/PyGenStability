@@ -14,7 +14,7 @@ from tqdm import tqdm
 try:
     import plotly.graph_objects as go
     from plotly.offline import plot as _plot
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 
@@ -41,7 +41,7 @@ def plot_scan(
         live (bool): for plotly backend, open browser with pot
         plotly_filename (str): filename of .html figure from plotly
     """
-    if len(all_results["scales"]) == 1:
+    if len(all_results["scales"]) == 1:  # pragma: no cover
         L.info("Cannot plot the results if only one scale point, we display the result instead:")
         L.info(all_results)
         return None
@@ -66,7 +66,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         nvi_opacity = 1.0
         nvi_title = "Variation of information"
         nvi_ticks = True
-    else:
+    else:  # pragma: no cover
         nvi_data = np.zeros(len(scales))
         nvi_opacity = 0.0
         nvi_title = None
@@ -98,7 +98,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         z = all_results["ttprime"]
         showscale = True
         tprime_title = "log10(scale)"
-    else:
+    else:  # pragma: no cover
         z = np.nan + np.zeros([len(scales), len(scales)])
         showscale = False
         tprime_title = None
@@ -182,7 +182,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     if filename is not None:
         _plot(fig, filename=filename)
 
-    if live:
+    if live:  # pragma: no-cover
         fig.show()
     return fig, layout
 
@@ -279,11 +279,11 @@ def plot_communities(
 
 def get_scales(all_results, scale_axis=True):
     """Get the scale vector."""
-    if not scale_axis:
+    if not scale_axis:  # pragma: no cover
         return np.arange(len(all_results["scales"]))
     if all_results["run_params"]["log_scale"]:
         return np.log10(all_results["scales"])
-    return all_results["scales"]
+    return all_results["scales"]  # pragma: no cover
 
 
 def _plot_number_comm(all_results, ax, scales):
@@ -373,7 +373,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
         ax0 = plt.subplot(gs[1, 0])
         _plot_ttprime(all_results, ax=ax0, scales=scales)
         ax1 = ax0.twinx()
-    else:
+    else:  # pragma: no cover
         ax1 = plt.subplot(gs[1, 0])
 
     axes.append(ax1)
