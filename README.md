@@ -1,3 +1,10 @@
+[![PyPI version](https://badge.fury.io/py/pygenstability.svg)](https://badge.fury.io/py/pygenstability)
+[![codecov](https://codecov.io/gh/barahona-research-group/PyGenStability/branch/master/graph/badge.svg?token=STP9DFO8MN)](https://codecov.io/gh/barahona-research-group/PyGenStability)
+[![Actions Status](https://github.com/barahona-research-group/PyGenStability/actions/workflows/run-tox.yml/badge.svg?branch=master)](https://github.com/barahona-research-group/PyGenStability/actions)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation status](https://readthedocs.org/projects/docs/badge/?version=latest)](https://barahona-research-group.github.io/PyGenStability/)
+[![License](https://img.shields.io/badge/License-GPLv3-blue)](https://github.com/barahona-research-group/PyGenStability/blob/master/LICENSE)
+
 # *PyGenStability*
 
 This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
