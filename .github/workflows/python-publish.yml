@@ -11,9 +11,6 @@ env:
   # Only build on Python 3.x
   CIBW_BUILD: 'cp3?-*'
   CIBW_SKIP: 'cp35-* cp310-* *-manylinux_i686'
-  CIBW_BEFORE_TEST: pip install pybind11 pytest && sudo apt-get install -y poppler-utils imagemagick
-  CIBW_TEST_EXTRAS: all
-  CIBW_TEST_COMMAND: pytest {package}/tests
 
 jobs:
   build_wheels:
@@ -21,14 +18,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-latest]
+        os: [ubuntu-latest, macos-12]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
         with:
           submodules: 'true'
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@master
         name: Install Python
         with:
           python-version: '3.9'
@@ -55,7 +52,7 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir dist
       - name: Store wheel as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@master
         with:
           name: dist
           path: dist
@@ -66,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@master
         with:
           python-version: 3.9
       - name: Build a source tarball
@@ -74,7 +71,7 @@ jobs:
           python -m pip install pybind11
           python setup.py sdist
       - name: Store sdist as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@master
         with:
           name: dist
           path: dist
@@ -85,7 +82,7 @@ jobs:
     name: Upload wheels to PyPI
     steps:
       - name: Download artifacts produced during the build_wheels and build_sdist jobs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@master
         with:
           name: dist
           path: dist
