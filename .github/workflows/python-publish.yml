@@ -10,7 +10,7 @@ env:
   CIBW_BUILD_VERBOSITY: 2
   # Only build on Python 3.x
   CIBW_BUILD: 'cp3?-*'
-  CIBW_SKIP: 'cp35-* cp39-* *-manylinux_i686'
+  CIBW_SKIP: 'cp35-* cp310-* *-manylinux_i686'
   CIBW_BEFORE_TEST: pip install pybind11 pytest
   CIBW_TEST_EXTRAS: "all"
   CIBW_TEST_COMMAND: pytest {package}/tests
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.7'
+          python-version: '3.9'
 
       - name: Install cibuildwheel
         run: |
@@ -65,10 +65,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - name: Set up Python 3.6
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6
+          python-version: 3.9
       - name: Build a source tarball
         run: |
           python -m pip install pybind11

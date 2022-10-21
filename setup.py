@@ -14,7 +14,6 @@ ext_modules = [
     ),
 ]
 plotly_require = ["plotly>=3.6.0"]
-contrib_require = ["scikit-image>=0.18.1"]
 test_require = [
     "pyyaml",
     "dictdiffer",
@@ -48,8 +47,7 @@ setup(
     zip_safe=False,
     extras_require={
         "plotly": plotly_require,
-        "contrib": contrib_require,
-        "all": plotly_require + contrib_require + test_require,
+        "all": plotly_require + test_require,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
     packages=find_packages("src", exclude=["tests"]),
