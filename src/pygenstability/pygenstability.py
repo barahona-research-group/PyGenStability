@@ -251,10 +251,26 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
             G, weights=quality_values, null_model=null_model.tolist()
         )
         optimiser = leidenalg.Optimiser()
-        optimiser.set_rng_seed(42)#np.random.randint(1e8))
+        optimiser.set_rng_seed(42)  # np.random.randint(1e8))
         optimiser.optimise_partition(partition)
         stability = partition.modularity
         community_id = partition.membership
+    if method == "leiden2":
+        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        partitions = []
+        n_null = len(null_model) / 2
+        for null in null_model[::2]:
+            partitions.append(
+                leidenalg.CPMVertexPartition(
+                    G, weights=quality_values, node_sizes=null.tolist(), resolution_parameter=n_null
+                )
+            )
+        optimiser = leidenalg.Optimiser()
+        optimiser.set_rng_seed(42)  # np.random.randint(1e8))
+        optimiser.optimise_partition_multiplex(partitions, weights=n_null * [1 / n_null])
+        stability = partition.modularity
+        community_id = partition.membership
+
     return stability + global_shift, community_id
 
 
