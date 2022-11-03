@@ -155,6 +155,9 @@ def run(
         constructor_data = _get_constructor_data(
             constructor, scales, pool, tqdm_disable=tqdm_disable
         )
+        if method == "leiden":
+            for data in constructor_data:
+                assert all(data["null_model"][0] == data["null_model"][1])
 
         L.info("Optimise stability...")
         all_results = defaultdict(list)
@@ -228,7 +231,7 @@ def evaluate_NVI(index_pair, top_partitions):
 
 def _to_indices(matrix):
     """Convert a sparse matrix to indices and values."""
-    rows, cols, values = sp.find(matrix)
+    rows, cols, values = sp.find(sp.tril(matrix))
     return (rows, cols), values
 
 
@@ -245,31 +248,24 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
             np.shape(null_model)[0],
             1.0,
         )
+
     if method == "leiden":
-        G = ig.Graph(edges=zip(*quality_indices), directed=True)
-        partition = leidenalg.GeneralizedModularityVertexPartition(
-            G, weights=quality_values, null_model=null_model.tolist()
-        )
-        optimiser = leidenalg.Optimiser()
-        optimiser.set_rng_seed(42)  # np.random.randint(1e8))
-        optimiser.optimise_partition(partition)
-        stability = partition.modularity
-        community_id = partition.membership
-    if method == "leiden2":
-        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        G = ig.Graph(edges=zip(*quality_indices))
         partitions = []
-        n_null = len(null_model) / 2
+        n_null = int(len(null_model) / 2)
         for null in null_model[::2]:
             partitions.append(
-                leidenalg.CPMVertexPartition(
-                    G, weights=quality_values, node_sizes=null.tolist(), resolution_parameter=n_null
-                )
+                leidenalg.CPMVertexPartition(G, weights=quality_values, node_sizes=null.tolist())
             )
         optimiser = leidenalg.Optimiser()
-        optimiser.set_rng_seed(42)  # np.random.randint(1e8))
-        optimiser.optimise_partition_multiplex(partitions, weights=n_null * [1 / n_null])
-        stability = partition.modularity
-        community_id = partition.membership
+        optimiser.set_rng_seed(np.random.randint(1e8))
+        stability = sum(partition.quality() for partition in partitions) / n_null
+        stability += optimiser.optimise_partition_multiplex(
+            partitions, layer_weights=n_null * [1.0 / n_null]
+        )
+        #stability -= 1.0
+        stability /= 2.0
+        community_id = partitions[0].membership
 
     return stability + global_shift, community_id
 

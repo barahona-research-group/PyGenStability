@@ -128,6 +128,7 @@ if __name__ == "__main__":
         constructor="continuous_combinatorial",
         n_workers=8,
         method="leiden",
+        with_postprocessing=False
     )
 
     # plots results
