@@ -19,8 +19,8 @@ from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
 
 try:
-    import leidenalg
     import igraph as ig
+    import leidenalg
 except ImportError:
     pass
 
@@ -257,7 +257,11 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
         )
 
     if method == "leiden":
+        # this implementation uses the trick suggested by V. Traag here:
+        # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
+
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
+
         # here we add a fake self-loop, so that leiden uses 'correct_self_loops=True'
         G.add_edge(0, 0)
         quality_values = quality_values.tolist()
