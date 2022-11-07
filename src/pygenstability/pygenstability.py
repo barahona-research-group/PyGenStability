@@ -127,7 +127,7 @@ def run(
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_tries (int): number of modularity optimisation evaluations
-        with_VI (bool): compute the variation of information between Louvain runs
+        with_NVI (bool): compute the variation of information between Louvain runs
         n_NVI (int): number of randomly chosen Louvain run to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
@@ -168,9 +168,7 @@ def run(
             communities = _process_runs(t, results, all_results)
 
             if with_NVI:
-                _compute_NVI(
-                    communities, all_results, pool, n_partitions=min(n_NVI, n_tries)
-                )
+                _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
 
             save_results(all_results, filename=result_file)
 
@@ -233,6 +231,7 @@ def _to_indices(matrix, directed=False):
     """Convert a sparse matrix to indices and values.
 
     Args:
+        matrix (sparse): sparse matrix to convert
         directed (bool): used for Leiden, which works if graph is full
     """
     if directed:
