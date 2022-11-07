@@ -171,7 +171,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
+            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -323,7 +323,7 @@ def compute_ttprime(all_results, pool):
 
 
 @timing
-def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -332,7 +332,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     ):
         worker = partial(
             evaluate_quality,
-            qualities_index=_to_indices(constructor["quality"]),
+            qualities_index=_to_indices(constructor["quality"], directed=method == "leiden"),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
         )
