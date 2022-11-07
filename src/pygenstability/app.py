@@ -67,7 +67,7 @@ def cli():
     help="Use linear or log scales.",
 )
 @click.option(
-    "--n-louvain",
+    "--n-tries",
     default=100,
     show_default=True,
     help="Number of Louvain evaluations.",
@@ -76,13 +76,13 @@ def cli():
     "--NVI/--no-NVI",
     default=True,
     show_default=True,
-    help="Compute the normalized variation of information between Louvain runs.",
+    help="Compute the normalized variation of information between runs.",
 )
 @click.option(
-    "--n-louvain-NVI",
+    "--n-NVI",
     default=20,
     show_default=True,
-    help="Number of randomly chosen Louvain run to estimate the NVI.",
+    help="Number of randomly chosen runs to estimate the NVI.",
 )
 @click.option(
     "--postprocessing/--no-postprocessing",
@@ -122,9 +122,9 @@ def run(
     max_scale,
     n_scale,
     log_scale,
-    n_louvain,
+    n_tries,
     nvi,
-    n_louvain_nvi,
+    n_nvi,
     postprocessing,
     ttprime,
     spectral_gap,
@@ -149,9 +149,9 @@ def run(
         max_scale=max_scale,
         n_scale=n_scale,
         log_scale=log_scale,
-        n_louvain=n_louvain,
+        n_tries=n_tries,
         with_NVI=nvi,
-        n_louvain_NVI=n_louvain_nvi,
+        n_NVI=n_nvi,
         with_postprocessing=postprocessing,
         with_ttprime=ttprime,
         with_spectral_gap=spectral_gap,

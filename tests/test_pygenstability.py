@@ -78,11 +78,11 @@ def test_evaluate_NVI():
     assert pgs.evaluate_NVI([0, 1], [[0, 0, 1, 1], [1, 1, 1, 1]]) == 1.0
 
 
-def test_evaluate_louvain(graph):
+def test_evaluate(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
     data = constructor.get_data(1)
     quality_indices, quality_values = pgs._to_indices(data["quality"])
-    stability, community_id = pgs.evaluate_louvain(
+    stability, community_id = pgs.optimise(
         0, quality_indices, quality_values, data["null_model"], 0
     )
     assert_almost_equal(stability, 0.5590341906608186)
