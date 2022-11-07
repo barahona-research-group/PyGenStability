@@ -176,7 +176,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
+            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -229,9 +229,16 @@ def evaluate_NVI(index_pair, top_partitions):
     return (JE - MI) / JE
 
 
-def _to_indices(matrix):
-    """Convert a sparse matrix to indices and values."""
-    rows, cols, values = sp.find(sp.tril(matrix))
+def _to_indices(matrix, directed=False):
+    """Convert a sparse matrix to indices and values.
+
+    Args:
+        directed (bool): used for Leiden, which works if graph is full
+    """
+    if directed:
+        rows, cols, values = sp.find(matrix)
+    else:
+        rows, cols, values = sp.find(sp.tril(matrix))
     return (rows, cols), values
 
 
@@ -250,7 +257,12 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
         )
 
     if method == "leiden":
-        G = ig.Graph(edges=zip(*quality_indices))
+        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        # here we add a fake self-loop, so that leiden uses 'correct_self_loops=True'
+        G.add_edge(0, 0)
+        quality_values = quality_values.tolist()
+        quality_values.append(0.00001)
+
         partitions = []
         n_null = int(len(null_model) / 2)
         for null in null_model[::2]:
@@ -263,8 +275,6 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
         stability += optimiser.optimise_partition_multiplex(
             partitions, layer_weights=n_null * [1.0 / n_null]
         )
-        #stability -= 1.0
-        stability /= 2.0
         community_id = partitions[0].membership
 
     return stability + global_shift, community_id
@@ -287,7 +297,9 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
 
 def run_optimisations(constructor, n_runs, pool, method="louvain"):
     """Run several louvain on the current quality matrix."""
-    quality_indices, quality_values = _to_indices(constructor["quality"])
+    quality_indices, quality_values = _to_indices(
+        constructor["quality"], directed=method == "leiden"
+    )
     worker = partial(
         optimise,
         quality_indices=quality_indices,
@@ -316,7 +328,7 @@ def compute_ttprime(all_results, pool):
 
 
 @timing
-def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -325,7 +337,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     ):
         worker = partial(
             evaluate_quality,
-            qualities_index=_to_indices(constructor["quality"]),
+            qualities_index=_to_indices(constructor["quality"], directed=method == "leiden"),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
         )
