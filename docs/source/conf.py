@@ -45,6 +45,7 @@ extensions = [
     "alabaster",
     "sphinx_click",
     "sphinx_mdinclude",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
