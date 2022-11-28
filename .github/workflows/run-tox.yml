@@ -22,12 +22,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: docker://pandoc/core:2.9
     - name: Install dependencies
       run: |
         sudo apt-get install -y poppler-utils imagemagick
         python -m pip install --upgrade pip setuptools
-        pip install tox-gh-actions pybind11
+        pip install tox-gh-actions pybind11 pandoc
     - name: Run tox
       run: |
         tox
