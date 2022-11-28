@@ -40,10 +40,10 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", n_tries=5):
 
             pgs.run(
                 A,
-                min_time=-1.5,
-                max_time=0.5,
-                n_time=10,
-                with_VI=True,
+                min_scale=-1.5,
+                max_scale=0.5,
+                n_scale=10,
+                with_NVI=True,
                 with_postprocessing=True,
                 with_ttprime=True,
                 with_optimal_scales=False,
