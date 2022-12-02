@@ -18,11 +18,8 @@ from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
 
-try:
-    import igraph as ig
-    import leidenalg
-except ImportError:
-    pass
+import igraph as ig
+import leidenalg
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
@@ -234,10 +231,9 @@ def _to_indices(matrix, directed=False):
         matrix (sparse): sparse matrix to convert
         directed (bool): used for Leiden, which works if graph is full
     """
-    if directed:
-        rows, cols, values = sp.find(matrix)
-    else:
-        rows, cols, values = sp.find(sp.tril(matrix))
+    if not directed:
+        matrix = sp.tril(matrix)
+    rows, cols, values = sp.find(matrix)
     return (rows, cols), values
 
 
@@ -261,16 +257,13 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
 
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
 
-        # here we add a fake self-loop, so that leiden uses 'correct_self_loops=True'
-        G.add_edge(0, 0)
-        quality_values = quality_values.tolist()
-        quality_values.append(0.00001)
-
         partitions = []
         n_null = int(len(null_model) / 2)
         for null in null_model[::2]:
             partitions.append(
-                leidenalg.CPMVertexPartition(G, weights=quality_values, node_sizes=null.tolist())
+                leidenalg.CPMVertexPartition(
+                    G, weights=quality_values, node_sizes=null.tolist(), correct_self_loops=True
+                )
             )
         optimiser = leidenalg.Optimiser()
         optimiser.set_rng_seed(np.random.randint(1e8))
@@ -340,7 +333,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, me
     ):
         worker = partial(
             evaluate_quality,
-            qualities_index=_to_indices(constructor["quality"], directed=method == "leiden"),
+            qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
         )

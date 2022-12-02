@@ -1,3 +1,8 @@
+NVI:
+- 0.0
+- 0.2602812235880231
+- 0.1971827451424417
+- 0.2208446745595347
 community_id:
 - - 0.0
   - 0.0
@@ -94,34 +99,37 @@ number_of_communities:
 - 2.0
 run_params:
   constructor: linearized
-  log_time: false
-  max_time: 0.5
-  min_time: -2.0
-  n_louvain: 100
-  n_louvain_VI: 20
-  n_time: 20
+  log_scale: false
+  max_scale: 0.5
+  method: louvain
+  min_scale: -2.0
+  n_NVI: 20
+  n_scale: 20
+  n_tries: 100
   n_workers: 4
+  optimal_scales_kwargs: null
   result_file: results.pkl
-  times:
+  scales:
   - 1.0
   - 2.0
   - 3.0
   - 4.0
   tqdm_disable: false
-  with_VI: true
+  with_NVI: true
+  with_optimal_scales: false
   with_postprocessing: true
   with_spectral_gap: false
   with_ttprime: true
+scales:
+- 1.0
+- 2.0
+- 3.0
+- 4.0
 stability:
 - 0.499306278182449
 - 0.4782633830500638
 - 0.4782633830500638
 - 0.4782633830500638
-times:
-- 1.0
-- 2.0
-- 3.0
-- 4.0
 ttprime:
 - - 0.0
   - 0.2629103268565887
@@ -139,8 +147,3 @@ ttprime:
   - 0.0
   - 0.0
   - 0.0
-NVI:
-- 0.0
-- 0.22084467455953471
-- 0.2208446745595347
-- 0.1971827451424417

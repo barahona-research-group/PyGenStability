@@ -180,10 +180,8 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     fig.update_layout(xaxis_title="log10(scale)")
 
     if filename is not None:
-        _plot(fig, filename=filename)
+        _plot(fig, filename=filename, auto_open=live)
 
-    if live:  # pragma: no cover
-        fig.show()
     return fig, layout
 
 

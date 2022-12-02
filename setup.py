@@ -43,6 +43,8 @@ setup(
         "tqdm>=4.45.0",
         "pybind11>=2.6.2",
         "pandas>=1.0.0",
+        "igraph",
+        "leidenalg",
     ],
     zip_safe=False,
     extras_require={
