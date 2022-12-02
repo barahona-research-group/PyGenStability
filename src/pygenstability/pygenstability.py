@@ -332,7 +332,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, me
     ):
         worker = partial(
             evaluate_quality,
-            qualities_index=_to_indices(constructor["quality"], directed=method == "leiden"),
+            qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
         )
