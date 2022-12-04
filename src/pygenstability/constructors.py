@@ -7,7 +7,7 @@ import scipy.sparse as sp
 
 L = logging.getLogger(__name__)
 _USE_CACHE = True
-THRESHOLD = 1e-12
+THRESHOLD = 1e-8
 DTYPE = "float128"
 
 
@@ -26,8 +26,8 @@ def load_constructor(constructor, graph, **kwargs):
 
 
 def threshold_matrix(matrix, threshold=THRESHOLD):
-    """Threshold a matrix to remove small numbers for Louvain speed up."""
-    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0
+    """Threshold a matrix to remove small numbers for speed up."""
+    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0.0
     matrix.eliminate_zeros()
 
 
@@ -49,7 +49,8 @@ def _check_total_degree(degrees):
 
 def get_spectral_gap(laplacian):
     """Compute spectral gap."""
-    spectral_gap = abs(sp.linalg.eigs(laplacian, which="SM", k=2)[0][1])
+    spectral_gap = np.round(max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8)
+    print(spectral_gap)
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
     return spectral_gap
 
@@ -107,7 +108,11 @@ class constructor_linearized(Constructor):
         """Return quality and null model at given time."""
         if self.with_spectral_gap:
             time /= self.spectral_gap
-        return time * self.partial_quality_matrix, self.partial_null_model, 1 - time
+        return {
+            "quality": time * self.partial_quality_matrix,
+            "null_model": self.partial_null_model,
+            "shift": float(1 - time),
+        }
 
 
 class constructor_continuous_combinatorial(Constructor):
@@ -130,7 +135,7 @@ class constructor_continuous_combinatorial(Constructor):
             time /= self.spectral_gap
         exp = apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return quality_matrix, self.partial_null_model, None
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
 class constructor_continuous_normalized(Constructor):
@@ -155,7 +160,7 @@ class constructor_continuous_normalized(Constructor):
             time /= self.spectral_gap
         exp = apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return quality_matrix, self.partial_null_model, None
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
 class constructor_signed_modularity(Constructor):
@@ -188,7 +193,10 @@ class constructor_signed_modularity(Constructor):
 
     def get_data(self, time):
         """Return quality and null model at given time."""
-        return time * self.partial_quality_matrix, self.partial_null_model, None
+        return {
+            "quality": time * self.partial_quality_matrix,
+            "null_model": self.partial_null_model,
+        }
 
 
 class constructor_directed(Constructor):
@@ -217,4 +225,4 @@ class constructor_directed(Constructor):
         """Return quality and null model at given time."""
         exp = apply_expm(time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
-        return quality_matrix, self.partial_null_model, None
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}

@@ -11,14 +11,21 @@ from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from tqdm import tqdm
 
-L = logging.getLogger(__name__)
+try:
+    import plotly.graph_objects as go
+    from plotly.offline import plot as _plot
+except ImportError:  # pragma: no cover
+    pass
 
-# pylint: disable=import-outside-toplevel
+
+from pygenstability.optimal_scales import identify_optimal_scales
+
+L = logging.getLogger(__name__)
 
 
 def plot_scan(
     all_results,
-    time_axis=True,
+    scale_axis=True,
     figure_name="scan_results.pdf",
     use_plotly=False,
     live=True,
@@ -28,27 +35,20 @@ def plot_scan(
 
     Args:
         all_results (dict): results of pygenstability scan
-        time_axis (bool): display time of time index on time axis
+        scale_axis (bool): display scale of scale index on scale axis
         figure_name (str): name of matplotlib figure
         use_plotly (bool): use matplotlib or plotly backend
         live (bool): for plotly backend, open browser with pot
         plotly_filename (str): filename of .html figure from plotly
     """
-    if len(all_results["times"]) == 1:
-        L.info("Cannot plot the results if only one time point, we display the result instead:")
+    if len(all_results["scales"]) == 1:  # pragma: no cover
+        L.info("Cannot plot the results if only one scale point, we display the result instead:")
         L.info(all_results)
-        return
+        return None
 
     if use_plotly:
-        try:
-            plot_scan_plotly(all_results, live=live, filename=plotly_filename)
-        except ImportError:
-            L.warning(
-                "Plotly is not installed, please install package with \
-                 pip install pygenstabiliy[plotly], using matplotlib instead."
-            )
-    else:
-        plot_scan_plt(all_results, time_axis=time_axis, figure_name=figure_name)
+        return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
+    return plot_scan_plt(all_results, scale_axis=scale_axis, figure_name=figure_name)
 
 
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
@@ -57,23 +57,20 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     filename="clusters.html",
 ):
     """Plot results of pygenstability with plotly."""
-    import plotly.graph_objects as go
-    from plotly.offline import plot as _plot
+    scales = get_scales(all_results, scale_axis=True)
 
-    times = get_times(all_results, time_axis=True)
+    hovertemplate = str("<b>scale</b>: %{x:.2f}, <br>%{text}<extra></extra>")
 
-    hovertemplate = str("<b>Time</b>: %{x:.2f}, <br>%{text}<extra></extra>")
-
-    if "variation_information" in all_results:
-        vi_data = all_results["variation_information"]
-        vi_opacity = 1.0
-        vi_title = "Variation of information"
-        vi_ticks = True
-    else:
-        vi_data = np.zeros(len(times))
-        vi_opacity = 0.0
-        vi_title = None
-        vi_ticks = False
+    if "NVI" in all_results:
+        nvi_data = all_results["NVI"]
+        nvi_opacity = 1.0
+        nvi_title = "Variation of information"
+        nvi_ticks = True
+    else:  # pragma: no cover
+        nvi_data = np.zeros(len(scales))
+        nvi_opacity = 0.0
+        nvi_title = None
+        nvi_ticks = False
 
     text = [
         f"""Number of communities: {n}, <br> Stability: {np.round(s, 3)},
@@ -81,12 +78,12 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         for n, s, vi, i in zip(
             all_results["number_of_communities"],
             all_results["stability"],
-            vi_data,
-            np.arange(0, len(times)),
+            nvi_data,
+            np.arange(0, len(scales)),
         )
     ]
     ncom = go.Scatter(
-        x=times,
+        x=scales,
         y=all_results["number_of_communities"],
         mode="lines+markers",
         hovertemplate=hovertemplate,
@@ -100,16 +97,16 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     if "ttprime" in all_results:
         z = all_results["ttprime"]
         showscale = True
-        tprime_title = "log10(time)"
-    else:
-        z = np.nan + np.zeros([len(times), len(times)])
+        tprime_title = "log10(scale)"
+    else:  # pragma: no cover
+        z = np.nan + np.zeros([len(scales), len(scales)])
         showscale = False
         tprime_title = None
 
     ttprime = go.Heatmap(
         z=z,
-        x=times,
-        y=times,
+        x=scales,
+        y=scales,
         colorscale="YlOrBr_r",
         yaxis="y2",
         xaxis="x2",
@@ -124,7 +121,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     )
     if "stability" in all_results:
         stab = go.Scatter(
-            x=times,
+            x=scales,
             y=all_results["stability"],
             mode="lines+markers",
             hovertemplate=hovertemplate,
@@ -134,8 +131,8 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         )
 
     vi = go.Scatter(
-        x=times,
-        y=vi_data,
+        x=scales,
+        y=nvi_data,
         mode="lines+markers",
         hovertemplate=hovertemplate,
         text=text,
@@ -143,7 +140,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y3",
         xaxis="x",
         marker_color="green",
-        opacity=vi_opacity,
+        opacity=nvi_opacity,
     )
 
     layout = go.Layout(
@@ -159,13 +156,13 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             tickfont=dict(color="black"),
             domain=[0.32, 1],
             side="right",
-            range=[times[0], times[-1]],
+            range=[scales[0], scales[-1]],
         ),
         yaxis3=dict(
-            title=vi_title,
+            title=nvi_title,
             titlefont=dict(color="green"),
             tickfont=dict(color="green"),
-            showticklabels=vi_ticks,
+            showticklabels=nvi_ticks,
             overlaying="y",
             side="right",
         ),
@@ -175,39 +172,42 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
             tickfont=dict(color="red"),
             overlaying="y2",
         ),
-        xaxis=dict(range=[times[0], times[-1]]),
-        xaxis2=dict(range=[times[0], times[-1]]),
+        xaxis=dict(range=[scales[0], scales[-1]]),
+        xaxis2=dict(range=[scales[0], scales[-1]]),
     )
 
     fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)
-    fig.update_layout(xaxis_title="log10(time)")
+    fig.update_layout(xaxis_title="log10(scale)")
 
     if filename is not None:
-        _plot(fig, filename=filename)
+        _plot(fig, filename=filename, auto_open=live)
 
-    if live:
-        fig.show()
     return fig, layout
 
 
-def plot_single_community(
-    graph, all_results, time_id, edge_color="0.5", edge_width=0.5, node_size=100
+def plot_single_partition(
+    graph, all_results, scale_id, edge_color="0.5", edge_width=0.5, node_size=100
 ):
-    """Plot the community structures for a given time.
+    """Plot the community structures for a given scale.
 
     Args:
         graph (networkx.Graph): graph to plot
         all_results (dict): results of pygenstability scan
-        time_id (int): index of time to plot
+        scale_id (int): index of scale to plot
         folder (str): folder to save figures
         edge_color (str): color of edges
         edge_width (float): width of edges
         node_size (float): size of nodes
         ext (str): extension of figures files
     """
+    if any("pos" not in graph.nodes[u] for u in graph):
+        pos = nx.spring_layout(graph)
+        for u in graph:
+            graph.nodes[u]["pos"] = pos[u]
+
     pos = {u: graph.nodes[u]["pos"] for u in graph}
 
-    node_color = all_results["community_id"][time_id]
+    node_color = all_results["community_id"][scale_id]
 
     nx.draw_networkx_nodes(
         graph,
@@ -220,18 +220,50 @@ def plot_single_community(
 
     plt.axis("off")
     plt.title(
-        str(r"$log_{10}(time) =$ ")
-        + str(np.round(np.log10(all_results["times"][time_id]), 2))
+        str(r"$log_{10}(scale) =$ ")
+        + str(np.round(np.log10(all_results["scales"][scale_id]), 2))
         + ", with "
-        + str(all_results["number_of_communities"][time_id])
+        + str(all_results["number_of_communities"][scale_id])
         + " communities"
     )
+
+
+def plot_optimal_partitions(
+    graph, all_results, edge_color="0.5", edge_width=0.5, folder="optimal_partitions", ext=".pdf"
+):
+    """Plot the community structures at each optimal scale.
+
+    Args:
+        graph (networkx.Graph): graph to plot
+        all_results (dict): results of pygenstability scan
+        edge_color (str): color of edges
+        edge_width (float): width of edgs
+        folder (str): folder to save figures
+        ext (str): extension of figures files
+    """
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+    if "selected_partitions" not in all_results:  # pragma: no cover
+        identify_optimal_scales(all_results)
+
+    selected_scales = all_results["selected_partitions"]
+    n_selected_scales = len(selected_scales)
+
+    if n_selected_scales == 0:  # pragma: no cover
+        return
+
+    for optimal_scale_id in selected_scales:
+        plot_single_partition(
+            graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
+        )
+        plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
 
 
 def plot_communities(
     graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
 ):
-    """Plot the community structures at each time in a folder.
+    """Plot the community structures at each scale in a folder.
 
     Args:
         graph (networkx.Graph): graph to plot
@@ -246,43 +278,39 @@ def plot_communities(
 
     mpl_backend = matplotlib.get_backend()
     matplotlib.use("Agg")
-    for time_id in tqdm(range(len(all_results["times"]))):
+    for scale_id in tqdm(range(len(all_results["scales"]))):
         plt.figure()
-        plot_single_community(
-            graph, all_results, time_id, edge_color=edge_color, edge_width=edge_width
+        plot_single_partition(
+            graph, all_results, scale_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(os.path.join(folder, "time_" + str(time_id) + ext), bbox_inches="tight")
+        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
         plt.close()
     matplotlib.use(mpl_backend)
 
 
-def get_times(all_results, time_axis=True):
-    """Get the time vector."""
-    if not time_axis:
-        return np.arange(len(all_results["times"]))
-    if all_results["run_params"]["log_time"]:
-        return np.log10(all_results["times"])
-    return all_results["times"]
+def get_scales(all_results, scale_axis=True):
+    """Get the scale vector."""
+    if not scale_axis:  # pragma: no cover
+        return np.arange(len(all_results["scales"]))
+    if all_results["run_params"]["log_scale"]:
+        return np.log10(all_results["scales"])
+    return all_results["scales"]  # pragma: no cover
 
 
-def _plot_number_comm(all_results, ax, time_axis=True):
+def _plot_number_comm(all_results, ax, scales):
     """Plot number of communities."""
-    times = get_times(all_results, time_axis)
-
-    ax.plot(times, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
+    ax.plot(scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
     ax.set_ylabel("Number of clusters", color="C3")
     ax.tick_params("y", colors="C3")
 
 
-def _plot_ttprime(all_results, ax, time_axis):
+def _plot_ttprime(all_results, ax, scales):
     """Plot ttprime."""
-    times = get_times(all_results, time_axis)
-
-    contourf_ = ax.contourf(times, times, all_results["ttprime"], cmap="YlOrBr_r")
+    contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
-    ax.axis([times[0], times[-1], times[0], times[-1]])
+    ax.axis([scales[0], scales[-1], scales[0], scales[-1]])
     ax.set_xlabel(r"$log_{10}(t)$")
 
     axins = inset_axes(
@@ -298,34 +326,31 @@ def _plot_ttprime(all_results, ax, time_axis):
     plt.colorbar(contourf_, cax=axins, label="NVI(t,t')")
 
 
-def _plot_variation_information(all_results, ax, time_axis=True):
+def _plot_NVI(all_results, ax, scales):
     """Plot variation information."""
-    times = get_times(all_results, time_axis=time_axis)
-    ax.plot(times, all_results["variation_information"], "-", lw=2.0, c="C2", label="VI")
+    ax.plot(scales, all_results["NVI"], "-", lw=2.0, c="C2", label="VI")
 
     ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
     ax.set_ylabel(r"NVI", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis([times[0], times[-1], 0.0, np.max(all_results["variation_information"]) * 1.1])
+    ax.axis([scales[0], scales[-1], 0.0, np.max(all_results["NVI"]) * 1.1])
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
-def _plot_stability(all_results, ax, time_axis=True):
+def _plot_stability(all_results, ax, scales):
     """Plot stability."""
-    times = get_times(all_results, time_axis=time_axis)
-    ax.plot(times, all_results["stability"], "-", label=r"Stability", c="C0")
+    ax.plot(scales, all_results["stability"], "-", label=r"Stability", c="C0")
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
+    ax.set_ylim(0, 1.1 * max(all_results["stability"]))
     ax.yaxis.set_label_position("left")
 
 
-def _plot_optimal_scales(all_results, ax, time_axis=True):
+def _plot_optimal_scales(all_results, ax, scales):
     """Plot stability."""
-    times = get_times(all_results, time_axis=time_axis)
-
     ax.plot(
-        times,
+        scales,
         all_results["optimal_scale_criterion"],
         "-",
         lw=2.0,
@@ -333,7 +358,7 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
         label="optimal scale criterion",
     )
     ax.plot(
-        times[all_results["selected_partitions"]],
+        scales[all_results["selected_partitions"]],
         all_results["optimal_scale_criterion"][all_results["selected_partitions"]],
         "o",
         lw=2.0,
@@ -341,35 +366,31 @@ def _plot_optimal_scales(all_results, ax, time_axis=True):
         label="optimal scales",
     )
 
-    ax.plot(
-        times, all_results["optimal_scale_criterion"], "-", label=r"Optimal scale criterion", c="C0"
-    )
     ax.tick_params("y", colors="C4")
     ax.set_ylabel("Optimal Scale Criterion", color="C4")
     ax.yaxis.set_label_position("left")
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
-def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
+def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
-    
-    if "optimal_scale_criterion" in all_results:  
-        gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
-    else:
-        gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 1.0])
- 
+    scales = get_scales(all_results, scale_axis=scale_axis)
+    gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     ax0 = None
+    axes = [ax0]
+
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[1, 0])
-        _plot_ttprime(all_results, ax=ax0, time_axis=time_axis)
+        _plot_ttprime(all_results, ax=ax0, scales=scales)
         ax1 = ax0.twinx()
-    else:
+    else:  # pragma: no cover
         ax1 = plt.subplot(gs[1, 0])
 
+    axes.append(ax1)
     ax1.set_xticks([])
 
-    _plot_variation_information(all_results, ax=ax1, time_axis=time_axis)
+    _plot_NVI(all_results, ax=ax1, scales=scales)
 
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
@@ -378,56 +399,57 @@ def plot_scan_plt(all_results, time_axis=True, figure_name="scan_results.svg"):
     ax2 = plt.subplot(gs[0, 0])
 
     if "stability" in all_results:
-        _plot_stability(all_results, ax=ax2, time_axis=time_axis)
+        _plot_stability(all_results, ax=ax2, scales=scales)
+        ax2.set_xticks([])
+        axes.append(ax2)
 
-    if "variation_information" in all_results:
+    if "NVI" in all_results:
         ax3 = ax2.twinx()
-        _plot_number_comm(all_results, ax=ax3, time_axis=time_axis)
+        _plot_number_comm(all_results, ax=ax3, scales=scales)
+        axes.append(ax3)
 
     if "optimal_scale_criterion" in all_results:
         ax4 = plt.subplot(gs[2, 0])
-        _plot_optimal_scales(all_results, ax=ax4, time_axis=time_axis)
-    else:
-        ax4 = None
-   
-        
-    if figure_name is not None:
-        plt.savefig(figure_name, bbox_inches="tight")
+        _plot_optimal_scales(all_results, ax=ax4, scales=scales)
+        axes.append(ax4)
 
-    return ax0, ax1, ax2, ax3, ax4
+    if figure_name is not None:
+        plt.savefig(figure_name)
+
+    return axes
 
 
 def plot_clustered_adjacency(
     adjacency,
     all_results,
-    time,
+    scale,
     labels=None,
     figsize=(12, 10),
     cmap="Blues",
     figure_name="clustered_adjacency.pdf",
 ):
-    """Plot the clustered adjacency matrix of the graph at a given time.
+    """Plot the clustered adjacency matrix of the graph at a given scale.
 
     Args:
         adjacency (ndarray): adjacency matrix to plot
         all_results (dict): results of PyGenStability
-        time (int): time index for clustering
+        scale (int): scale index for clustering
         labels (list): node labels, or None
         figsize (tubple): figure size
         cmap (str): colormap for matrix elements
         figure_name (str): filename of the figure with extension
     """
-    comms, counts = np.unique(all_results["community_id"][time], return_counts=True)
+    comms, counts = np.unique(all_results["community_id"][scale], return_counts=True)
 
     node_ids = []
     for comm in comms:
-        node_ids += list(np.where(all_results["community_id"][time] == comm)[0])
+        node_ids += list(np.where(all_results["community_id"][scale] == comm)[0])
 
     adjacency = adjacency[np.ix_(node_ids, node_ids)]
     adjacency[adjacency == 0] = np.nan
 
     plt.figure(figsize=figsize)
-    plt.imshow(adjacency, aspect="auto", origin="auto", cmap=cmap)
+    plt.imshow(adjacency, aspect="auto", cmap=cmap)
 
     ax = plt.gca()
 
@@ -447,7 +469,7 @@ def plot_clustered_adjacency(
     ax.set_xticks(np.arange(len(adjacency)))
     ax.set_yticks(np.arange(len(adjacency)))
 
-    if labels is not None:
+    if labels is not None:  # pragma: no cover
         labels_plot = [labels[i] for i in node_ids]
         ax.set_xticklabels(labels_plot)
         ax.set_yticklabels(labels_plot)
@@ -456,10 +478,10 @@ def plot_clustered_adjacency(
     plt.xticks(rotation=90)
     plt.axis([-0.5, len(adjacency) - 0.5, -0.5, len(adjacency) - 0.5])
     plt.suptitle(
-        "log10(time) = "
-        + str(np.round(np.log10(all_results["times"][time]), 2))
+        "log10(scale) = "
+        + str(np.round(np.log10(all_results["scales"][scale]), 2))
         + ",  number_of_communities="
-        + str(all_results["number_of_communities"][time])
+        + str(all_results["number_of_communities"][scale])
     )
 
     plt.savefig(figure_name, bbox_inches="tight")

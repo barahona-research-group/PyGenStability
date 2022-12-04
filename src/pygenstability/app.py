@@ -3,6 +3,7 @@ import pickle
 from pathlib import Path
 
 import click
+import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy import sparse as sp
@@ -11,6 +12,26 @@ from pygenstability import load_results
 from pygenstability import run as _run
 from pygenstability.plotting import plot_communities as _plot_communities
 from pygenstability.plotting import plot_scan as _plot_scan
+
+
+def _load_graph(graph_file):
+    try:
+        # load pickle file
+        if Path(graph_file).suffix == ".pkl":
+            with open(graph_file, "rb") as pickle_file:  # pragma: no cover
+                graph = pickle.load(pickle_file)
+        else:
+            # load text file with edge list
+            edges = pd.read_csv(graph_file)
+            n_nodes = len(np.unique(edges[edges.columns[:2]].to_numpy().flatten()))
+            # pylint: disable=unsubscriptable-object,no-member
+            graph = sp.csr_matrix(
+                (edges[edges.columns[2]], tuple(edges[edges.columns[:2]].to_numpy().T)),
+                shape=(n_nodes, n_nodes),
+            )
+    except Exception as exc:  # pragma: no cover
+        raise Exception("Could not load the graph file.") from exc
+    return graph
 
 
 @click.group()
@@ -27,41 +48,41 @@ def cli():
     help="Name of the quality constructor.",
 )
 @click.option(
-    "--min-time",
+    "--min-scale",
     default=-2.0,
     show_default=True,
-    help="Minimum Markov time.",
+    help="Minimum scale.",
 )
 @click.option(
-    "--max-time",
+    "--max-scale",
     default=0.5,
     show_default=True,
-    help="Maximum Markov time.",
+    help="Maximum scale.",
 )
-@click.option("--n-time", default=20, show_default=True, help="Number of time steps.")
+@click.option("--n-scale", default=20, show_default=True, help="Number of scale steps.")
 @click.option(
-    "--log-time",
+    "--log-scale",
     default=True,
     show_default=True,
-    help="Use linear or log scales for times.",
+    help="Use linear or log scales.",
 )
 @click.option(
-    "--n-louvain",
+    "--n-tries",
     default=100,
     show_default=True,
     help="Number of Louvain evaluations.",
 )
 @click.option(
-    "--VI/--no-VI",
+    "--NVI/--no-NVI",
     default=True,
     show_default=True,
-    help="Compute the variation of information between Louvain runs.",
+    help="Compute the normalized variation of information between runs.",
 )
 @click.option(
-    "--n-louvain-VI",
+    "--n-NVI",
     default=20,
     show_default=True,
-    help="Number of randomly chosen Louvain run to estimate the VI.",
+    help="Number of randomly chosen runs to estimate the NVI.",
 )
 @click.option(
     "--postprocessing/--no-postprocessing",
@@ -79,7 +100,7 @@ def cli():
     "--spectral-gap/--no-spectral-gap",
     default=True,
     show_default=True,
-    help="Normalize time by spectral gap.",
+    help="Normalize scale by spectral gap.",
 )
 @click.option(
     "--result-file",
@@ -97,13 +118,13 @@ def cli():
 def run(
     graph_file,
     constructor,
-    min_time,
-    max_time,
-    n_time,
-    log_time,
-    n_louvain,
-    vi,
-    n_louvain_vi,
+    min_scale,
+    max_scale,
+    n_scale,
+    log_scale,
+    n_tries,
+    nvi,
+    n_nvi,
     postprocessing,
     ttprime,
     spectral_gap,
@@ -120,33 +141,17 @@ def run(
 
     See https://barahona-research-group.github.io/PyGenStability/ for more information.
     """
-    try:
-        # load pickle file
-        if Path(graph_file).suffix == ".pkl":
-            with open(graph_file, "rb") as pickle_file:
-                graph = pickle.load(pickle_file)
-        else:
-            # load text file with edge list
-            edges = pd.read_csv(graph_file)
-            n_nodes = len(np.unique(edges[edges.columns[:2]].to_numpy().flatten()))
-            # pylint: disable=unsubscriptable-object,no-member
-            graph = sp.csr_matrix(
-                (edges[edges.columns[2]], tuple(edges[edges.columns[:2]].to_numpy().T)),
-                shape=(n_nodes, n_nodes),
-            )
-    except Exception as exc:
-        raise Exception("Could not load the graph file.") from exc
-
+    graph = _load_graph(graph_file)
     _run(
         graph,
         constructor=constructor,
-        min_time=min_time,
-        max_time=max_time,
-        n_time=n_time,
-        log_time=log_time,
-        n_louvain=n_louvain,
-        with_VI=vi,
-        n_louvain_VI=n_louvain_vi,
+        min_scale=min_scale,
+        max_scale=max_scale,
+        n_scale=n_scale,
+        log_scale=log_scale,
+        n_tries=n_tries,
+        with_NVI=nvi,
+        n_NVI=n_nvi,
         with_postprocessing=postprocessing,
         with_ttprime=ttprime,
         with_spectral_gap=spectral_gap,
@@ -166,11 +171,9 @@ def plot_scan(results_file):
 @cli.command("plot_communities")
 @click.argument("graph_file", type=click.Path(exists=True))
 @click.argument("results_file", type=click.Path(exists=True))
-def plot_communities(results_file, graph_file):
-    """Plot communities on networkx graph.
-
-    Argument graph_file has to be a .gpickle compatible with network.
-    """
-    with open(graph_file, "rb") as pickle_file:
-        graph = pickle.load(pickle_file)
+def plot_communities(graph_file, results_file):
+    """Plot communities on networkx graph."""
+    graph = _load_graph(graph_file)
+    if not isinstance(graph, nx.Graph):
+        graph = nx.from_scipy_sparse_array(graph)
     _plot_communities(graph, load_results(results_file))

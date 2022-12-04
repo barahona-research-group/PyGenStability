@@ -1,7 +1,7 @@
 """Sankey diagram plots."""
-import numpy as np
-import plotly.graph_objects as go
-from plotly.offline import plot
+import numpy as np  # pragma: no cover
+import plotly.graph_objects as go  # pragma: no cover
+from plotly.offline import plot  # pragma: no cover
 
 
 def plot_sankey(
@@ -10,7 +10,7 @@ def plot_sankey(
     live=False,
     filename="communities_sankey.html",
     time_index=None,
-):
+):  # pragma: no cover
     """Plot Sankey diagram of communities accros time (plotly only).
 
     Args:

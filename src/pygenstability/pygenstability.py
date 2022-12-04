@@ -4,6 +4,8 @@ import logging
 import multiprocessing
 from collections import defaultdict
 from functools import partial
+from functools import wraps
+from time import time
 
 import numpy as np
 import scipy.sparse as sp
@@ -14,6 +16,10 @@ from tqdm import tqdm
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
+from pygenstability.optimal_scales import identify_optimal_scales
+
+import igraph as ig
+import leidenalg
 
 try:
     import leidenalg
@@ -23,6 +29,24 @@ except ImportError:
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
+
+
+def timing(f):  # pragma: no cover
+    """Use as decorator to time a function excecution if logging is in DEBUG mode."""
+
+    @wraps(f)
+    def wrap(*args, **kw):
+        if logging.root.level == logging.DEBUG:
+            t_start = time()
+            result = f(*args, **kw)
+            t_end = time()
+            with open("timing.csv", "a", encoding="utf-8") as file:
+                print(f"{f.__name__}, {t_start - t_end}", file=file)
+        else:
+            result = f(*args, **kw)
+        return result
+
+    return wrap
 
 
 def _get_chunksize(n_comp, pool):
@@ -48,144 +72,156 @@ def _graph_checks(graph, dtype=_DTYPE):
     return graph
 
 
-def _get_times(min_time=-2.0, max_time=0.5, n_time=20, log_time=True, times=None):
-    """Get the time vectors."""
-    if times is not None:
-        return times
-    if log_time:
-        return np.logspace(min_time, max_time, n_time)
-    return np.linspace(min_time, max_time, n_time)
+def _get_scales(min_scale=-2.0, max_scale=0.5, n_scale=20, log_scale=True, scales=None):
+    """Get the scale vectors."""
+    if scales is not None:
+        return scales
+    if log_scale:
+        return np.logspace(min_scale, max_scale, n_scale)
+    return np.linspace(min_scale, max_scale, n_scale)
 
 
 def _get_params(all_locals):
     """Get run paramters from the local variables."""
     del all_locals["graph"]
-    if callable(all_locals["constructor"]):
+    if hasattr(all_locals["constructor"], "get_data"):
         all_locals["constructor"] = "custom constructor"
     return all_locals
 
 
+@timing
+def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
+    return list(
+        tqdm(pool.imap(constructor.get_data, scales), total=len(scales), disable=tqdm_disable)
+    )
+
+
+@timing
 def run(
     graph=None,
     constructor="linearized",
-    min_time=-2.0,
-    max_time=0.5,
-    n_time=20,
-    log_time=True,
-    times=None,
-    n_louvain=100,
-    with_VI=True,
-    n_louvain_VI=20,
+    min_scale=-2.0,
+    max_scale=0.5,
+    n_scale=20,
+    log_scale=True,
+    scales=None,
+    n_tries=100,
+    with_NVI=True,
+    n_NVI=20,
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
+    with_optimal_scales=True,
+    optimal_scales_kwargs=None,
     method="louvain",
 ):
-    """Main function to compute clustering at various time scales.
+    """Main function to compute clustering at various scales.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
         constructor (str/function): name of the quality constructor,
-            or custom constructor function. It must have two arguments, graph and time.
-        min_time (float): minimum Markov time
-        max_time (float): maximum Markov time
-        n_time (int): number of time steps
-        log_time (bool): use linear or log scales for times
-        times (array): custom time vector, if provided, it will override the other time arguments
-        n_louvain (int): number of Louvain evaluations
-        with_VI (bool): compute the variation of information between Louvain runs
-        n_louvain_VI (int): number of randomly chosen Louvain run to estimate VI
+            or custom constructor function. It must have two arguments, graph and scale.
+        min_scale (float): minimum Markov scale
+        max_scale (float): maximum Markov scale
+        n_scale (int): number of scale steps
+        log_scale (bool): use linear or log scales for scales
+        scales (array): custom scale vector, if provided, it will override the other scale arguments
+        n_tries (int): number of modularity optimisation evaluations
+        with_NVI (bool): compute the variation of information between Louvain runs
+        n_NVI (int): number of randomly chosen Louvain run to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
-        with_spectral_gap (bool): normalise time by spectral gap
+        with_spectral_gap (bool): normalise scale by spectral gap
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
+        with_optimal_scales (bool): apply optimal scale detection algorithm
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
         method (str): optimiation method, louvain or leiden
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
-    times = _get_times(
-        min_time=min_time,
-        max_time=max_time,
-        n_time=n_time,
-        log_time=log_time,
-        times=times,
+    scales = _get_scales(
+        min_scale=min_scale,
+        max_scale=max_scale,
+        n_scale=n_scale,
+        log_scale=log_scale,
+        scales=scales,
     )
-    constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
     with multiprocessing.Pool(n_workers) as pool:
+        constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
 
-        L.info("Start loop over times...")
+        L.info("Precompute constructors...")
+        constructor_data = _get_constructor_data(
+            constructor, scales, pool, tqdm_disable=tqdm_disable
+        )
+        if method == "leiden":
+            for data in constructor_data:
+                assert all(data["null_model"][0] == data["null_model"][1])
+
+        L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
-        for time in tqdm(times, disable=tqdm_disable):
-            quality_matrix, null_model, global_shift = constructor.get_data(time)
-            louvain_results = _run_several(
-                quality_matrix, null_model, global_shift, n_louvain, pool, method=method
-            )
-            communities = _process_louvain_run(time, louvain_results, all_results)
 
-            if with_VI:
-                _compute_variation_information(
-                    communities,
-                    all_results,
-                    pool,
-                    n_partitions=min(n_louvain_VI, n_louvain),
-                )
+        for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
+            results = run_optimisations(constructor_data[i], n_tries, pool, method)
+            communities = _process_runs(t, results, all_results)
+
+            if with_NVI:
+                _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
 
             save_results(all_results, filename=result_file)
 
-        if with_ttprime:
-            L.info("Start computing ttprimes...")
-            compute_ttprime(all_results, pool)
-
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor=constructor)
+            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
+
+        if with_ttprime or with_optimal_scales:
+            L.info("Compute ttprimes...")
+            compute_ttprime(all_results, pool)
+
+            if with_optimal_scales:
+                L.info("Identify optimal scales...")
+                if optimal_scales_kwargs is None:
+                    optimal_scales_kwargs = {"window_size": max(2, int(0.1 * n_scale))}
+                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
 
     return dict(all_results)
 
 
-def _process_louvain_run(time, louvain_results, all_results, variation_information=None):
-    """Convert the louvain outputs to useful data and save it."""
-    stabilities = np.array([res[0] for res in louvain_results])
-    communities = np.array([res[1] for res in louvain_results])
+def _process_runs(scale, results, all_results):
+    """Convert the optimisation outputs to useful data and save it."""
+    stabilities = np.array([res[0] for res in results])
+    communities = np.array([res[1] for res in results])
 
     best_run_id = np.argmax(stabilities)
-    all_results["times"].append(time)
+    all_results["scales"].append(scale)
     all_results["number_of_communities"].append(np.max(communities[best_run_id]) + 1)
     all_results["stability"].append(stabilities[best_run_id])
     all_results["community_id"].append(communities[best_run_id])
 
-    if variation_information is not None:
-        all_results["variation_information"].append(variation_information)
-
     return communities
 
 
-def _compute_variation_information(communities, all_results, pool, n_partitions=10):
-    """Compute an information measure between the first n_partitions."""
+@timing
+def _compute_NVI(communities, all_results, pool, n_partitions=10):
+    """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(_evaluate_VI, top_partitions=selected_partitions)
+    worker = partial(evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["variation_information"].append(
-        np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
-    )
+    all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
 
 
-def _evaluate_VI(index_pair, top_partitions):
-    """Worker for VI evaluations."""
-    MI = mutual_info_score(
-        top_partitions[index_pair[0]],
-        top_partitions[index_pair[1]],
-    )
+def evaluate_NVI(index_pair, top_partitions):
+    """Worker for NVI evaluations."""
+    MI = mutual_info_score(top_partitions[index_pair[0]], top_partitions[index_pair[1]])
     Ex = entropy(top_partitions[index_pair[0]])
     Ey = entropy(top_partitions[index_pair[1]])
     JE = Ex + Ey - MI
@@ -194,15 +230,22 @@ def _evaluate_VI(index_pair, top_partitions):
     return (JE - MI) / JE
 
 
-def _to_indices(matrix):
-    """Convert a sparse matrix to indices and values."""
-    rows, cols, values = sp.find(sp.tril(matrix))
+def _to_indices(matrix, directed=False):
+    """Convert a sparse matrix to indices and values.
+
+    Args:
+        matrix (sparse): sparse matrix to convert
+        directed (bool): used for Leiden, which works if graph is full
+    """
+    if not directed:
+        matrix = sp.tril(matrix)
+    rows, cols, values = sp.find(matrix)
     return (rows, cols), values
 
 
-def _evaluate(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+@timing
+def optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
     """Worker for Louvain runs."""
-    print(method)
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
             quality_indices[0],
@@ -213,24 +256,33 @@ def _evaluate(_, quality_indices, quality_values, null_model, global_shift, meth
             np.shape(null_model)[0],
             1.0,
         )
+
     if method == "leiden":
+        # this implementation uses the trick suggested by V. Traag here:
+        # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
 
-        edges = zip(*quality_indices)
-        G = ig.Graph(1, edges, False)
-        partition = leidenalg.GeneralizedModularityVertexPartition(
-            G, weights=quality_values, null_model=null_model[0].tolist()
-        )
+        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+
+        partitions = []
+        n_null = int(len(null_model) / 2)
+        for null in null_model[::2]:
+            partitions.append(
+                leidenalg.CPMVertexPartition(
+                    G, weights=quality_values, node_sizes=null.tolist(), correct_self_loops=True
+                )
+            )
         optimiser = leidenalg.Optimiser()
-        optimiser.optimise_partition(partition)
-        stability = partition.modularity
-        community_id = partition.membership
+        optimiser.set_rng_seed(np.random.randint(1e8))
+        stability = sum(partition.quality() for partition in partitions) / n_null
+        stability += optimiser.optimise_partition_multiplex(
+            partitions, layer_weights=n_null * [1.0 / n_null]
+        )
+        community_id = partitions[0].membership
 
-    if global_shift is not None:
-        return stability + global_shift, community_id
-    return stability, community_id
+    return stability + global_shift, community_id
 
 
-def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
+def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     """Worker for Louvain runs."""
     quality = generalized_louvain.evaluate_quality(
         qualities_index[0][0],
@@ -242,20 +294,20 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
         1.0,
         partition_id,
     )
-    if global_shift is not None:
-        return quality + global_shift
-    return quality
+    return quality + global_shift
 
 
-def _run_several(quality_matrix, null_model, global_shift, n_runs, pool, method="louvain"):
+def run_optimisations(constructor, n_runs, pool, method="louvain"):
     """Run several louvain on the current quality matrix."""
-    quality_indices, quality_values = _to_indices(quality_matrix)
+    quality_indices, quality_values = _to_indices(
+        constructor["quality"], directed=method == "leiden"
+    )
     worker = partial(
-        _evaluate,
+        optimise,
         quality_indices=quality_indices,
         quality_values=quality_values,
-        null_model=null_model,
-        global_shift=global_shift,
+        null_model=constructor["null_model"],
+        global_shift=constructor.get("shift", 0.0),
         method=method,
     )
 
@@ -263,34 +315,33 @@ def _run_several(quality_matrix, null_model, global_shift, n_runs, pool, method=
     return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
+@timing
 def compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
-    index_pairs = list(itertools.combinations(range(len(all_results["times"])), 2))
-    worker = partial(_evaluate_VI, top_partitions=all_results["community_id"])
+    index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
+    worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
-    all_results["ttprime"] = np.zeros([len(all_results["times"]), len(all_results["times"])])
+    all_results["ttprime"] = np.zeros([len(all_results["scales"]), len(all_results["scales"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-def apply_postprocessing(all_results, pool, constructor, tqdm_disable=False):
+@timing
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
-    for i, time in tqdm(
-        enumerate(all_results["times"]),
-        total=len(all_results["times"]),
-        disable=tqdm_disable,
+    for i, constructor in tqdm(
+        enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
-        quality_matrix, null_model, global_shift = constructor.get_data(time)
         worker = partial(
-            _evaluate_quality,
-            qualities_index=_to_indices(quality_matrix),
-            null_model=null_model,
-            global_shift=global_shift,
+            evaluate_quality,
+            qualities_index=_to_indices(constructor["quality"]),
+            null_model=constructor["null_model"],
+            global_shift=constructor.get("shift", 0.0),
         )
         best_quality_id = np.argmax(
             list(

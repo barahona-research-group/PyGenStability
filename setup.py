@@ -3,7 +3,7 @@ from pybind11.setup_helpers import Pybind11Extension
 from setuptools import find_packages
 from setuptools import setup
 
-__version__ = "0.0.2"
+__version__ = "0.1.7"
 
 ext_modules = [
     Pybind11Extension(
@@ -14,13 +14,13 @@ ext_modules = [
     ),
 ]
 plotly_require = ["plotly>=3.6.0"]
-contrib_require = ["scikit-image>=0.18.1"]
 test_require = [
     "pyyaml",
     "dictdiffer",
     "pytest",
     "pytest-cov",
     "pytest-html",
+    "diff-pdf-visually",
 ]
 
 setup(
@@ -37,18 +37,19 @@ setup(
         "scipy>=1.4.1",
         "matplotlib>=3.1.3",
         "networkx>=2.4",
-        "sklearn>=0.0",
+        "scikit-learn",
         "cmake>=3.16.3",
         "click>=7.0",
         "tqdm>=4.45.0",
         "pybind11>=2.6.2",
         "pandas>=1.0.0",
+        "igraph",
+        "leidenalg",
     ],
     zip_safe=False,
     extras_require={
         "plotly": plotly_require,
-        "contrib": contrib_require,
-        "all": plotly_require + contrib_require + test_require,
+        "all": plotly_require + test_require,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
     packages=find_packages("src", exclude=["tests"]),
