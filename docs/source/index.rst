@@ -15,6 +15,7 @@ Documentation of the API of *PyGenStability*.
    plotting
    optimal_scales
    io
+   examples/example
  
 
 Indices and tables
