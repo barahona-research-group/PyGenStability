@@ -37,8 +37,9 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, with_optimal_scales=False)
     results = _to_list(results)
-    # yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
+    yaml.dump(results, open(DATA / "_test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
+    print(results)
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, with_spectral_gap=True, with_optimal_scales=False)
