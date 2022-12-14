@@ -21,6 +21,7 @@ test_require = [
     "pytest-cov",
     "pytest-html",
     "diff-pdf-visually",
+    "ipython!=8.7.0",  # see https://github.com/spatialaudio/nbsphinx/issues/687
 ]
 
 setup(

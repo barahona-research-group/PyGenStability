@@ -24,7 +24,7 @@ def test_plot_clustered_adjacency(graph, results, tmp_path):
     plotting.plot_clustered_adjacency(
         graph.toarray(), results, 0, figure_name=tmp_path / "clustered_adjacency.pdf"
     )
-    assert pdf_similar(DATA / "clustered_adjacency.pdf", tmp_path / "clustered_adjacency.pdf")
+    assert pdf_similar(DATA / "clustered_adjacency.pdf", tmp_path / "clustered_adjacency.pdf", threshold=15)
 
 
 def test_plot_communities(graph_nx, results, tmp_path):
@@ -37,4 +37,4 @@ def test_plot_optimal_partitions(graph_nx, results, tmp_path):
     np.random.seed(42)
     results["selected_partitions"] = [1]
     plotting.plot_optimal_partitions(graph_nx, results, folder=tmp_path / "partitions")
-    assert pdf_similar(DATA / "scale_1.pdf", tmp_path / "partitions/scale_1.pdf")
+    assert pdf_similar(DATA / "scale_1.pdf", tmp_path / "partitions/scale_1.pdf", threshold=15)
