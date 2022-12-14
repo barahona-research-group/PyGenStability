@@ -37,14 +37,13 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, with_optimal_scales=False)
     results = _to_list(results)
-    yaml.dump(results, open(DATA / "_test_run_default.yaml", "w"))
+    #yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
-    print(results)
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, with_spectral_gap=True, with_optimal_scales=False)
     results = _to_list(results)
-    # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
+    #yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
@@ -56,13 +55,13 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         with_optimal_scales=False,
     )
     results = _to_list(results)
-    # yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
+    #yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, scales=[1, 2, 3, 4], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
-    # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+    #yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
@@ -72,7 +71,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, with_optimal_scales=False)
     results = _to_list(results)
-    # yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
+    yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default_leiden.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
