@@ -50,7 +50,6 @@ def _check_total_degree(degrees):
 def get_spectral_gap(laplacian):
     """Compute spectral gap."""
     spectral_gap = np.round(max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8)
-    print(spectral_gap)
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
     return spectral_gap
 

@@ -7,6 +7,8 @@ from functools import partial
 from functools import wraps
 from time import time
 
+import igraph as ig
+import leidenalg
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
@@ -18,14 +20,6 @@ from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
 
-import igraph as ig
-import leidenalg
-
-try:
-    import leidenalg
-    import igraph as ig
-except ImportError:
-    pass
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
