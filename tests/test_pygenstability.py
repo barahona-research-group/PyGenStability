@@ -46,8 +46,8 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(
         graph,
-        min_scale=-1,
-        max_scale=0,
+        min_scale=-2,
+        max_scale=-1,
         n_scale=5,
         with_spectral_gap=True,
         with_optimal_scales=False,
@@ -55,6 +55,8 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
+    for a in diff(expected_results, results, tolerance=1e-5):
+        print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
