@@ -15,7 +15,8 @@ DATA = Path(__file__).absolute().parent / "data"
 
 def _to_list(data):
     """Convert dict to list with floats for yaml encoding."""
-    data.pop('NVI', None)  # NVI computation is unstable, we don't test it
+    data.pop("NVI", None)  # NVI computation is unstable, we don't test it
+    data.pop("stability", None)  # stability computation is unstable, we don't test it
     for key, val in data.items():
         if isinstance(val, dict):
             data[key] = _to_list(data[key])
@@ -39,10 +40,8 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False)
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
@@ -54,10 +53,8 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         with_optimal_scales=False,
     )
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
@@ -71,13 +68,13 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         with_optimal_scales=False,
     )
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, scales=[1, 2, 3, 4], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
@@ -89,7 +86,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False)
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default_leiden.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
