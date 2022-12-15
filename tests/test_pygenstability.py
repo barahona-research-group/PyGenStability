@@ -15,6 +15,7 @@ DATA = Path(__file__).absolute().parent / "data"
 
 def _to_list(data):
     """Convert dict to list with floats for yaml encoding."""
+    data.pop('NVI', None)
     for key, val in data.items():
         if isinstance(val, dict):
             data[key] = _to_list(data[key])
@@ -44,14 +45,24 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
-    results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_spectral_gap=True, with_optimal_scales=False)
+    results = pgs.run(
+        graph,
+        min_scale=-1,
+        max_scale=0,
+        n_scale=5,
+        with_spectral_gap=True,
+        with_optimal_scales=False,
+    )
     results = _to_list(results)
     #yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
-        graph, min_scale=-1, max_scale=0, n_scale=5,
+        graph,
+        min_scale=-1,
+        max_scale=0,
+        n_scale=5,
         with_NVI=False,
         with_postprocessing=False,
         with_ttprime=False,
@@ -70,7 +81,9 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     # test leiden method
     constructor = load_constructor("continuous_combinatorial", graph)
-    results = pgs.run(graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, method="leiden")
+    results = pgs.run(
+        graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, method="leiden"
+    )
 
     results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False)
     results = _to_list(results)
