@@ -72,9 +72,9 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
-    results = pgs.run(graph, scales=[1, 2, 3, 4], log_scale=False, with_optimal_scales=False)
+    results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
-    # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+    yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     for a in diff(expected_results, results, tolerance=1e-5):
         print(a)
