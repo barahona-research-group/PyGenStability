@@ -152,6 +152,7 @@ def run(
             constructor, scales, pool, tqdm_disable=tqdm_disable
         )
         if method == "leiden":
+            # pragma: no cover
             for data in constructor_data:
                 assert all(data["null_model"][0] == data["null_model"][1])
 
