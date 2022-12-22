@@ -31,7 +31,12 @@ def pool2d_nvi(A, kernel_size, stride, padding=0):
         (A.shape[1] - kernel_size) // stride + 1,
     )
     shape_w = (output_shape[0], output_shape[1], kernel_size, kernel_size)
-    strides_w = (stride * A.strides[0], stride * A.strides[1], A.strides[0], A.strides[1])
+    strides_w = (
+        stride * A.strides[0],
+        stride * A.strides[1],
+        A.strides[0],
+        A.strides[1],
+    )  # pylint: disable=unsubscriptable-object
     A_w = as_strided(A, shape_w, strides_w)
 
     # Return the result of pooling
