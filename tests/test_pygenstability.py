@@ -15,8 +15,8 @@ DATA = Path(__file__).absolute().parent / "data"
 
 def _to_list(data):
     """Convert dict to list with floats for yaml encoding."""
-    data.pop("NVI", None)  # NVI computation is unstable, we don't test it
-    data.pop("stability", None)  # stability computation is unstable, we don't test it
+    # data.pop("NVI", None)  # NVI computation is unstable, we don't test it
+    # data.pop("stability", None)  # stability computation is unstable, we don't test it
     for key, val in data.items():
         if isinstance(val, dict):
             data[key] = _to_list(data[key])
@@ -55,8 +55,6 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
@@ -76,10 +74,8 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
-    yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results))) == 0
 
     # test leiden method
