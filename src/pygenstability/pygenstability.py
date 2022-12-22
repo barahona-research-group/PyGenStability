@@ -171,7 +171,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
+            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -323,7 +323,7 @@ def compute_ttprime(all_results, pool):
 
 
 @timing
-def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 

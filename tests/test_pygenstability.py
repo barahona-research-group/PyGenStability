@@ -40,19 +40,15 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False)
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
-<<<<<<< HEAD
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, with_spectral_gap=True, with_optimal_scales=False)
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
-=======
-    assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
->>>>>>> 3de90221af004dac52d33e731ba7221e40f017dd
 
     results = pgs.run(
         graph,
@@ -79,30 +75,19 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         with_optimal_scales=False,
     )
     results = _to_list(results)
-    #yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
-<<<<<<< HEAD
-    #yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
-=======
     results["community_id"].pop(1)  # unstable
     # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
->>>>>>> 3de90221af004dac52d33e731ba7221e40f017dd
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
     # test leiden method
     constructor = load_constructor("continuous_combinatorial", graph)
-<<<<<<< HEAD
-    results = pgs.run(graph_signed, constructor=constructor, method="leiden")
-
-    results = pgs.run(graph, with_optimal_scales=False)
-    results = _to_list(results)
-    yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
-=======
     results = pgs.run(
         graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, method="leiden"
     )
@@ -112,7 +97,6 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     )
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
->>>>>>> 3de90221af004dac52d33e731ba7221e40f017dd
     expected_results = yaml.safe_load(open(DATA / "test_run_default_leiden.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
