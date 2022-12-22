@@ -124,7 +124,7 @@ if __name__ == "__main__":
         min_scale=-1.5,
         max_scale=0.5,
         n_scale=50,
-        n_louvain=20,
+        n_tries=20,
         constructor="continuous_combinatorial",
         n_workers=4,
     )
