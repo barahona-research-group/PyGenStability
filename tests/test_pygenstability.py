@@ -43,8 +43,6 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     # yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
 
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
@@ -58,8 +56,6 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     results = pgs.run(
@@ -81,6 +77,9 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results = _to_list(results)
     # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
+
+    for a in diff(expected_results, results, tolerance=1e-5):
+        print(a)
     assert len(list(diff(expected_results, results))) == 0
 
     # test leiden method
