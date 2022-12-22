@@ -3,6 +3,8 @@ import logging
 
 import numpy as np
 import pandas as pd
+from numpy.lib.stride_tricks import as_strided
+from scipy.signal import find_peaks
 
 from numpy.lib.stride_tricks import as_strided
 from scipy.signal import find_peaks
@@ -27,24 +29,26 @@ def pool2d_nvi(A, kernel_size, stride, padding=0):
     A = np.pad(A, padding, mode='constant', constant_values=np.nan)
 
     # Replace diagonal with NAN
-    np.fill_diagonal(A,np.nan)
+    np.fill_diagonal(A, np.nan)
 
     # Window view of A
-    output_shape = ((A.shape[0] - kernel_size) // stride + 1,
-                (A.shape[1] - kernel_size) // stride + 1)
+    output_shape = (
+        (A.shape[0] - kernel_size) // stride + 1,
+        (A.shape[1] - kernel_size) // stride + 1,
+    )
     shape_w = (output_shape[0], output_shape[1], kernel_size, kernel_size)
-    strides_w = (stride*A.strides[0], stride*A.strides[1], A.strides[0], A.strides[1])
+    strides_w = (stride * A.strides[0], stride * A.strides[1], A.strides[0], A.strides[1])
     A_w = as_strided(A, shape_w, strides_w)
 
     # Return the result of pooling
-    return np.nanmean(A_w,axis=(2, 3))
+    return np.nanmean(A_w, axis=(2, 3))
 
 
-def identify_optimal_scales(results,kernel_size=3,window_size=3,max_nvi=1,basin_radius=1):
+def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, basin_radius=1):
     """Identifies optimal scales in Markov Stability.
 
     Stable scales are found from the NVI(t, t') matrix by searching for large diagonal
-    blocks 
+    blocks
 
     Args:
         results (dict): the results from a Markov Stability calculation
@@ -59,11 +63,13 @@ def identify_optimal_scales(results,kernel_size=3,window_size=3,max_nvi=1,basin_
 
     # get NVI(t) and NVI(t,t')
     nvi_t = np.asarray(results["NVI"])
-    nvi_tt = results['ttprime']
+    nvi_tt = results["ttprime"]
 
     # pool NVI(s,s')
-    nvi_tt_pooled = pool2d_nvi(nvi_tt, kernel_size=kernel_size, stride=1, padding=int(kernel_size/2))
-    diagonal = np.diag(nvi_tt_pooled)[:len(nvi_t)]
+    nvi_tt_pooled = pool2d_nvi(
+        nvi_tt, kernel_size=kernel_size, stride=1, padding=int(kernel_size / 2)
+    )
+    diagonal = np.diag(nvi_tt_pooled)[: len(nvi_t)]
 
     # smooth diagonal with moving window
     block_detection_curve = np.roll(
@@ -72,7 +78,7 @@ def identify_optimal_scales(results,kernel_size=3,window_size=3,max_nvi=1,basin_
     )
     results["block_detection_curve"] = block_detection_curve
 
-    # find local minima on diagonal of pooled NVI(s,s') 
+    # find local minima on diagonal of pooled NVI(s,s')
     basin_centers, _ = find_peaks(-block_detection_curve, height=-max_nvi)
 
     # add robust scales located in large 0 margins
@@ -88,7 +94,11 @@ def identify_optimal_scales(results,kernel_size=3,window_size=3,max_nvi=1,basin_
     robust_scales = set()
     for basin_center in basin_centers:
         # basins should not extend beyond domain of block detection curve
-        basin = np.arange(max(basin_center-basin_radius,not_nan_ind[0]),min(basin_center+basin_radius+1,not_nan_ind[-1]),dtype='int')
+        basin = np.arange(
+            max(basin_center - basin_radius, not_nan_ind[0]),
+            min(basin_center + basin_radius + 1, not_nan_ind[-1]),
+            dtype="int",
+        )
         robust_scales.add(basin[np.argmin(nvi_t[basin])])
 
     # return with results dict

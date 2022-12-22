@@ -15,6 +15,8 @@ DATA = Path(__file__).absolute().parent / "data"
 
 def _to_list(data):
     """Convert dict to list with floats for yaml encoding."""
+    data.pop("NVI", None)  # NVI computation is unstable, we don't test it
+    data.pop("ttprime", None)  # ttprime computation is unstable, we don't test it
     for key, val in data.items():
         if isinstance(val, dict):
             data[key] = _to_list(data[key])
@@ -29,16 +31,18 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     # test some warnings/raises
     with pytest.raises(Exception):
         results = pgs.run(graph_non_connected)
-    results = pgs.run(graph_directed)
-    results = pgs.run(graph_signed)
+
+    results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5)
+    results = pgs.run(graph_signed, min_scale=-1, max_scale=0, n_scale=5)
 
     constructor = load_constructor("continuous_combinatorial", graph)
-    results = pgs.run(graph_signed, constructor=constructor)
+    results = pgs.run(graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor)
 
-    results = pgs.run(graph, with_optimal_scales=False)
+    results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False)
     results = _to_list(results)
     #yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
+<<<<<<< HEAD
     assert len(list(diff(expected_results, results))) == 0
 
     results = pgs.run(graph, with_spectral_gap=True, with_optimal_scales=False)
@@ -46,9 +50,29 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     #yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
+=======
+    assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
+>>>>>>> 3de90221af004dac52d33e731ba7221e40f017dd
 
     results = pgs.run(
         graph,
+        min_scale=-2,
+        max_scale=-1,
+        n_scale=5,
+        with_spectral_gap=True,
+        with_optimal_scales=False,
+    )
+    results = _to_list(results)
+    results["community_id"].pop(2)  # unstable
+    # yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
+    expected_results = yaml.safe_load(open(DATA / "test_run_gap.yaml", "r"))
+    assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
+
+    results = pgs.run(
+        graph,
+        min_scale=-1,
+        max_scale=0,
+        n_scale=5,
         with_NVI=False,
         with_postprocessing=False,
         with_ttprime=False,
@@ -59,19 +83,36 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
-    results = pgs.run(graph, scales=[1, 2, 3, 4], log_scale=False, with_optimal_scales=False)
+    results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False)
     results = _to_list(results)
+<<<<<<< HEAD
     #yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+=======
+    results["community_id"].pop(1)  # unstable
+    # yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+>>>>>>> 3de90221af004dac52d33e731ba7221e40f017dd
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
     # test leiden method
     constructor = load_constructor("continuous_combinatorial", graph)
+<<<<<<< HEAD
     results = pgs.run(graph_signed, constructor=constructor, method="leiden")
 
     results = pgs.run(graph, with_optimal_scales=False)
     results = _to_list(results)
     yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
+=======
+    results = pgs.run(
+        graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, method="leiden"
+    )
+
+    results = pgs.run(
+        graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False, method="leiden"
+    )
+    results = _to_list(results)
+    # yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
+>>>>>>> 3de90221af004dac52d33e731ba7221e40f017dd
     expected_results = yaml.safe_load(open(DATA / "test_run_default_leiden.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
@@ -97,6 +138,35 @@ def test_evaluate(graph):
     )
     assert_almost_equal(stability, 0.5590341906608186)
     assert community_id == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+
+    stability, community_id = pgs.optimise(
+        0, quality_indices, quality_values, data["null_model"], 0, method="leiden"
+    )
+    assert_almost_equal(stability, 0.36540825919902664)
+    assert community_id == [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        0,
+        0,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+    ]
 
 
 def test_evaluate_quality(graph):
