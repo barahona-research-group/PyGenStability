@@ -78,10 +78,10 @@ def identify_optimal_scales(results,kernel_size=3,window_size=3,max_nvi=1,basin_
     # add robust scales located in large 0 margins
     not_nan_ind = np.argwhere(~np.isnan(block_detection_curve)).flatten()
 
-    if np.count_nonzero(block_detection_curve[not_nan_ind[0]:not_nan_ind[0]+2*basin_radius+1])==0:
+    if np.count_nonzero(np.around(block_detection_curve[not_nan_ind[0]:not_nan_ind[0]+2*basin_radius+1],5))==0:
         basin_centers = np.insert(basin_centers,0,not_nan_ind[0]+basin_radius)
 
-    if np.count_nonzero(block_detection_curve[not_nan_ind[-1]-2*basin_radius:not_nan_ind[-1]+1])==0:
+    if np.count_nonzero(np.around(block_detection_curve[not_nan_ind[-1]-2*basin_radius:not_nan_ind[-1]+1],5))==0:
         basin_centers = np.append(basin_centers,not_nan_ind[-1]-basin_radius)
 
     # robust scales are minima of NVI(s) in basins
