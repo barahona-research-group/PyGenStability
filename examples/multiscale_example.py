@@ -130,7 +130,7 @@ if __name__ == "__main__":
     )
 
     # plots results
-    plt.figure(figsize=(7, 4))
+    plt.figure(figsize=(7, 5))
     axes = plotting.plot_scan(results, figure_name=None)
     axes[3].set_ylim(0, 50)
     axes[3].axhline(3, ls="--", color="k", zorder=-1, lw=0.5)

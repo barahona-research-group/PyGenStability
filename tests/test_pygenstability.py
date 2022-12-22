@@ -93,8 +93,6 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results["community_id"].pop(2)  # unstable
     # yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default_leiden.yaml", "r"))
-    for a in diff(expected_results, results, tolerance=1e-5):
-        print(a)
     assert len(list(diff(expected_results, results))) == 0
 
 

@@ -299,31 +299,31 @@ def get_scales(all_results, scale_axis=True):
 
 def _plot_number_comm(all_results, ax, scales):
     """Plot number of communities."""
-    ax.plot(scales, all_results["number_of_communities"], "-", c="C4", label="size", lw=2.0)
-    ax.set_ylabel("#clusters", color="C4")
-    ax.tick_params("y", colors="C4")
-    ax.set_ylim(-10, 1.1 * max(all_results["number_of_communities"]))
+    ax.plot(scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
+    ax.set_ylim(0, 1.1 * max(all_results["number_of_communities"]))
+    ax.set_ylabel("# clusters", color="C3")
+    ax.tick_params("y", colors="C3")
 
 
 def _plot_ttprime(all_results, ax, scales):
     """Plot ttprime."""
     contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
-    ax.yaxis.tick_right()
-    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_left()
+    ax.yaxis.set_label_position("left")
     ax.axis([scales[0], scales[-1], scales[0], scales[-1]])
     ax.set_xlabel(r"$log_{10}(t)$")
 
     axins = inset_axes(
         ax,
-        width="5%",  # width = 5% of parent_bbox width
-        height="50%",  # height : 50%
+        width="3%",
+        height="40%",
         loc="lower left",
-        bbox_to_anchor=(1.1, 0.25, 1, 1),
+        bbox_to_anchor=(0.05, 0.45, 1, 1),
         bbox_transform=ax.transAxes,
         borderpad=0,
     )
-
+    axins.tick_params(labelsize=7)
     plt.colorbar(contourf_, cax=axins, label="NVI(t,t')")
 
 
@@ -331,11 +331,11 @@ def _plot_NVI(all_results, ax, scales):
     """Plot variation information."""
     ax.plot(scales, all_results["NVI"], "-", lw=2.0, c="C2", label="VI")
 
-    #ax.yaxis.tick_right()
+    ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
     ax.set_ylabel(r"NVI", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis([scales[0], scales[-1], -0.05, np.max(all_results["NVI"]) * 1.1])
+    ax.axis([scales[0], scales[-1], 0.0, np.max(all_results["NVI"]) * 1.1])
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
@@ -344,51 +344,51 @@ def _plot_stability(all_results, ax, scales):
     ax.plot(scales, all_results["stability"], "-", label=r"Stability", c="C0")
     ax.tick_params("y", colors="C0")
     ax.set_ylabel("Stability", color="C0")
-    ax.axis([scales[0], scales[-1], -0.05, 1.1 * max(all_results["stability"])])
+    ax.set_ylim(0, 1.1 * max(all_results["stability"]))
     ax.yaxis.set_label_position("left")
 
 
-def _plot_optimal_scales(all_results, ax_ttprime, ax_nvi, ax_nclusters, scales):
+def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
     """Plot stability."""
-    ax_ttprime.plot(
+    ax.plot(
         scales,
         all_results["block_detection_curve"],
         "-",
         lw=2.0,
-        c="black",
-        label="optimal scale criterion",
+        c="C4",
+        label="Block NVI",
+    )
+    ax.plot(
+        scales[all_results["selected_partitions"]],
+        all_results["block_detection_curve"][all_results["selected_partitions"]],
+        "o",
+        lw=2.0,
+        c="C4",
+        label="optimal scales",
     )
 
-    ax_ttprime.tick_params("y", colors="black")
-    ax_ttprime.set_ylabel("Block NVI", color="black")
-    ax_ttprime.yaxis.set_label_position("left")
-    ax_ttprime.yaxis.tick_left()
-    ax_ttprime.axis([scales[0], scales[-1], -0.01, 
-             np.nanmax(all_results["block_detection_curve"]) * 1.1])
+    ax.tick_params("y", colors="C4")
+    ax.set_ylabel("Block NVI", color="C4")
+    ax.yaxis.set_label_position("left")
+    ax.set_xlabel(r"$log_{10}(t)$")
 
     for scale in scales[all_results["selected_partitions"]]:
-        ax_ttprime.axvline(x=scale, ls="--", color = 'red')
-        ax_nvi.axvline(x=scale, ls="--", color = 'red')
-        ax_nclusters.axvline(x=scale, ls="--", color = 'red')
+        ax.axvline(scale, ls="--", color="C4")
+        ax1.axvline(scale, ls="--", color="C4")
+        ax2.axvline(scale, ls="--", color="C4")
 
 
 def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     scales = get_scales(all_results, scale_axis=scale_axis)
-
-    if "block_detection_curve" in all_results:
-        gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
-    else:
-        gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 1.0])
-
+    gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
-    ax0 = None
-    axes = [ax0]
+    axes = []
 
     if "ttprime" in all_results:
         ax0 = plt.subplot(gs[1, 0])
+        axes.append(ax0)
         _plot_ttprime(all_results, ax=ax0, scales=scales)
-        ax0.yaxis.tick_right()
         ax1 = ax0.twinx()
     else:  # pragma: no cover
         ax1 = plt.subplot(gs[1, 0])
@@ -396,28 +396,31 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     axes.append(ax1)
     ax1.set_xticks([])
 
+    _plot_NVI(all_results, ax=ax1, scales=scales)
+
     if "ttprime" in all_results:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
 
     ax2 = plt.subplot(gs[0, 0])
-    _plot_number_comm(all_results, ax=ax2.twinx(), scales=scales)
 
     if "stability" in all_results:
         _plot_stability(all_results, ax=ax2, scales=scales)
         ax2.set_xticks([])
         axes.append(ax2)
 
-
     if "NVI" in all_results:
-        ax3 = plt.subplot(gs[2, 0])
-        _plot_NVI(all_results, ax=ax3, scales=scales)
+        ax3 = ax2.twinx()
+        _plot_number_comm(all_results, ax=ax3, scales=scales)
         axes.append(ax3)
 
     if "block_detection_curve" in all_results:
-        _plot_optimal_scales(all_results, ax_ttprime=ax1,ax_nvi=ax3, ax_nclusters=ax2, scales=scales)
-        ax0.yaxis.tick_right()
-        ax0.yaxis.set_label_position("right")
+        ax4 = plt.subplot(gs[2, 0])
+        _plot_optimal_scales(all_results, ax=ax4, scales=scales, ax1=ax1, ax2=ax2)
+        axes.append(ax4)
+
+    for ax in axes:
+        ax.set_xlim(scales[0], scales[-1])
 
     if figure_name is not None:
         plt.savefig(figure_name)

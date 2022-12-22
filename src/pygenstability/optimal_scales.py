@@ -1,32 +1,26 @@
 """Detect optimal scales from a scale scan."""
-import logging
-
 import numpy as np
 import pandas as pd
 from numpy.lib.stride_tricks import as_strided
 from scipy.signal import find_peaks
 
-from numpy.lib.stride_tricks import as_strided
-from scipy.signal import find_peaks
-
-L = logging.getLogger(__name__)
 
 def pool2d_nvi(A, kernel_size, stride, padding=0):
-    """2D average-pooling 
-    
+    """2D average-pooling
+
     Average-pooling ignores padded values and diagonal values.
-    
+
     Args:
         A (array): input 2D array
         kernel_size (int): size of the window over which we take pool
         stride (int): stride of the window
         padding (int): implicit NAN paddings on both sides of the input
-    
+
     Returns:
         Average-pooled 2D array
     """
     # Padding with NAN
-    A = np.pad(A, padding, mode='constant', constant_values=np.nan)
+    A = np.pad(A, padding, mode="constant", constant_values=np.nan)
 
     # Replace diagonal with NAN
     np.fill_diagonal(A, np.nan)
@@ -50,7 +44,7 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
     Stable scales are found from the NVI(t, t') matrix by searching for large diagonal
     blocks of low values that are located at local minima of the pooled diagonal, called
     block detection curve, and we obtain basins of fixed radius around these local minima.
-    We then determine the minimum of the NVI(t) curve for each basin, and these minima 
+    We then determine the minimum of the NVI(t) curve for each basin, and these minima
     correspond to the robust partitions of the network.
 
     Args:
@@ -87,12 +81,25 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
     # add robust scales located in large 0 margins
     not_nan_ind = np.argwhere(~np.isnan(block_detection_curve)).flatten()
 
-    if np.count_nonzero(np.around(block_detection_curve[not_nan_ind[0]:not_nan_ind[0]+2*basin_radius+1],5))==0:
-        basin_centers = np.insert(basin_centers,0,not_nan_ind[0]+basin_radius)
+    if (
+        np.count_nonzero(
+            np.around(
+                block_detection_curve[not_nan_ind[0] : not_nan_ind[0] + 2 * basin_radius + 1], 5
+            )
+        )
+        == 0
+    ):
+        basin_centers = np.insert(basin_centers, 0, not_nan_ind[0] + basin_radius)
 
-    if np.count_nonzero(np.around(block_detection_curve[not_nan_ind[-1]-2*basin_radius:not_nan_ind[-1]+1],5))==0:
-        basin_centers = np.append(basin_centers,not_nan_ind[-1]-basin_radius)
-
+    if (
+        np.count_nonzero(
+            np.around(
+                block_detection_curve[not_nan_ind[-1] - 2 * basin_radius : not_nan_ind[-1] + 1], 5
+            )
+        )
+        == 0
+    ):
+        basin_centers = np.append(basin_centers, not_nan_ind[-1] - basin_radius)
     # robust scales are minima of NVI(s) in basins
     robust_scales = set()
     for basin_center in basin_centers:
