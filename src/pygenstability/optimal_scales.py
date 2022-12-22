@@ -48,7 +48,10 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
     """Identifies optimal scales in Markov Stability.
 
     Stable scales are found from the NVI(t, t') matrix by searching for large diagonal
-    blocks
+    blocks of low values that are located at local minima of the pooled diagonal, called
+    block detection curve, and we obtain basins of fixed radius around these local minima.
+    We then determine the minimum of the NVI(t) curve for each basin, and these minima 
+    correspond to the robust partitions of the network.
 
     Args:
         results (dict): the results from a Markov Stability calculation
