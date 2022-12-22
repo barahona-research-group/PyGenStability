@@ -21,6 +21,7 @@ test_require = [
     "pytest-cov",
     "pytest-html",
     "diff-pdf-visually",
+    "ipython!=8.7.0",  # see https://github.com/spatialaudio/nbsphinx/issues/687
 ]
 
 setup(
@@ -43,7 +44,8 @@ setup(
         "tqdm>=4.45.0",
         "pybind11>=2.6.2",
         "pandas>=1.0.0",
-        "python-dateutil>=2.0.0",
+        "igraph",
+        "leidenalg",
     ],
     zip_safe=False,
     extras_require={

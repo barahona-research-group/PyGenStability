@@ -7,6 +7,8 @@ from functools import partial
 from functools import wraps
 from time import time
 
+import igraph as ig
+import leidenalg
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
@@ -96,9 +98,9 @@ def run(
     n_scale=20,
     log_scale=True,
     scales=None,
-    n_louvain=100,
+    n_tries=100,
     with_NVI=True,
-    n_louvain_NVI=20,
+    n_NVI=20,
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
@@ -107,6 +109,7 @@ def run(
     tqdm_disable=False,
     with_optimal_scales=True,
     optimal_scales_kwargs=None,
+    method="louvain",
 ):
     """Main function to compute clustering at various scales.
 
@@ -119,9 +122,9 @@ def run(
         n_scale (int): number of scale steps
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
-        n_louvain (int): number of Louvain evaluations
-        with_NVI (bool): compute the normalized variation of information (NVI) between Louvain runs
-        n_louvain_NVI (int): number of randomly chosen Louvain run to estimate NVI
+        n_tries (int): number of modularity optimisation evaluations
+        with_NVI (bool): compute the variation of information between Louvain runs
+        n_NVI (int): number of randomly chosen Louvain run to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the ttprime matrix
         with_spectral_gap (bool): normalise scale by spectral gap
@@ -130,6 +133,7 @@ def run(
         tqdm_disable (bool): disable progress bars
         with_optimal_scales (bool): apply optimal scale detection algorithm
         optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
+        method (str): optimiation method, louvain or leiden
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -147,23 +151,21 @@ def run(
         constructor_data = _get_constructor_data(
             constructor, scales, pool, tqdm_disable=tqdm_disable
         )
+        if method == "leiden":
+            # pragma: no cover
+            for data in constructor_data:
+                assert all(data["null_model"][0] == data["null_model"][1])
 
         L.info("Optimise stability...")
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
 
         for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-            # stability optimisation
-            louvain_results = run_several_louvains(constructor_data[i], n_louvain, pool)
-            communities = _process_louvain_run(t, louvain_results, all_results)
+            results = run_optimisations(constructor_data[i], n_tries, pool, method)
+            communities = _process_runs(t, results, all_results)
 
             if with_NVI:
-                _compute_NVI(
-                    communities,
-                    all_results,
-                    pool,
-                    n_partitions=min(n_louvain_NVI, n_louvain),
-                )
+                _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
 
             save_results(all_results, filename=result_file)
 
@@ -186,10 +188,10 @@ def run(
     return dict(all_results)
 
 
-def _process_louvain_run(scale, louvain_results, all_results):
-    """Convert the louvain outputs to useful data and save it."""
-    stabilities = np.array([res[0] for res in louvain_results])
-    communities = np.array([res[1] for res in louvain_results])
+def _process_runs(scale, results, all_results):
+    """Convert the optimisation outputs to useful data and save it."""
+    stabilities = np.array([res[0] for res in results])
+    communities = np.array([res[1] for res in results])
 
     best_run_id = np.argmax(stabilities)
     all_results["scales"].append(scale)
@@ -222,24 +224,54 @@ def evaluate_NVI(index_pair, top_partitions):
     return (JE - MI) / JE
 
 
-def _to_indices(matrix):
-    """Convert a sparse matrix to indices and values."""
-    rows, cols, values = sp.find(sp.tril(matrix))
+def _to_indices(matrix, directed=False):
+    """Convert a sparse matrix to indices and values.
+
+    Args:
+        matrix (sparse): sparse matrix to convert
+        directed (bool): used for Leiden, which works if graph is full
+    """
+    if not directed:
+        matrix = sp.tril(matrix)
+    rows, cols, values = sp.find(matrix)
     return (rows, cols), values
 
 
 @timing
-def evaluate_louvain(_, quality_indices, quality_values, null_model, global_shift):
+def optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
     """Worker for Louvain runs."""
-    stability, community_id = generalized_louvain.run_louvain(
-        quality_indices[0],
-        quality_indices[1],
-        quality_values,
-        len(quality_values),
-        null_model,
-        np.shape(null_model)[0],
-        1.0,
-    )
+    if method == "louvain":
+        stability, community_id = generalized_louvain.run_louvain(
+            quality_indices[0],
+            quality_indices[1],
+            quality_values,
+            len(quality_values),
+            null_model,
+            np.shape(null_model)[0],
+            1.0,
+        )
+
+    if method == "leiden":
+        # this implementation uses the trick suggested by V. Traag here:
+        # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
+        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+
+        partitions = []
+        n_null = int(len(null_model) / 2)
+        for null in null_model[::2]:
+            partitions.append(
+                leidenalg.CPMVertexPartition(
+                    G, weights=quality_values, node_sizes=null.tolist(), correct_self_loops=True
+                )
+            )
+        optimiser = leidenalg.Optimiser()
+        optimiser.set_rng_seed(np.random.randint(1e8))
+        stability = sum(partition.quality() for partition in partitions) / n_null
+        stability += optimiser.optimise_partition_multiplex(
+            partitions, layer_weights=n_null * [1.0 / n_null]
+        )
+        community_id = partitions[0].membership
+
     return stability + global_shift, community_id
 
 
@@ -258,15 +290,18 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality + global_shift
 
 
-def run_several_louvains(constructor, n_runs, pool):
+def run_optimisations(constructor, n_runs, pool, method="louvain"):
     """Run several louvain on the current quality matrix."""
-    quality_indices, quality_values = _to_indices(constructor["quality"])
+    quality_indices, quality_values = _to_indices(
+        constructor["quality"], directed=method == "leiden"
+    )
     worker = partial(
-        evaluate_louvain,
+        optimise,
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],
         global_shift=constructor.get("shift", 0.0),
+        method=method,
     )
 
     chunksize = _get_chunksize(n_runs, pool)

@@ -26,8 +26,8 @@ def load_constructor(constructor, graph, **kwargs):
 
 
 def threshold_matrix(matrix, threshold=THRESHOLD):
-    """Threshold a matrix to remove small numbers for Louvain speed up."""
-    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0
+    """Threshold a matrix to remove small numbers for speed up."""
+    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0.0
     matrix.eliminate_zeros()
 
 
@@ -49,7 +49,7 @@ def _check_total_degree(degrees):
 
 def get_spectral_gap(laplacian):
     """Compute spectral gap."""
-    spectral_gap = max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0]))
+    spectral_gap = np.round(max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8)
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
     return spectral_gap
 
