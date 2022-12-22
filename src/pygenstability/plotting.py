@@ -391,7 +391,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     scales = get_scales(all_results, scale_axis=scale_axis)
 
-    if "optimal_scale_criterion" in all_results:
+    if "block_detection_curve" in all_results:
         gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     else:
         gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 1.0])
