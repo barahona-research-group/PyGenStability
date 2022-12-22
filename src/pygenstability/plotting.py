@@ -372,21 +372,6 @@ def _plot_optimal_scales(all_results, ax_ttprime, ax_nvi, ax_nclusters, scales):
         ax_nclusters.axvline(x=scale, ls="--", color = 'red')
 
 
-    #ax_ttprime.set_xlabel(r"$log_{10}(t)$")
-
-
-    # ax.plot(
-    #     scales[all_results["selected_partitions"]],
-    #     all_results["optimal_scale_criterion"][all_results["selected_partitions"]],
-    #     "o",
-    #     lw=2.0,
-    #     c="C4",
-    #     label="optimal scales",
-    # )
-
-    
-
-
 def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     scales = get_scales(all_results, scale_axis=scale_axis)
