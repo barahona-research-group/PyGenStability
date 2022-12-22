@@ -324,7 +324,7 @@ def compute_ttprime(all_results, pool):
 
 
 @timing
-def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
+def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
