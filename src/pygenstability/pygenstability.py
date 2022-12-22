@@ -254,7 +254,6 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
     if method == "leiden":
         # this implementation uses the trick suggested by V. Traag here:
         # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
-
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
 
         partitions = []
