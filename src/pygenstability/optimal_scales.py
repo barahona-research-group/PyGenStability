@@ -6,7 +6,7 @@ from scipy.signal import find_peaks
 
 
 def pool2d_nvi(A, kernel_size, stride, padding=0):
-    """2D average-pooling
+    """Computes 2D average-pooling.
 
     Average-pooling ignores padded values and diagonal values.
 
@@ -57,7 +57,6 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
     Returns:
         result dictionary with two new keys: 'selected_partitions' and 'block_detection_curve'
     """
-
     # get NVI(t) and NVI(t,t')
     nvi_t = np.asarray(results["NVI"])
     nvi_tt = results["ttprime"]
