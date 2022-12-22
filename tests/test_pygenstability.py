@@ -15,7 +15,7 @@ DATA = Path(__file__).absolute().parent / "data"
 
 def _to_list(data):
     """Convert dict to list with floats for yaml encoding."""
-    # data.pop("NVI", None)  # NVI computation is unstable, we don't test it
+    data.pop("NVI", None)  # NVI computation is unstable, we don't test it
     # data.pop("stability", None)  # stability computation is unstable, we don't test it
     for key, val in data.items():
         if isinstance(val, dict):
