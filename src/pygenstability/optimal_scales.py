@@ -104,7 +104,11 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
         )
         robust_scales.add(basin[np.argmin(nvi_t[basin])])
 
+    # sort robust scales
+    robust_scales = list(robust_scales)
+    robust_scales.sort()
+
     # return with results dict
-    results["selected_partitions"] = list(robust_scales)
+    results["selected_partitions"] = robust_scales
 
     return results
