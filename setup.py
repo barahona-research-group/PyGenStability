@@ -32,7 +32,7 @@ setup(
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
     description="Python binding of generalised Louvain with Markov Stability",
     ext_modules=ext_modules,
-    setup_requires=["pybind11>=2.6.0"],
+    setup_requires=["pybind11>=2.10.0"],
     install_requires=[
         "numpy>=1.18.1",
         "scipy>=1.4.1",
@@ -42,7 +42,7 @@ setup(
         "cmake>=3.16.3",
         "click>=7.0",
         "tqdm>=4.45.0",
-        "pybind11>=2.6.2",
+        "pybind11>=2.10.0",
         "pandas>=1.0.0",
         "igraph",
         "leidenalg",
