@@ -14,6 +14,9 @@ We further provide specific analysis tools to process and analyse the results fr
 
 ![illustration](docs/artwork/diffusion_schematic.png)
 
+## Documentation
+
+A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/
 
 ## Installation
 
@@ -87,10 +90,6 @@ For those of you that wish to implement their own constructor, you will need to 
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
 
 Please see `pygenstability/constructors.py` for the existing implemented constructors. 
-
-## Documentation
-
-A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/
 
 ## Contributers
 
