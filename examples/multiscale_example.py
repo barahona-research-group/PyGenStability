@@ -21,7 +21,7 @@ def block(n, th, rng):
     return A
 
 
-if __name__ == "__main__":
+def create_graph():
 
     # define size and strength of multiscale structure
     n0 = 270
@@ -49,11 +49,6 @@ if __name__ == "__main__":
     # remove self-loops
     A -= np.diag(np.diag(A))
 
-    # plot matrix
-    plt.figure()
-    plt.imshow(A, interpolation="nearest")
-    plt.savefig("adjacency_matrix.pdf", bbox_inches="tight")
-
     # Multiscale structure
     coarse_scale_id = np.zeros(n0)
     middle_scale_id = np.zeros(n0)
@@ -67,6 +62,18 @@ if __name__ == "__main__":
 
     for i in range(n3):
         fine_scale_id[(i * n0 // n3) : ((i + 1) * n0 // n3)] = i
+
+    return A, coarse_scale_id, middle_scale_id, fine_scale_id
+
+
+if __name__ == "__main__":
+
+    A, coarse_scale_id, middle_scale_id, fine_scale_id = create_graph()
+
+    # plot matrix
+    plt.figure()
+    plt.imshow(A, interpolation="nearest")
+    plt.savefig("adjacency_matrix.pdf", bbox_inches="tight")
 
     # Create nx graph
     G = nx.from_numpy_array(A)
