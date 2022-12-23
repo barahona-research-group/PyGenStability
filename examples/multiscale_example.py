@@ -124,13 +124,13 @@ if __name__ == "__main__":
         min_scale=-1.5,
         max_scale=0.5,
         n_scale=50,
-        n_louvain=20,
+        n_tries=20,
         constructor="continuous_combinatorial",
         n_workers=4,
     )
 
     # plots results
-    plt.figure(figsize=(7, 4))
+    plt.figure(figsize=(7, 5))
     axes = plotting.plot_scan(results, figure_name=None)
     axes[3].set_ylim(0, 50)
     axes[3].axhline(3, ls="--", color="k", zorder=-1, lw=0.5)
