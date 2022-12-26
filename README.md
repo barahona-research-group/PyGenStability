@@ -140,9 +140,10 @@ or using the click app:
 
 Other examples can be found as jupyter-notebooks in `examples/` directory, including:
 * Example 1: Undirected SBM
-* Example 2: Directed networks
-* Example 3: Custom constructors
-* Example 4: Hypergraphs
+* Example 2: Multiscale
+* Example 3: Directed networks
+* Example 4: Custom constructors
+* Example 5: Hypergraphs
 
 
 ## Our other available packages
