@@ -128,8 +128,8 @@ if __name__ == "__main__":
     # run markov stability and identify optimal scales
     results = pgs.run(
         sp.csgraph.csgraph_from_dense(A),
-        min_scale=-1.5,
-        max_scale=0.5,
+        min_scale=-1.25,
+        max_scale=0.75,
         n_scale=50,
         n_tries=20,
         constructor="continuous_combinatorial",
