@@ -10,7 +10,7 @@
 # *PyGenStability*
 
 This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalised modularity function [3]. To maximize the generalized modularity cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
-We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic detection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
+We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic selection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
 
 ![illustration](docs/artwork/diffusion_schematic.png)
 
@@ -72,13 +72,13 @@ results = run(graph, method = "leiden")
 
 There are also additional postprocessing and analysis functions, including:
 - Plotting via matplotlib and plotly (interactive).
-- Automated optimal scale detection.
+- Automated optimal scale selection.
 
-Optimal scale detection is performed by default with the run function but can be repeated with different parameters if needed. The optimial network partitions can then be plotted given a NetworkX nx_graph.
+Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see documentation . The optimial network partitions can then be plotted given a NetworkX nx_graph.
 
 ```
 from pygenstability import optimal_scales
-results  = identify_optimal_scales(results, window_size = 2)
+results  = identify_optimal_scales(results, block_size = 10, window_size = 5)
 plotting.plot_optimal_partitions(nx_graph, results)
 ```
 
@@ -168,7 +168,7 @@ If you are interested in trying our other packages, see the below list:
 
 [5] V. A. Traag, L. Waltman, and N. J. van Eck, ‘From Louvain to Leiden: guaranteeing well-connected communities’, *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
 
-[6] D. Schindler, J. Clarke, and M. Barahona, ‘Multiscale mobility patterns and the restriction of human mobility under lockdown’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2022.Available: https://arxiv.org/abs/2201.06323
+[6] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction of Human Movement’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2023, Available: https://arxiv.org/abs/2201.06323
 
 [7] Preprint incoming ...
 
