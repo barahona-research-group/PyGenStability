@@ -5,7 +5,7 @@ from numpy.lib.stride_tricks import as_strided
 from scipy.signal import find_peaks
 
 
-def pool2d_nvi(A, kernel_size, stride, padding=0):
+def _pool2d_nvi(A, kernel_size, stride, padding=0):
     """Computes 2D average-pooling.
 
     Average-pooling ignores padded values and diagonal values.
@@ -40,13 +40,13 @@ def pool2d_nvi(A, kernel_size, stride, padding=0):
 
 
 def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, basin_radius=1):
-    """Identifies optimal scales in Markov Stability.
+    """Identifies optimal scales in Markov Stability [1]_.
 
-    Stable scales are found from the NVI(t, t') matrix by searching for large diagonal
-    blocks of low values that are located at local minima of the pooled diagonal, called
-    block detection curve, and we obtain basins of fixed radius around these local minima.
-    We then determine the minimum of the NVI(t) curve for each basin, and these minima
-    correspond to the robust partitions of the network.
+    Robust scales are found in a sequential way. We first search for large diagonal blocks 
+    of low values in the NVI(t, t') matrix that are located at local minima of its pooled 
+    diagonal, called block detection curve, and we obtain basins of fixed radius around 
+    these local minima. We then determine the minima of the NVI(t) curve for each basin, 
+    and these minima correspond to the robust partitions of the network.
 
     Args:
         results (dict): the results from a Markov Stability calculation
@@ -57,13 +57,19 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
 
     Returns:
         result dictionary with two new keys: 'selected_partitions' and 'block_detection_curve'
+
+    References:
+    ----------
+    .. [1] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction 
+    of Human Movement’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2023, Available: https://arxiv.org/abs/2201.06323
     """
+
     # get NVI(t) and NVI(t,t')
     nvi_t = np.asarray(results["NVI"])
     nvi_tt = results["ttprime"]
 
     # pool NVI(s,s')
-    nvi_tt_pooled = pool2d_nvi(
+    nvi_tt_pooled = _pool2d_nvi(
         nvi_tt, kernel_size=kernel_size, stride=1, padding=int(kernel_size / 2)
     )
     diagonal = np.diag(nvi_tt_pooled)[: len(nvi_t)]
