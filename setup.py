@@ -14,6 +14,7 @@ ext_modules = [
     ),
 ]
 plotly_require = ["plotly>=3.6.0"]
+
 test_require = [
     "pyyaml",
     "dictdiffer",
