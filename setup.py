@@ -38,7 +38,7 @@ setup(
         "numpy>=1.18.1",
         "scipy>=1.4.1",
         "matplotlib>=3.1.3",
-        "networkx>=2.4",
+        "networkx<3.0",
         "scikit-learn",
         "cmake>=3.16.3",
         "click>=7.0",
