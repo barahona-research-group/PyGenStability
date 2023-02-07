@@ -111,12 +111,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         yaxis="y2",
         xaxis="x2",
         hoverinfo="skip",
-        colorbar=dict(
-            title="VI",
-            len=0.2,
-            yanchor="middle",
-            y=0.5,
-        ),
+        colorbar={"title": "VI", "len": 0.2, "yanchor": "middle", "y": 0.5},
         showscale=showscale,
     )
     if "stability" in all_results:
@@ -144,36 +139,36 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     )
 
     layout = go.Layout(
-        yaxis=dict(
-            title="Stability",
-            titlefont=dict(color="blue"),
-            tickfont=dict(color="blue"),
-            domain=[0.0, 0.28],
-        ),
-        yaxis2=dict(
-            title=tprime_title,
-            titlefont=dict(color="black"),
-            tickfont=dict(color="black"),
-            domain=[0.32, 1],
-            side="right",
-            range=[scales[0], scales[-1]],
-        ),
-        yaxis3=dict(
-            title=nvi_title,
-            titlefont=dict(color="green"),
-            tickfont=dict(color="green"),
-            showticklabels=nvi_ticks,
-            overlaying="y",
-            side="right",
-        ),
-        yaxis4=dict(
-            title="Number of communities",
-            titlefont=dict(color="red"),
-            tickfont=dict(color="red"),
-            overlaying="y2",
-        ),
-        xaxis=dict(range=[scales[0], scales[-1]]),
-        xaxis2=dict(range=[scales[0], scales[-1]]),
+        yaxis={
+            "title": "Stability",
+            "titlefont": {"color": "blue"},
+            "tickfont": {"color": "blue"},
+            "domain": [0.0, 0.28],
+        },
+        yaxis2={
+            "title": tprime_title,
+            "titlefont": {"color": "black"},
+            "tickfont": {"color": "black"},
+            "domain": [0.32, 1],
+            "side": "right",
+            "range": [scales[0], scales[-1]],
+        },
+        yaxis3={
+            "title": nvi_title,
+            "titlefont": {"color": "green"},
+            "tickfont": {"color": "green"},
+            "showticklabels": nvi_ticks,
+            "overlaying": "y",
+            "side": "right",
+        },
+        yaxis4={
+            "title": "Number of communities",
+            "titlefont": {"color": "red"},
+            "tickfont": {"color": "red"},
+            "overlaying": "y2",
+        },
+        xaxis={"range": [scales[0], scales[-1]]},
+        xaxis2={"range": [scales[0], scales[-1]]},
     )
 
     fig = go.Figure(data=[stab, ncom, vi, ttprime], layout=layout)

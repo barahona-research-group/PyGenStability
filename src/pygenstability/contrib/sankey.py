@@ -52,12 +52,12 @@ def plot_sankey(
     fig = go.Figure(
         data=[
             go.Sankey(
-                node=dict(
-                    pad=1,
-                    thickness=1,
-                    line=dict(color="black", width=0.0),
-                ),
-                link=dict(source=sources, target=targets, value=values),
+                node={
+                    "pad": 1,
+                    "thickness": 1,
+                    "line": {"color": "black", "width": 0.0},
+                },
+                link={"source": sources, "target": targets, "value": values},
             )
         ],
         layout=layout,
