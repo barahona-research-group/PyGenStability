@@ -302,7 +302,7 @@ def _plot_number_comm(all_results, ax, scales):
 
 def _plot_ttprime(all_results, ax, scales):
     """Plot ttprime."""
-    contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r")
+    contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
