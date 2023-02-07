@@ -59,8 +59,8 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
         result dictionary with two new keys: 'selected_partitions' and 'block_detection_curve'
 
     References:
-        .. [1] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction
-               of Human Movement’, *arXiv:2201.06323*, 2023, Available: https://arxiv.org/abs/2201.06323
+        .. [1] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and
+               the Restriction of Human Movement’, *arXiv:2201.06323*, 2023
     """
     # get NVI(t) and NVI(t,t')
     nvi_t = np.asarray(results["NVI"])
