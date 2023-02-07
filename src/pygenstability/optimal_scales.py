@@ -42,10 +42,10 @@ def _pool2d_nvi(A, kernel_size, stride, padding=0):
 def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, basin_radius=1):
     """Identifies optimal scales in Markov Stability [1]_.
 
-    Robust scales are found in a sequential way. We first search for large diagonal blocks 
-    of low values in the NVI(t, t') matrix that are located at local minima of its pooled 
-    diagonal, called block detection curve, and we obtain basins of fixed radius around 
-    these local minima. We then determine the minima of the NVI(t) curve for each basin, 
+    Robust scales are found in a sequential way. We first search for large diagonal blocks
+    of low values in the NVI(t, t') matrix that are located at local minima of its pooled
+    diagonal, called block detection curve, and we obtain basins of fixed radius around
+    these local minima. We then determine the minima of the NVI(t) curve for each basin,
     and these minima correspond to the robust partitions of the network.
 
     Args:
@@ -59,8 +59,8 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
         result dictionary with two new keys: 'selected_partitions' and 'block_detection_curve'
 
     References:
-    ----------
-    .. [1] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction 
+    -----------
+    .. [1] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction
     of Human Movement’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2023, Available: https://arxiv.org/abs/2201.06323
     """
 
