@@ -57,7 +57,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     filename="clusters.html",
 ):
     """Plot results of pygenstability with plotly."""
-    scales = get_scales(all_results, scale_axis=True)
+    scales = _get_scales(all_results, scale_axis=True)
 
     hovertemplate = str("<b>scale</b>: %{x:.2f}, <br>%{text}<extra></extra>")
 
@@ -283,7 +283,7 @@ def plot_communities(
     matplotlib.use(mpl_backend)
 
 
-def get_scales(all_results, scale_axis=True):
+def _get_scales(all_results, scale_axis=True):
     """Get the scale vector."""
     if not scale_axis:  # pragma: no cover
         return np.arange(len(all_results["scales"]))
@@ -375,7 +375,7 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
 
 def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
-    scales = get_scales(all_results, scale_axis=scale_axis)
+    scales = _get_scales(all_results, scale_axis=scale_axis)
     gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     axes = []

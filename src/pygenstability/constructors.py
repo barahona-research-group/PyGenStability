@@ -25,19 +25,19 @@ def load_constructor(constructor, graph, **kwargs):
     return constructor
 
 
-def threshold_matrix(matrix, threshold=THRESHOLD):
+def _threshold_matrix(matrix, threshold=THRESHOLD):
     """Threshold a matrix to remove small numbers for speed up."""
     matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0.0
     matrix.eliminate_zeros()
 
 
-def apply_expm(matrix):
+def _apply_expm(matrix):
     """Apply matrix exponential.
 
     TODO: implement other variants
     """
     exp = sp.csr_matrix(sp.linalg.expm(matrix.toarray().astype(DTYPE)))
-    threshold_matrix(exp)
+    _threshold_matrix(exp)
     return exp
 
 
@@ -47,7 +47,7 @@ def _check_total_degree(degrees):
         raise Exception("The total degree = 0, we cannot proceed further")
 
 
-def get_spectral_gap(laplacian):
+def _get_spectral_gap(laplacian):
     """Compute spectral gap."""
     spectral_gap = np.round(max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8)
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
@@ -100,7 +100,7 @@ class constructor_linearized(Constructor):
 
         if self.with_spectral_gap:
             laplacian = sp.csgraph.laplacian(self.graph, normed=False)
-            self.spectral_gap = get_spectral_gap(laplacian)
+            self.spectral_gap = _get_spectral_gap(laplacian)
         self.partial_quality_matrix = (self.graph / degrees.sum()).astype(DTYPE)
 
     def get_data(self, time):
@@ -125,14 +125,14 @@ class constructor_continuous_combinatorial(Constructor):
         pi = np.ones(self.graph.shape[0]) / self.graph.shape[0]
         self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
         if self.with_spectral_gap:
-            self.spectral_gap = get_spectral_gap(laplacian)
+            self.spectral_gap = _get_spectral_gap(laplacian)
         self.partial_quality_matrix = laplacian
 
     def get_data(self, time):
         """Return quality and null model at given time."""
         if self.with_spectral_gap:
             time /= self.spectral_gap
-        exp = apply_expm(-time * self.partial_quality_matrix)
+        exp = _apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -150,14 +150,14 @@ class constructor_continuous_normalized(Constructor):
         self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
 
         if self.with_spectral_gap:
-            self.spectral_gap = get_spectral_gap(normed_laplacian)
+            self.spectral_gap = _get_spectral_gap(normed_laplacian)
         self.partial_quality_matrix = normed_laplacian
 
     def get_data(self, time):
         """Return quality and null model at given time."""
         if self.with_spectral_gap:
             time /= self.spectral_gap
-        exp = apply_expm(-time * self.partial_quality_matrix)
+        exp = _apply_expm(-time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -222,6 +222,6 @@ class constructor_directed(Constructor):
 
     def get_data(self, time):
         """Return quality and null model at given time."""
-        exp = apply_expm(time * self.partial_quality_matrix)
+        exp = _apply_expm(time * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
