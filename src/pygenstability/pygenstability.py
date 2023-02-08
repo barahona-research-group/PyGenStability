@@ -122,18 +122,21 @@ def run(
         n_scale (int): number of scale steps
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
-        n_tries (int): number of modularity optimisation evaluations
-        with_NVI (bool): compute the variation of information between Louvain runs
-        n_NVI (int): number of randomly chosen Louvain run to estimate NVI
+        n_tries (int): number of generalized modularity optimisation evaluations
+        with_NVI (bool): compute NVI(t) between generalized modularity optimisation runs at each scale t
+        n_NVI (int): number of randomly chosen generalized modularity optimisation runs to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
-        with_ttprime (bool): compute the ttprime matrix
+        with_ttprime (bool): compute the NVI(t,tprime) matrix to compare partitions at scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
-        with_optimal_scales (bool): apply optimal scale detection algorithm
-        optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
+        with_optimal_scales (bool): apply optimal scale selection algorithm
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection
         method (str): optimiation method, louvain or leiden
+
+    Returns:
+        Results dictionary. TODO: specify
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -243,7 +246,7 @@ def _to_indices(matrix, directed=False):
 
 @timing
 def optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
-    """Worker for Louvain runs."""
+    """Worker for generalized modularity optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
             quality_indices[0],
@@ -280,7 +283,7 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
 
 
 def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
-    """Worker for Louvain runs."""
+    """Worker for generalized modularity optimisation runs."""
     quality = generalized_louvain.evaluate_quality(
         qualities_index[0][0],
         qualities_index[0][1],
@@ -295,7 +298,7 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
 
 
 def run_optimisations(constructor, n_runs, pool, method="louvain"):
-    """Run several louvain on the current quality matrix."""
+    """Run several generalized modularity optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
     )
