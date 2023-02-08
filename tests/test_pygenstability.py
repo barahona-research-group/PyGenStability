@@ -112,13 +112,13 @@ def test_evaluate(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
     data = constructor.get_data(1)
     quality_indices, quality_values = pgs._to_indices(data["quality"])
-    stability, community_id = pgs.optimise(
+    stability, community_id = pgs._optimise(
         0, quality_indices, quality_values, data["null_model"], 0
     )
     assert_almost_equal(stability, 0.5590341906608186)
     assert community_id == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 
-    stability, community_id = pgs.optimise(
+    stability, community_id = pgs._optimise(
         0, quality_indices, quality_values, data["null_model"], 0, method="leiden"
     )
     assert_almost_equal(stability, 0.36540825919902664)
@@ -153,5 +153,5 @@ def test_evaluate_quality(graph):
     data = constructor.get_data(1)
     community_id = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     qualities_index = pgs._to_indices(data["quality"])
-    quality = pgs.evaluate_quality(community_id, qualities_index, data["null_model"], 0)
+    quality = pgs._evaluate_quality(community_id, qualities_index, data["null_model"], 0)
     assert_almost_equal(quality, 0.5590341906608186)

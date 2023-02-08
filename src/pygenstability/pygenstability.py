@@ -24,7 +24,7 @@ L = logging.getLogger(__name__)
 _DTYPE = np.float64
 
 
-def timing(f):  # pragma: no cover
+def _timing(f):  # pragma: no cover
     """Use as decorator to time a function excecution if logging is in DEBUG mode."""
 
     @wraps(f)
@@ -82,14 +82,14 @@ def _get_params(all_locals):
     return all_locals
 
 
-@timing
+@_timing
 def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     return list(
         tqdm(pool.imap(constructor.get_data, scales), total=len(scales), disable=tqdm_disable)
     )
 
 
-@timing
+@_timing
 def run(
     graph=None,
     constructor="linearized",
@@ -164,7 +164,7 @@ def run(
         all_results["run_params"] = run_params
 
         for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-            results = run_optimisations(constructor_data[i], n_tries, pool, method)
+            results = _run_optimisations(constructor_data[i], n_tries, pool, method)
             communities = _process_runs(t, results, all_results)
 
             if with_NVI:
@@ -174,11 +174,11 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
+            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool)
+            _compute_ttprime(all_results, pool)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
@@ -209,7 +209,7 @@ def _process_runs(scale, results, all_results):
     return communities
 
 
-@timing
+@_timing
 def _compute_NVI(communities, all_results, pool, n_partitions=10):
     """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
@@ -244,8 +244,8 @@ def _to_indices(matrix, directed=False):
     return (rows, cols), values
 
 
-@timing
-def optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+@_timing
+def _optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
     """Worker for generalized modularity optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
@@ -282,7 +282,7 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
     return stability + global_shift, community_id
 
 
-def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
+def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     """Worker for generalized modularity optimisation runs."""
     quality = generalized_louvain.evaluate_quality(
         qualities_index[0][0],
@@ -297,13 +297,13 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality + global_shift
 
 
-def run_optimisations(constructor, n_runs, pool, method="louvain"):
+def _run_optimisations(constructor, n_runs, pool, method="louvain"):
     """Run several generalized modularity optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
     )
     worker = partial(
-        optimise,
+        _optimise,
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],
@@ -315,8 +315,8 @@ def run_optimisations(constructor, n_runs, pool, method="louvain"):
     return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
-@timing
-def compute_ttprime(all_results, pool):
+@_timing
+def _compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
     worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
@@ -329,8 +329,8 @@ def compute_ttprime(all_results, pool):
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-@timing
-def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
+@_timing
+def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -338,7 +338,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
         enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
         worker = partial(
-            evaluate_quality,
+            _evaluate_quality,
             qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
