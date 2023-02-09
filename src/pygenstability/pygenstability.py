@@ -1,4 +1,18 @@
-"""PyGenStability module."""
+r"""PyGenStability code to solve generalise modularity with various constructors,
+including Markov stability.
+
+The generalise modularity is of the form
+
+.. math::
+
+    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
+
+where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
+The choice of the quality matrix and null model vectors are arbitrary in the generalised modularity
+setting, and can be parametrised via built-in constructors, or specified by the user via the
+constructor module.
+
+"""
 import itertools
 import logging
 import multiprocessing
@@ -111,7 +125,15 @@ def run(
     optimal_scales_kwargs=None,
     method="louvain",
 ):
-    """Main function to compute clustering at various scales.
+    """This is the main function to compute graph clustering across scales with Markov Stability.
+
+    This function needs a graph object  as an adjacency matrix encoded with scipy.csgraph.
+    The default settings will provide a fast and generic run with linearized Markov Stability,
+    which corresponds to modularity with a scale parameter. Other built-in constructors are
+    available to perform Markov Stability with matrix exponential computations. Custom constructors
+    can be added via the constructor module.
+    Additional parameters can be used to set the range and number of scales, number of trials for
+    generalised modularity optimisation, with Louvain or Leiden algorithm.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
@@ -123,10 +145,10 @@ def run(
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_tries (int): number of generalized modularity optimisation evaluations
-        with_NVI (bool): compute NVI(t) between generalized modularity optimisation runs at each scale t
-        n_NVI (int): number of randomly chosen generalized modularity optimisation runs to estimate NVI
+        with_NVI (bool): compute NVI(t) between generalized modularity optimisations at each scale t
+        n_NVI (int): number of randomly chosen generalized modularity optimisations to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
-        with_ttprime (bool): compute the NVI(t,tprime) matrix to compare partitions at scales t and tprime
+        with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
@@ -136,7 +158,13 @@ def run(
         method (str): optimiation method, louvain or leiden
 
     Returns:
-        Results dictionary. TODO: specify
+        Results dict with the following entries
+            - 'run_params': dict with parameters used to run the code
+            - 'scales': scales of the scan
+            - 'number_of_communities': number of communities at each scale
+            - 'community_id': community node labels at each scale
+            - 'NVI': NVI at each scale
+            - 'ttprime': ttprime matrix
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -214,13 +242,13 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(evaluate_NVI, top_partitions=selected_partitions)
+    worker = partial(_evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
 
 
-def evaluate_NVI(index_pair, top_partitions):
+def _evaluate_NVI(index_pair, top_partitions):
     """Worker for NVI evaluations."""
     MI = mutual_info_score(top_partitions[index_pair[0]], top_partitions[index_pair[1]])
     Ex = entropy(top_partitions[index_pair[0]])
@@ -319,7 +347,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
 def _compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
-    worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
+    worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 

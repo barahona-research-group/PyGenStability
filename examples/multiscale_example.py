@@ -135,7 +135,7 @@ if __name__ == "__main__":
         constructor="continuous_combinatorial",
         n_workers=4,
     )
-
+    print(results)
     # plots results
     plt.figure(figsize=(7, 5))
     axes = plotting.plot_scan(results, figure_name=None)
