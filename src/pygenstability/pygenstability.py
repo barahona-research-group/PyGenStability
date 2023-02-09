@@ -124,8 +124,7 @@ def run(
     optimal_scales_kwargs=None,
     method="louvain",
 ):
-
-    """This is the main function to compute graph clustering across scales with Markov Stability [1,2]_.
+    """This is the main function to compute graph clustering across scales with Markov Stability.
 
     This function needs a graph object  as an adjacency matrix encoded with scipy.csgraph.
     The default settings will provide a fast and generic run with linearized Markov Stability,
@@ -165,11 +164,6 @@ def run(
             - 'community_id': community node labels at each scale
             - 'NVI': NVI at each scale
             - 'ttprime': ttprime matrix
-
-    References:
-        .. [1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, ‘Stability of graph communities across time scales’, 
-               *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010.
-        .. [2] preprint incoming ...
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)

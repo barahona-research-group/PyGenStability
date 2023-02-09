@@ -29,7 +29,7 @@ def load_constructor(constructor, graph, **kwargs):
             return getattr(sys.modules[__name__], f"constructor_{constructor}")(graph, **kwargs)
         except AttributeError as exc:
             raise Exception(f"Could not load constructor {constructor}") from exc
-    if not isinstance(constructor, GenModularity):
+    if not isinstance(constructor, Constructor):
         raise Exception("Only Constructor class object can be used.")
     return constructor
 
@@ -63,15 +63,12 @@ def _get_spectral_gap(laplacian):
     return spectral_gap
 
 
-class GenModularity:
-    """Parent class for generalized modularity [1]_.
+class Constructor:
+    """Parent class for generalized modularity.
 
     This class encodes generalized modularity through the quality matrix and null models.
     Use the method prepare to load and compute time independent quantities, and the method get_data
-    to return quality matrix, null model, and possible global shift (for linearised Markov Stability).
-
-    References:
-        .. [1] preprint incoming ...
+    to return quality matrix, null model, and possible global shift.
     """
 
     def __init__(self, graph, with_spectral_gap=False, **kwargs):
@@ -99,7 +96,7 @@ class GenModularity:
         """Return quality and null model at given time as well as global shift (or None)."""
 
 
-class constructor_linearized(GenModularity):
+class constructor_linearized(Constructor):
     r"""Constructor for continuous linearized Markov Stability.
 
     The quality matrix is:
@@ -135,7 +132,7 @@ class constructor_linearized(GenModularity):
         }
 
 
-class constructor_continuous_combinatorial(GenModularity):
+class constructor_continuous_combinatorial(Constructor):
     r"""Constructor for continuous combinatorial Markov Stability.
 
     The quality matrix is:
@@ -167,7 +164,7 @@ class constructor_continuous_combinatorial(GenModularity):
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
-class constructor_continuous_normalized(GenModularity):
+class constructor_continuous_normalized(Constructor):
     r"""Constructor for continuous normalized Markov Stability.
 
     The quality matrix is:
@@ -202,7 +199,7 @@ class constructor_continuous_normalized(GenModularity):
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
-class constructor_signed_modularity(GenModularity):
+class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
     This implementation is based on (Gomes, Jensen, Arenas, PRE 2009).
@@ -238,7 +235,7 @@ class constructor_signed_modularity(GenModularity):
         }
 
 
-class constructor_directed(GenModularity):
+class constructor_directed(Constructor):
     r"""Constructor for directed Markov stability.
 
     The quality matrix is:
