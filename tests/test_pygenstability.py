@@ -102,10 +102,10 @@ def test__get_scales():
     assert_almost_equal(pgs._get_scales(n_scale=3, log_scale=False), [-2.0, -0.75, 0.5])
 
 
-def test__evaluate_NVI():
+def test_evaluate_NVI():
     """Test evaluate_NVI."""
-    assert pgs._evaluate_NVI([0, 1], [[1, 1, 1, 1], [1, 1, 1, 1]]) == 0.0
-    assert pgs._evaluate_NVI([0, 1], [[0, 0, 1, 1], [1, 1, 1, 1]]) == 1.0
+    assert pgs.evaluate_NVI([0, 1], [[1, 1, 1, 1], [1, 1, 1, 1]]) == 0.0
+    assert pgs.evaluate_NVI([0, 1], [[0, 0, 1, 1], [1, 1, 1, 1]]) == 1.0
 
 
 def test__optimise(graph):
