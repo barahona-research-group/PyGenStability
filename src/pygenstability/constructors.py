@@ -1,4 +1,13 @@
-"""Quality matrix and null model constructor functions."""
+r"""Quality matrix and null model constructor functions.
+
+The generalise modularity is of the form
+
+.. math::
+
+    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
+
+where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
+"""
 import logging
 import sys
 
@@ -91,7 +100,16 @@ class GenModularity:
 
 
 class constructor_linearized(GenModularity):
-    """Constructor for continuous linearized Markov Stability."""
+    r"""Constructor for continuous linearized Markov Stability.
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t) = tA
+
+    and with null model :math:`v_k=\pi=A1`.
+    """
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-time dependent computations."""
@@ -118,7 +136,16 @@ class constructor_linearized(GenModularity):
 
 
 class constructor_continuous_combinatorial(GenModularity):
-    """Constructor for continuous combinatorial Markov Stability."""
+    r"""Constructor for continuous combinatorial Markov Stability.
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t) = \Pi\exp(-Lt)
+
+    where :math:`L=D-A` and :math:`\Pi=\mathrm{diag}(\pi)`, with null model :math:`v_k=\pi=A1`.
+    """
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-time dependent computations."""
@@ -141,7 +168,18 @@ class constructor_continuous_combinatorial(GenModularity):
 
 
 class constructor_continuous_normalized(GenModularity):
-    """Constructor for continuous normalized Markov Stability."""
+    r"""Constructor for continuous normalized Markov Stability.
+
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t) = \Pi\exp(-Lt)
+
+    where :math:`L=D^{-1}(D-A)` and :math:`\Pi=\mathrm{diag}(\pi)`
+    and null model :math:`v_k=\pi=A1`.
+    """
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-time dependent computations."""
@@ -168,7 +206,7 @@ class constructor_continuous_normalized(GenModularity):
 class constructor_signed_modularity(GenModularity):
     """Constructor of signed modularity.
 
-    Based on (Gomes, Jensen, Arenas, PRE 2009).
+    This implementation is based on (Gomes, Jensen, Arenas, PRE 2009).
     The time only multiplies the quality matrix (this many not mean anything, use with care!).
     """
 
@@ -202,7 +240,17 @@ class constructor_signed_modularity(GenModularity):
 
 
 class constructor_directed(GenModularity):
-    """Constructor for directed Markov stability."""
+    r"""Constructor for directed Markov stability.
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t) = \Pi\exp(-L_\alpha t)
+
+    where :math:`L_\alpha = \alpha L+\frac{1-\alpha}{N}I` and :math:`\Pi=\mathrm{diag}(\pi)` and
+    null model :math:`v_k=\pi` where :math:`\pi` is the PageRank vector.
+    """
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-time dependent computations."""

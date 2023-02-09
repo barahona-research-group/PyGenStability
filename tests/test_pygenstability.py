@@ -102,13 +102,13 @@ def test__get_scales():
     assert_almost_equal(pgs._get_scales(n_scale=3, log_scale=False), [-2.0, -0.75, 0.5])
 
 
-def test_evaluate_NVI():
+def test__evaluate_NVI():
     """Test evaluate_NVI."""
-    assert pgs.evaluate_NVI([0, 1], [[1, 1, 1, 1], [1, 1, 1, 1]]) == 0.0
-    assert pgs.evaluate_NVI([0, 1], [[0, 0, 1, 1], [1, 1, 1, 1]]) == 1.0
+    assert pgs._evaluate_NVI([0, 1], [[1, 1, 1, 1], [1, 1, 1, 1]]) == 0.0
+    assert pgs._evaluate_NVI([0, 1], [[0, 0, 1, 1], [1, 1, 1, 1]]) == 1.0
 
 
-def test_evaluate(graph):
+def test__optimise(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
     data = constructor.get_data(1)
     quality_indices, quality_values = pgs._to_indices(data["quality"])
@@ -148,7 +148,7 @@ def test_evaluate(graph):
     ]
 
 
-def test_evaluate_quality(graph):
+def test__evaluate_quality(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
     data = constructor.get_data(1)
     community_id = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
