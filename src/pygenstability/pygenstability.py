@@ -111,7 +111,7 @@ def run(
     optimal_scales_kwargs=None,
     method="louvain",
 ):
-    """Main function to compute clustering at various scales.
+    """Main function for multiscale clustering using Markov Stability or generalized modularity [1,2]_.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
@@ -137,6 +137,11 @@ def run(
 
     Returns:
         Results dictionary. TODO: specify
+
+    References:
+        .. [1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, ‘Stability of graph communities across time scales’, 
+               *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010.
+        .. [2] preprint incoming ...
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
