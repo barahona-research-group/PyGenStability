@@ -1,6 +1,6 @@
 r"""Quality matrix and null model constructor functions.
 
-The generalise modularity is of the form
+The generalised modularity is of the form
 
 .. math::
 
@@ -166,7 +166,6 @@ class constructor_continuous_combinatorial(Constructor):
 
 class constructor_continuous_normalized(Constructor):
     r"""Constructor for continuous normalized Markov Stability.
-
 
     The quality matrix is:
 

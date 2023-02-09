@@ -1,7 +1,6 @@
-r"""PyGenStability code to solve generalise modularity with various constructors,
-including Markov stability.
+r"""PyGenStability code to solve generalise modularity including Markov stability.
 
-The generalise modularity is of the form
+The generalised modularity is of the form
 
 .. math::
 
