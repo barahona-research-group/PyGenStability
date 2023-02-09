@@ -67,7 +67,7 @@ class Constructor:
     """Parent class for generalized modularity constructor.
 
     This class encodes generalized modularity through the quality matrix and null models.
-    Use the method prepare to load and compute time independent quantities, and the method get_data
+    Use the method prepare to load and compute scale independent quantities, and the method get_data
     to return quality matrix, null model, and possible global shift.
     """
 
@@ -76,7 +76,7 @@ class Constructor:
 
         Args:
             graph (csgraph): graph for which to run clustering
-            with_spectral_gap (bool): set to True to use spectral gap time rescale if available
+            with_spectral_gap (bool): set to True to use spectral gap to rescale
             kwargs (dict): any other properties to pass to the constructor.
         """
         self.graph = graph
@@ -90,10 +90,10 @@ class Constructor:
         self.prepare(**kwargs)
 
     def prepare(self, **kwargs):
-        """Prepare the constructor with non-time dependent computations."""
+        """Prepare the constructor with non-scale dependent computations."""
 
-    def get_data(self, time):
-        """Return quality and null model at given time as well as global shift (or None)."""
+    def get_data(self, scale):
+        """Return quality and null model at given scale as well as global shift (or None)."""
 
 
 class constructor_linearized(Constructor):
@@ -109,7 +109,7 @@ class constructor_linearized(Constructor):
     """
 
     def prepare(self, **kwargs):
-        """Prepare the constructor with non-time dependent computations."""
+        """Prepare the constructor with non-scale dependent computations."""
         degrees = np.array(self.graph.sum(1)).flatten()
         _check_total_degree(degrees)
 
@@ -121,14 +121,14 @@ class constructor_linearized(Constructor):
             self.spectral_gap = _get_spectral_gap(laplacian)
         self.partial_quality_matrix = (self.graph / degrees.sum()).astype(DTYPE)
 
-    def get_data(self, time):
-        """Return quality and null model at given time."""
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
         if self.with_spectral_gap:
-            time /= self.spectral_gap
+            scale /= self.spectral_gap
         return {
-            "quality": time * self.partial_quality_matrix,
+            "quality": scale * self.partial_quality_matrix,
             "null_model": self.partial_null_model,
-            "shift": float(1 - time),
+            "shift": float(1 - scale),
         }
 
 
@@ -145,7 +145,7 @@ class constructor_continuous_combinatorial(Constructor):
     """
 
     def prepare(self, **kwargs):
-        """Prepare the constructor with non-time dependent computations."""
+        """Prepare the constructor with non-scale dependent computations."""
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
         _check_total_degree(degrees)
         laplacian /= degrees.mean()
@@ -155,11 +155,11 @@ class constructor_continuous_combinatorial(Constructor):
             self.spectral_gap = _get_spectral_gap(laplacian)
         self.partial_quality_matrix = laplacian
 
-    def get_data(self, time):
-        """Return quality and null model at given time."""
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
         if self.with_spectral_gap:
-            time /= self.spectral_gap
-        exp = _apply_expm(-time * self.partial_quality_matrix)
+            scale /= self.spectral_gap
+        exp = _apply_expm(-scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -178,7 +178,7 @@ class constructor_continuous_normalized(Constructor):
     """
 
     def prepare(self, **kwargs):
-        """Prepare the constructor with non-time dependent computations."""
+        """Prepare the constructor with non-scale dependent computations."""
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
         _check_total_degree(degrees)
         normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
@@ -190,11 +190,11 @@ class constructor_continuous_normalized(Constructor):
             self.spectral_gap = _get_spectral_gap(normed_laplacian)
         self.partial_quality_matrix = normed_laplacian
 
-    def get_data(self, time):
-        """Return quality and null model at given time."""
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
         if self.with_spectral_gap:
-            time /= self.spectral_gap
-        exp = _apply_expm(-time * self.partial_quality_matrix)
+            scale /= self.spectral_gap
+        exp = _apply_expm(-scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -203,7 +203,7 @@ class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
     This implementation is based on [1]_.
-    The time only multiplies the quality matrix (this many not mean anything, use with care!).
+    The scale only multiplies the quality matrix (this many not mean anything, use with care!).
 
     References:
         .. [1] Gómez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
@@ -211,7 +211,7 @@ class constructor_signed_modularity(Constructor):
     """
 
     def prepare(self, **kwargs):
-        """Prepare the constructor with non-time dependent computations."""
+        """Prepare the constructor with non-scale dependent computations."""
         adj_pos = self.graph.copy()
         adj_pos[self.graph < 0] = 0.0
         adj_neg = -self.graph.copy()
@@ -231,10 +231,10 @@ class constructor_signed_modularity(Constructor):
         )
         self.partial_quality_matrix = self.graph / deg_norm
 
-    def get_data(self, time):
-        """Return quality and null model at given time."""
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
         return {
-            "quality": time * self.partial_quality_matrix,
+            "quality": scale * self.partial_quality_matrix,
             "null_model": self.partial_null_model,
         }
 
@@ -253,7 +253,7 @@ class constructor_directed(Constructor):
     """
 
     def prepare(self, **kwargs):
-        """Prepare the constructor with non-time dependent computations."""
+        """Prepare the constructor with non-scale dependent computations."""
         alpha = kwargs.get("alpha", 0.8)
         n_nodes = self.graph.shape[0]
         ones = np.ones((n_nodes, n_nodes)) / n_nodes
@@ -271,8 +271,8 @@ class constructor_directed(Constructor):
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
 
-    def get_data(self, time):
-        """Return quality and null model at given time."""
-        exp = _apply_expm(time * self.partial_quality_matrix)
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
+        exp = _apply_expm(scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}

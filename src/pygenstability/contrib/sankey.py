@@ -9,26 +9,26 @@ def plot_sankey(
     optimal_scales=True,
     live=False,
     filename="communities_sankey.html",
-    time_index=None,
+    scale_index=None,
 ):  # pragma: no cover
-    """Plot Sankey diagram of communities accros time (plotly only).
+    """Plot Sankey diagram of communities accros scale (plotly only).
 
     Args:
         all_results (dict): results from run function
         optimal_scales (bool): use optimal scales or not
         live (bool): if True, interactive figure will appear in browser
         filename (str): filename to save the plot
-        time_index (bool): plot time of indices
+        scale_index (bool): plot scale of indices
     """
     sources = []
     targets = []
     values = []
     shift = 0
 
-    if not time_index:
+    if not scale_index:
         all_results["community_id_reduced"] = all_results["community_id"]
     else:
-        all_results["community_id_reduced"] = [all_results["community_id"][i] for i in time_index]
+        all_results["community_id_reduced"] = [all_results["community_id"][i] for i in scale_index]
 
     community_ids = all_results["community_id_reduced"]
     if optimal_scales and ("selected_partitions" in all_results.keys()):
