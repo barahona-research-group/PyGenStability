@@ -242,17 +242,33 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(_evaluate_NVI, top_partitions=selected_partitions)
+    worker = partial(evaluate_NVI, top_partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
 
 
-def _evaluate_NVI(index_pair, top_partitions):
-    """Worker for NVI evaluations."""
-    MI = mutual_info_score(top_partitions[index_pair[0]], top_partitions[index_pair[1]])
-    Ex = entropy(top_partitions[index_pair[0]])
-    Ey = entropy(top_partitions[index_pair[1]])
+def evaluate_NVI(index_pair, partitions):
+    r"""Evaluations of Normalized Variation of Information (NVI).
+
+    NVI is defined for two partitions :math:`p1` and :math:`p2` as:
+
+    .. math::
+
+        NVI = S(p1) + S(p2) - MI(p1, p2)
+
+    where :math:`S` is the entropy and :math:`MI` the mutual information.
+
+    Args:
+        index_pair (list): list of indices for pairs of partitions
+        partitions (list): list of partitions
+
+    Returns:
+        float, Normalized Variation Information
+    """
+    MI = mutual_info_score(partitions[index_pair[0]], partitions[index_pair[1]])
+    Ex = entropy(partitions[index_pair[0]])
+    Ey = entropy(partitions[index_pair[1]])
     JE = Ex + Ey - MI
     if abs(JE) < 1e-8:
         return 0.0
@@ -347,7 +363,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
 def _compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
-    worker = partial(_evaluate_NVI, top_partitions=all_results["community_id"])
+    worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 

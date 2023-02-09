@@ -23,7 +23,7 @@ project = "PyGenStability"
 copyright = "2021, Alexis Arnaudon"
 author = "Alexis Arnaudon"
 
-
+autodoc_member_order = 'bysource'
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
