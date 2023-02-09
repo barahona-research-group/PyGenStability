@@ -1,6 +1,6 @@
 r"""Quality matrix and null model constructor functions.
 
-The generalised modularity is of the form
+The generalized modularity is of the form
 
 .. math::
 
@@ -64,7 +64,7 @@ def _get_spectral_gap(laplacian):
 
 
 class Constructor:
-    """Parent class for generalized modularity.
+    """Parent class for generalized modularity constructor.
 
     This class encodes generalized modularity through the quality matrix and null models.
     Use the method prepare to load and compute time independent quantities, and the method get_data
@@ -202,8 +202,12 @@ class constructor_continuous_normalized(Constructor):
 class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
-    This implementation is based on (Gomes, Jensen, Arenas, PRE 2009).
+    This implementation is based on [1]_.
     The time only multiplies the quality matrix (this many not mean anything, use with care!).
+
+    References:
+        .. [1] Gómez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
+                networks of correlated data. Physical Review E, 80(1), 016114.
     """
 
     def prepare(self, **kwargs):

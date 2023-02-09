@@ -1,13 +1,13 @@
-r"""PyGenStability code to solve generalise modularity including Markov stability.
+r"""PyGenStability code to solve generalized modularity including Markov stability.
 
-The generalised modularity is of the form
+The generalized modularity is of the form
 
 .. math::
 
     Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
 
 where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
-The choice of the quality matrix and null model vectors are arbitrary in the generalised modularity
+The choice of the quality matrix and null model vectors are arbitrary in the generalized modularity
 setting, and can be parametrised via built-in constructors, or specified by the user via the
 constructor module.
 
@@ -132,11 +132,11 @@ def run(
     available to perform Markov Stability with matrix exponential computations. Custom constructors
     can be added via the constructor module.
     Additional parameters can be used to set the range and number of scales, number of trials for
-    generalised modularity optimisation, with Louvain or Leiden algorithm.
+    generalized modularity optimisation, with Louvain or Leiden algorithm.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
-        constructor (str/function): name of the quality constructor,
+        constructor (str/function): name of the generalised modularity constructor,
             or custom constructor function. It must have two arguments, graph and scale.
         min_scale (float): minimum Markov scale
         max_scale (float): maximum Markov scale
@@ -153,7 +153,8 @@ def run(
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
         with_optimal_scales (bool): apply optimal scale selection algorithm
-        optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection, see
+            optimal_scale module.
         method (str): optimiation method, louvain or leiden
 
     Returns:
