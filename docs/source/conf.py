@@ -14,8 +14,6 @@
 import os
 import sys
 
-import alabaster
-
 sys.path.insert(0, os.path.abspath("../../"))
 
 
@@ -25,7 +23,7 @@ project = "PyGenStability"
 copyright = "2021, Alexis Arnaudon"
 author = "Alexis Arnaudon"
 
-
+autodoc_member_order = 'bysource'
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -62,8 +60,7 @@ exclude_patterns = ["Thumbs.db", ".DS_Store", "_build", "**.ipynb_checkpoints"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme_path = [alabaster.get_path()]
-html_theme = "alabaster"
+html_theme = "furo"
 autoclass_content = "both"
 
 # Add any paths that contain custom static files (such as style sheets) here,

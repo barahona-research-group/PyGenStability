@@ -1,4 +1,17 @@
-"""PyGenStability module."""
+r"""PyGenStability code to solve generalized modularity including Markov stability.
+
+The generalized modularity is of the form
+
+.. math::
+
+    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
+
+where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
+The choice of the quality matrix and null model vectors are arbitrary in the generalized modularity
+setting, and can be parametrised via built-in constructors, or specified by the user via the
+constructor module.
+
+"""
 import itertools
 import logging
 import multiprocessing
@@ -24,7 +37,7 @@ L = logging.getLogger(__name__)
 _DTYPE = np.float64
 
 
-def timing(f):  # pragma: no cover
+def _timing(f):  # pragma: no cover
     """Use as decorator to time a function excecution if logging is in DEBUG mode."""
 
     @wraps(f)
@@ -82,14 +95,14 @@ def _get_params(all_locals):
     return all_locals
 
 
-@timing
+@_timing
 def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     return list(
         tqdm(pool.imap(constructor.get_data, scales), total=len(scales), disable=tqdm_disable)
     )
 
 
-@timing
+@_timing
 def run(
     graph=None,
     constructor="linearized",
@@ -111,29 +124,47 @@ def run(
     optimal_scales_kwargs=None,
     method="louvain",
 ):
-    """Main function to compute clustering at various scales.
+    """This is the main function to compute graph clustering across scales with Markov Stability.
+
+    This function needs a graph object  as an adjacency matrix encoded with scipy.csgraph.
+    The default settings will provide a fast and generic run with linearized Markov Stability,
+    which corresponds to modularity with a scale parameter. Other built-in constructors are
+    available to perform Markov Stability with matrix exponential computations. Custom constructors
+    can be added via the constructor module.
+    Additional parameters can be used to set the range and number of scales, number of trials for
+    generalized modularity optimisation, with Louvain or Leiden algorithm.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
-        constructor (str/function): name of the quality constructor,
+        constructor (str/function): name of the generalised modularity constructor,
             or custom constructor function. It must have two arguments, graph and scale.
         min_scale (float): minimum Markov scale
         max_scale (float): maximum Markov scale
         n_scale (int): number of scale steps
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
-        n_tries (int): number of modularity optimisation evaluations
-        with_NVI (bool): compute the variation of information between Louvain runs
-        n_NVI (int): number of randomly chosen Louvain run to estimate NVI
+        n_tries (int): number of generalized modularity optimisation evaluations
+        with_NVI (bool): compute NVI(t) between generalized modularity optimisations at each scale t
+        n_NVI (int): number of randomly chosen generalized modularity optimisations to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
-        with_ttprime (bool): compute the ttprime matrix
+        with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
-        with_optimal_scales (bool): apply optimal scale detection algorithm
-        optimal_scales_kwargs (dict): kwargs to pass to optimal scale detection
+        with_optimal_scales (bool): apply optimal scale selection algorithm
+        optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection, see
+            optimal_scale module.
         method (str): optimiation method, louvain or leiden
+
+    Returns:
+        Results dict with the following entries
+            - 'run_params': dict with parameters used to run the code
+            - 'scales': scales of the scan
+            - 'number_of_communities': number of communities at each scale
+            - 'community_id': community node labels at each scale
+            - 'NVI': NVI at each scale
+            - 'ttprime': ttprime matrix
     """
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
@@ -161,7 +192,7 @@ def run(
         all_results["run_params"] = run_params
 
         for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-            results = run_optimisations(constructor_data[i], n_tries, pool, method)
+            results = _run_optimisations(constructor_data[i], n_tries, pool, method)
             communities = _process_runs(t, results, all_results)
 
             if with_NVI:
@@ -171,11 +202,11 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
+            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
-            compute_ttprime(all_results, pool)
+            _compute_ttprime(all_results, pool)
 
             if with_optimal_scales:
                 L.info("Identify optimal scales...")
@@ -206,22 +237,38 @@ def _process_runs(scale, results, all_results):
     return communities
 
 
-@timing
+@_timing
 def _compute_NVI(communities, all_results, pool, n_partitions=10):
     """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(evaluate_NVI, top_partitions=selected_partitions)
+    worker = partial(evaluate_NVI, partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
 
 
-def evaluate_NVI(index_pair, top_partitions):
-    """Worker for NVI evaluations."""
-    MI = mutual_info_score(top_partitions[index_pair[0]], top_partitions[index_pair[1]])
-    Ex = entropy(top_partitions[index_pair[0]])
-    Ey = entropy(top_partitions[index_pair[1]])
+def evaluate_NVI(index_pair, partitions):
+    r"""Evaluations of Normalized Variation of Information (NVI).
+
+    NVI is defined for two partitions :math:`p1` and :math:`p2` as:
+
+    .. math::
+
+        NVI = S(p1) + S(p2) - MI(p1, p2)
+
+    where :math:`S` is the entropy and :math:`MI` the mutual information.
+
+    Args:
+        index_pair (list): list of two indices to select pairs of partitions
+        partitions (list): list of partitions
+
+    Returns:
+        float, Normalized Variation Information
+    """
+    MI = mutual_info_score(partitions[index_pair[0]], partitions[index_pair[1]])
+    Ex = entropy(partitions[index_pair[0]])
+    Ey = entropy(partitions[index_pair[1]])
     JE = Ex + Ey - MI
     if abs(JE) < 1e-8:
         return 0.0
@@ -241,9 +288,9 @@ def _to_indices(matrix, directed=False):
     return (rows, cols), values
 
 
-@timing
-def optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
-    """Worker for Louvain runs."""
+@_timing
+def _optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+    """Worker for generalized modularity optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
             quality_indices[0],
@@ -279,8 +326,8 @@ def optimise(_, quality_indices, quality_values, null_model, global_shift, metho
     return stability + global_shift, community_id
 
 
-def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
-    """Worker for Louvain runs."""
+def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
+    """Worker for generalized modularity optimisation runs."""
     quality = generalized_louvain.evaluate_quality(
         qualities_index[0][0],
         qualities_index[0][1],
@@ -294,13 +341,13 @@ def evaluate_quality(partition_id, qualities_index, null_model, global_shift):
     return quality + global_shift
 
 
-def run_optimisations(constructor, n_runs, pool, method="louvain"):
-    """Run several louvain on the current quality matrix."""
+def _run_optimisations(constructor, n_runs, pool, method="louvain"):
+    """Run several generalized modularity optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
     )
     worker = partial(
-        optimise,
+        _optimise,
         quality_indices=quality_indices,
         quality_values=quality_values,
         null_model=constructor["null_model"],
@@ -312,11 +359,11 @@ def run_optimisations(constructor, n_runs, pool, method="louvain"):
     return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
 
 
-@timing
-def compute_ttprime(all_results, pool):
+@_timing
+def _compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
-    worker = partial(evaluate_NVI, top_partitions=all_results["community_id"])
+    worker = partial(evaluate_NVI, partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
@@ -326,8 +373,8 @@ def compute_ttprime(all_results, pool):
     all_results["ttprime"] += all_results["ttprime"].T
 
 
-@timing
-def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
+@_timing
+def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -335,7 +382,7 @@ def apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
         enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
         worker = partial(
-            evaluate_quality,
+            _evaluate_quality,
             qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
