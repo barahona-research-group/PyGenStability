@@ -117,6 +117,7 @@ def run(
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
+    with_spectral_decomp=False,
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
@@ -149,6 +150,7 @@ def run(
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
+        with_spectral_decomp (bool): compute exponentials via spectral decomposition
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
@@ -176,7 +178,7 @@ def run(
         scales=scales,
     )
     with multiprocessing.Pool(n_workers) as pool:
-        constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
+        constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap, with_spectral_decomp=with_spectral_decomp)
 
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(

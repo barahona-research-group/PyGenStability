@@ -13,6 +13,7 @@ import sys
 
 import numpy as np
 import scipy.sparse as sp
+import scipy.linalg as la
 
 L = logging.getLogger(__name__)
 _USE_CACHE = True
@@ -41,11 +42,37 @@ def _threshold_matrix(matrix, threshold=THRESHOLD):
 
 
 def _apply_expm(matrix):
-    """Apply matrix exponential.
-
-    TODO: implement other variants
-    """
+    """Compute matrix exponential via Pade approximation."""
     exp = sp.csr_matrix(sp.linalg.expm(matrix.toarray().astype(DTYPE)))
+    _threshold_matrix(exp)
+    return exp
+
+def _compute_spectral_decomp(matrix):
+    """Solve (generalized) eigenalue problem."""
+    # transform to dense
+    matrix = sp.csr_matrix.todense(matrix)
+
+    # solve (generalized) eigenvalue problem
+    Lambdas, V = la.eig(matrix)
+
+    # transform to real
+    Lambdas = Lambdas.real
+    V = V.real
+
+    # compute inverse of eigenvector matrix V
+    Vinv = la.inv(V)
+
+    return [Lambdas, V, Vinv]
+
+def _apply_exp_spectral_decomp(scale,spectral_decomp):
+    """Compute matrix exponential from eigen decomposition."""
+    # unpack eigen decomposition
+    Lambdas = spectral_decomp[0]
+    V = spectral_decomp[1]
+    Vinv = spectral_decomp[2]
+
+    # apply matrix exponential
+    exp = sp.csc_matrix(V @ np.diag(np.exp(-scale*Lambdas)) @ Vinv)
     _threshold_matrix(exp)
     return exp
 
@@ -71,7 +98,7 @@ class Constructor:
     to return quality matrix, null model, and possible global shift.
     """
 
-    def __init__(self, graph, with_spectral_gap=False, **kwargs):
+    def __init__(self, graph, with_spectral_gap=False, with_spectral_decomp=False, **kwargs):
         """The constructor calls the prepare method upon initialisation.
 
         Args:
@@ -82,10 +109,12 @@ class Constructor:
         self.graph = graph
         self.with_spectral_gap = with_spectral_gap
         self.spectral_gap = None
+        self.with_spectral_decomp = with_spectral_decomp
 
-        # these two variable can be used in prepare method
+        # these three variable can be used in prepare method
         self.partial_quality_matrix = None
         self.partial_null_model = None
+        self.spectral_decomp = None
 
         self.prepare(**kwargs)
 
@@ -153,13 +182,20 @@ class constructor_continuous_combinatorial(Constructor):
         self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
         if self.with_spectral_gap:
             self.spectral_gap = _get_spectral_gap(laplacian)
-        self.partial_quality_matrix = laplacian
+        if self.with_spectral_decomp:
+            self.spectral_decomp = _compute_spectral_decomp(laplacian)
+        else:
+            self.partial_quality_matrix = laplacian
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-        exp = _apply_expm(-scale * self.partial_quality_matrix)
+        # compute exp either via spectral decomposition or Pade approximation
+        if self.with_spectral_decomp:
+            exp = _apply_exp_spectral_decomp(scale, self.spectral_decomp)
+        else:
+            exp = _apply_expm(-scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
