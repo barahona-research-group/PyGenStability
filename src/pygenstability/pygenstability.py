@@ -242,7 +242,7 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
 
-    worker = partial(evaluate_NVI, selected_partitions)
+    worker = partial(evaluate_NVI, partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
     all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
@@ -363,7 +363,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
 def _compute_ttprime(all_results, pool):
     """Compute ttprime from the stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
-    worker = partial(evaluate_NVI, all_results["community_id"])
+    worker = partial(evaluate_NVI, partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
