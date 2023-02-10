@@ -6,6 +6,7 @@ import numpy as np
 import os
 import pandas as pd
 import pygenstability as pgs
+import scipy.sparse as sp
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -33,7 +34,8 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", n_tries=5):
                 G = nx.erdos_renyi_graph(size * 60, size * 1000.0 / math.comb(size * 60, 2))
             _node_sizes.append(len(G))
             _edge_sizes.append(len(G.edges))
-            A = nx.to_scipy_sparse_array(G)
+            A = nx.to_numpy_array(G)
+            A = sp.csgraph.csgraph_from_dense(A)
 
             if Path("timing.csv").exists():
                 os.remove("timing.csv")
@@ -47,7 +49,8 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", n_tries=5):
                 with_postprocessing=True,
                 with_ttprime=True,
                 with_optimal_scales=False,
-                n_louvain=50,
+                with_spectral_decomp=True,
+                n_tries=50,
                 constructor=constructor,
                 n_workers=1,
             )
