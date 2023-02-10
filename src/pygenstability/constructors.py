@@ -202,8 +202,9 @@ class constructor_continuous_normalized(Constructor):
 class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
-    This implementation is based on [1]_.
-    The scale only multiplies the quality matrix (this many not mean anything, use with care!).
+    This implementation is equation (18) of [1]_, where quality is the adjacency matrix and
+    the null model is the difference between the sstandard modularity null models based on
+    positive and negative degree vectors.
 
     References:
         .. [1] Gómez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
@@ -248,14 +249,10 @@ class constructor_directed(Constructor):
 
         F(t)=\Pi \exp\left(-\alpha L-\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)I\right)
 
-        where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
-        out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`I` denotes the identity matrix
-        and :math:`0\le \alpha < 1` the damping factor, and associated null model
-        :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
-
-
-    where :math:`L_\alpha = \alpha L+\frac{1-\alpha}{N}I` and :math:`\Pi=\mathrm{diag}(\pi)` and
-    null model :math:`v_k=\pi` where :math:`\pi` is the PageRank vector.
+    where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
+    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`I` denotes the identity matrix
+    and :math:`0\le \alpha < 1` the damping factor, and associated null model
+    :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
     """
 
     def prepare(self, **kwargs):

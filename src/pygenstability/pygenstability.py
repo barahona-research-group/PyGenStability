@@ -260,7 +260,7 @@ def evaluate_NVI(index_pair, partitions):
     where :math:`S` is the entropy and :math:`MI` the mutual information.
 
     Args:
-        index_pair (list): list of indices for pairs of partitions
+        index_pair (list): list of two indices to select pairs of partitions
         partitions (list): list of partitions
 
     Returns:
