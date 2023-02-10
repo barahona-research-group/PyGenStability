@@ -224,13 +224,20 @@ class constructor_continuous_normalized(Constructor):
 
         if self.with_spectral_gap:
             self.spectral_gap = _get_spectral_gap(normed_laplacian)
-        self.partial_quality_matrix = normed_laplacian
+        if self.with_spectral_decomp:
+            self.spectral_decomp = _compute_spectral_decomp(normed_laplacian)
+        else:
+            self.partial_quality_matrix = normed_laplacian
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-        exp = _apply_expm(-scale * self.partial_quality_matrix)
+        # compute exp either via spectral decomposition or Pade approximation
+        if self.with_spectral_decomp:
+            exp = _apply_exp_spectral_decomp(scale, self.spectral_decomp)
+        else:
+            exp = _apply_expm(-scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -299,19 +306,26 @@ class constructor_directed(Constructor):
 
         out_degrees = self.graph.toarray().sum(axis=1).flatten()
         dinv = np.divide(1, out_degrees, where=out_degrees != 0)
-
-        self.partial_quality_matrix = sp.csr_matrix(
+        alpha_laplacian = sp.csr_matrix(
             alpha * np.diag(dinv).dot(self.graph.toarray())
             + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(ones)
             - np.eye(n_nodes)
         )
-
-        pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
+        pi = abs(sp.linalg.eigs(alpha_laplacian.transpose(), which="SM", k=1)[1][:, 0])
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
+        if self.with_spectral_decomp:
+            L.warning("Spectral decomposition in directed case might lead to large approximation errors!")
+            self.spectral_decomp = _compute_spectral_decomp(alpha_laplacian)
+        else:
+            self.partial_quality_matrix = alpha_laplacian
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
-        exp = _apply_expm(scale * self.partial_quality_matrix)
+        # compute exp either via spectral decomposition or Pade approximation
+        if self.with_spectral_decomp:
+            exp = _apply_exp_spectral_decomp(scale, self.spectral_decomp)
+        else:
+            exp = _apply_expm(-scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
