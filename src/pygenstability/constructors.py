@@ -324,8 +324,8 @@ class constructor_directed(Constructor):
         """Return quality and null model at given scale."""
         # compute exp either via spectral decomposition or Pade approximation
         if self.with_spectral_decomp:
-            exp = _apply_exp_spectral_decomp(scale, self.spectral_decomp)
+            exp = _apply_exp_spectral_decomp(-scale, self.spectral_decomp)
         else:
-            exp = _apply_expm(-scale * self.partial_quality_matrix)
+            exp = _apply_expm(scale * self.partial_quality_matrix)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
