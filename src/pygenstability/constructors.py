@@ -203,7 +203,7 @@ class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
     This implementation is equation (18) of [1]_, where quality is the adjacency matrix and
-    the null model is the difference between the sstandard modularity null models based on
+    the null model is the difference between the standard modularity null models based on
     positive and negative degree vectors.
 
     References:
