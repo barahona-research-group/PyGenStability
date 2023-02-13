@@ -290,10 +290,11 @@ class constructor_directed(Constructor):
 
     .. math::
 
-        F(t)=\Pi \exp\left(-\alpha L-\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)I\right)
+        F(t)=\Pi \exp\left(-\alpha L-\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        \boldsymbol{1}\boldsymbol{1}^T\right)
 
     where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
-    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`I` denotes the identity matrix
+    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`\boldsymbol{1}` denotes the vector of ones
     and :math:`0\le \alpha < 1` the damping factor, and associated null model
     :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
     """

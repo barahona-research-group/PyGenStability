@@ -257,9 +257,9 @@ def evaluate_NVI(index_pair, partitions):
 
     .. math::
 
-        NVI = S(p1) + S(p2) - MI(p1, p2)
+        NVI = \frac{E(p1) + E(p2) - 2MI(p1, p2)}{JE(p1,p2)}
 
-    where :math:`S` is the entropy and :math:`MI` the mutual information.
+    where :math:`E` is the entropy, :math:`JE` the joint entropy and :math:`MI` the mutual information.
 
     Args:
         index_pair (list): list of two indices to select pairs of partitions
