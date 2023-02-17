@@ -47,7 +47,7 @@ def _timing(f):  # pragma: no cover
             result = f(*args, **kw)
             t_end = time()
             with open("timing.csv", "a", encoding="utf-8") as file:
-                print(f"{f.__name__}, {t_start - t_end}", file=file)
+                print(f"{f.__name__}, {t_end - t_start}", file=file)
         else:
             result = f(*args, **kw)
         return result
