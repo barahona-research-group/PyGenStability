@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("matplotlib").setLevel(logging.INFO)
 
 
-def get_comp_time(sizes, graph_type="SBM", constructor="linearized", n_tries=5):
+def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="louvain", n_tries=5):
     """Estimate computational times for simple benchmarking."""
     df = pd.DataFrame()
     node_sizes = []
@@ -50,6 +50,7 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", n_tries=5):
                 with_ttprime=True,
                 with_optimal_scales=False,
                 with_spectral_decomp=True,
+                method=method,
                 n_tries=50,
                 constructor=constructor,
                 n_workers=1,
@@ -83,15 +84,19 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", n_tries=5):
     ax2 = ax1.twiny()
     ax2.plot(edge_sizes, -np.ones(len(edge_sizes)))
     ax2.set_xlabel("Graph size [# edges]")
-    df.to_csv(f"comp_time_{constructor}_{graph_type}.csv")
+    df.to_csv(f"comp_time_{constructor}_{graph_type}_{method}.csv")
     plt.ylabel("Computational time [s]")
-    plt.savefig(f"comp_time_{constructor}_{graph_type}.pdf")
+    plt.savefig(f"comp_time_{constructor}_{graph_type}_{method}.pdf")
 
 
 if __name__ == "__main__":
     sizes = list(range(2, 11))
 
-    get_comp_time(sizes, graph_type="SBM", constructor="linearized")
-    get_comp_time(sizes, graph_type="ER", constructor="linearized")
-    get_comp_time(sizes, graph_type="SBM", constructor="continuous_combinatorial")
-    get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial")
+    get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="louvain")
+    get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="leiden")
+    get_comp_time(sizes, graph_type="SBM", constructor="continuous_combinatorial", method="louvain")
+    get_comp_time(sizes, graph_type="SBM", constructor="continuous_combinatorial", method="leiden")
+    get_comp_time(sizes, graph_type="ER", constructor="linearized", method="louvain")
+    get_comp_time(sizes, graph_type="ER", constructor="linearized", method="leiden")
+    get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial", method="louvain")
+    get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial", method="leiden")
