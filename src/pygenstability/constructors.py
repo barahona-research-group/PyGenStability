@@ -170,7 +170,7 @@ class constructor_continuous_combinatorial(Constructor):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-        # compute exp either via spectral decomposition or Pade approximation
+
         exp = self._get_exp(scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
@@ -210,7 +210,7 @@ class constructor_continuous_normalized(Constructor):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-        # compute exp either via spectral decomposition or Pade approximation
+
         exp = self._get_exp(scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
