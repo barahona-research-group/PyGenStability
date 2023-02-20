@@ -117,7 +117,7 @@ def run(
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
-    with_spectral_decomp=True,
+    exp_comp_mode="expm",
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
@@ -150,7 +150,7 @@ def run(
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
-        with_spectral_decomp (bool): compute exponentials via spectral decomposition instead of Pade
+        exp_comp_mode (str): mode to compute matrix exponential, can be expm or spectral
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
@@ -177,8 +177,12 @@ def run(
         log_scale=log_scale,
         scales=scales,
     )
+    assert exp_comp_mode in ["spectral", "expm"]
+
     with multiprocessing.Pool(n_workers) as pool:
-        constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap, with_spectral_decomp=with_spectral_decomp)
+        constructor = load_constructor(
+            constructor, graph, with_spectral_gap=with_spectral_gap, exp_comp_mode=exp_comp_mode
+        )
 
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
@@ -259,7 +263,8 @@ def evaluate_NVI(index_pair, partitions):
 
         NVI = \frac{E(p1) + E(p2) - 2MI(p1, p2)}{JE(p1,p2)}
 
-    where :math:`E` is the entropy, :math:`JE` the joint entropy and :math:`MI` the mutual information.
+    where :math:`E` is the entropy, :math:`JE` the joint entropy
+    and :math:`MI` the mutual information.
 
     Args:
         index_pair (list): list of two indices to select pairs of partitions

@@ -32,6 +32,9 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     with pytest.raises(Exception):
         results = pgs.run(graph_non_connected)
 
+    with pytest.raises(Exception):
+        results = pgs.run(graph, exp_comp_mode="UNKNOWN")
+
     results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5)
     results = pgs.run(graph_signed, min_scale=-1, max_scale=0, n_scale=5)
 

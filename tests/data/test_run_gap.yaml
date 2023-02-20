@@ -95,6 +95,7 @@ number_of_communities:
 - 3.0
 run_params:
   constructor: linearized
+  exp_comp_mode: expm
   log_scale: true
   max_scale: -1
   method: louvain
