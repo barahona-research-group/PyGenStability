@@ -224,7 +224,13 @@ def plot_single_partition(
 
 
 def plot_optimal_partitions(
-    graph, all_results, edge_color="0.5", edge_width=0.5, folder="optimal_partitions", ext=".pdf"
+    graph,
+    all_results,
+    edge_color="0.5",
+    edge_width=0.5,
+    folder="optimal_partitions",
+    ext=".pdf",
+    show=False,
 ):
     """Plot the community structures at each optimal scale.
 
@@ -235,6 +241,7 @@ def plot_optimal_partitions(
         edge_width (float): width of edgs
         folder (str): folder to save figures
         ext (str): extension of figures files
+        show (bool): show each plot with plt.show() or not
     """
     if not os.path.isdir(folder):
         os.mkdir(folder)
@@ -253,6 +260,8 @@ def plot_optimal_partitions(
             graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
         )
         plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
+        if show:
+            plt.show()
 
 
 def plot_communities(

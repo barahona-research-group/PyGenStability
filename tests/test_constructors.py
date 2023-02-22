@@ -40,7 +40,9 @@ def test_load_constructor(graph):
     assert constructors.load_constructor(constructor, graph) == constructor
 
     for constr in CONSTRUCTORS:
-        data = _list_data(constructors.load_constructor(constr, graph).get_data(1))
+        data = _list_data(
+            constructors.load_constructor(constr, graph, exp_comp_mode="expm").get_data(1)
+        )
         # yaml.dump(data, open(DATA / f"test_constructor_{constr}.yaml", "w"))
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}.yaml", "r"))
         assert_almost_equal(data["quality"], expected_data["quality"])
@@ -48,7 +50,9 @@ def test_load_constructor(graph):
 
     for constr in CONSTRUCTORS:
         data = _list_data(
-            constructors.load_constructor(constr, graph, with_spectral_gap=True).get_data(1)
+            constructors.load_constructor(
+                constr, graph, with_spectral_gap=True, exp_comp_mode="expm"
+            ).get_data(1)
         )
         # yaml.dump(data, open(DATA / f"test_constructor_{constr}_gap.yaml", "w"))
         expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}_gap.yaml", "r"))

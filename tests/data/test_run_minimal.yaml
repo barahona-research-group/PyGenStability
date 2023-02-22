@@ -117,7 +117,7 @@ number_of_communities:
 - 3.0
 run_params:
   constructor: linearized
-  exp_comp_mode: expm
+  exp_comp_mode: spectral
   log_scale: true
   max_scale: 0
   method: louvain

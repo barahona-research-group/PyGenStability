@@ -117,7 +117,7 @@ def run(
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
-    exp_comp_mode="expm",
+    exp_comp_mode="spectral",
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
@@ -178,6 +178,9 @@ def run(
         scales=scales,
     )
     assert exp_comp_mode in ["spectral", "expm"]
+    if constructor == "directed":
+        L.info("We cannot use spectral exponential computation for directed contructor")
+        exp_comp_mode = "expm"
 
     with multiprocessing.Pool(n_workers) as pool:
         constructor = load_constructor(

@@ -63,7 +63,7 @@ class Constructor:
     to return quality matrix, null model, and possible global shift.
     """
 
-    def __init__(self, graph, with_spectral_gap=False, exp_comp_mode="expm", **kwargs):
+    def __init__(self, graph, with_spectral_gap=False, exp_comp_mode="spectral", **kwargs):
         """The constructor calls the prepare method upon initialisation.
 
         Args:
@@ -294,6 +294,6 @@ class constructor_directed(Constructor):
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
-        exp = self._get_exp(scale)
+        exp = self._get_exp(-scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
