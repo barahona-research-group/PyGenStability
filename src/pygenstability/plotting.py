@@ -260,7 +260,7 @@ def plot_optimal_partitions(
             graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
         )
         plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
-        if show:
+        if show:  # pragma: no cover
             plt.show()
 
 
