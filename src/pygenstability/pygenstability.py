@@ -47,7 +47,7 @@ def _timing(f):  # pragma: no cover
             result = f(*args, **kw)
             t_end = time()
             with open("timing.csv", "a", encoding="utf-8") as file:
-                print(f"{f.__name__}, {t_start - t_end}", file=file)
+                print(f"{f.__name__}, {t_end - t_start}", file=file)
         else:
             result = f(*args, **kw)
         return result
@@ -117,6 +117,7 @@ def run(
     with_postprocessing=True,
     with_ttprime=True,
     with_spectral_gap=False,
+    exp_comp_mode="spectral",
     result_file="results.pkl",
     n_workers=4,
     tqdm_disable=False,
@@ -149,6 +150,7 @@ def run(
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
+        exp_comp_mode (str): mode to compute matrix exponential, can be expm or spectral
         result_file (str): path to the result file
         n_workers (int): number of workers for multiprocessing
         tqdm_disable (bool): disable progress bars
@@ -175,8 +177,15 @@ def run(
         log_scale=log_scale,
         scales=scales,
     )
+    assert exp_comp_mode in ["spectral", "expm"]
+    if constructor == "directed":
+        L.info("We cannot use spectral exponential computation for directed contructor")
+        exp_comp_mode = "expm"
+
     with multiprocessing.Pool(n_workers) as pool:
-        constructor = load_constructor(constructor, graph, with_spectral_gap=with_spectral_gap)
+        constructor = load_constructor(
+            constructor, graph, with_spectral_gap=with_spectral_gap, exp_comp_mode=exp_comp_mode
+        )
 
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
@@ -255,9 +264,10 @@ def evaluate_NVI(index_pair, partitions):
 
     .. math::
 
-        NVI = S(p1) + S(p2) - MI(p1, p2)
+        NVI = \frac{E(p1) + E(p2) - 2MI(p1, p2)}{JE(p1,p2)}
 
-    where :math:`S` is the entropy and :math:`MI` the mutual information.
+    where :math:`E` is the entropy, :math:`JE` the joint entropy
+    and :math:`MI` the mutual information.
 
     Args:
         index_pair (list): list of two indices to select pairs of partitions

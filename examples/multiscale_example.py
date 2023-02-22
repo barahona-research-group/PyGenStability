@@ -134,6 +134,7 @@ if __name__ == "__main__":
         n_tries=20,
         constructor="continuous_combinatorial",
         n_workers=4,
+        exp_comp_mode='expm',
     )
     print(results)
     # plots results

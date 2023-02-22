@@ -138,12 +138,16 @@ or using the click app:
 
 
 
-Other examples can be found as jupyter-notebooks in `examples/` directory, including:
+Other examples can be found as jupyter-notebooks in the `examples/` directory, including:
 * Example 1: Undirected SBM
 * Example 2: Multiscale
 * Example 3: Directed networks
 * Example 4: Custom constructors
 * Example 5: Hypergraphs
+
+Finally, we provide applications to real-world networks in the `examples/real_examples/` directory, including:
+* Powergrid network
+* Protein structures
 
 
 ## Our other available packages

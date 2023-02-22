@@ -12,6 +12,7 @@ import logging
 import sys
 
 import numpy as np
+import scipy.linalg as la
 import scipy.sparse as sp
 
 L = logging.getLogger(__name__)
@@ -34,20 +35,11 @@ def load_constructor(constructor, graph, **kwargs):
     return constructor
 
 
-def _threshold_matrix(matrix, threshold=THRESHOLD):
-    """Threshold a matrix to remove small numbers for speed up."""
-    matrix.data[np.abs(matrix.data) < threshold * np.max(matrix)] = 0.0
-    matrix.eliminate_zeros()
-
-
-def _apply_expm(matrix):
-    """Apply matrix exponential.
-
-    TODO: implement other variants
-    """
-    exp = sp.csr_matrix(sp.linalg.expm(matrix.toarray().astype(DTYPE)))
-    _threshold_matrix(exp)
-    return exp
+def _compute_spectral_decomp(matrix):
+    """Solve eigenalue problem."""
+    lambdas, v = la.eig(matrix.toarray())
+    vinv = la.inv(v.real)
+    return lambdas.real, v.real, vinv
 
 
 def _check_total_degree(degrees):
@@ -71,23 +63,38 @@ class Constructor:
     to return quality matrix, null model, and possible global shift.
     """
 
-    def __init__(self, graph, with_spectral_gap=False, **kwargs):
+    def __init__(self, graph, with_spectral_gap=False, exp_comp_mode="spectral", **kwargs):
         """The constructor calls the prepare method upon initialisation.
 
         Args:
             graph (csgraph): graph for which to run clustering
             with_spectral_gap (bool): set to True to use spectral gap to rescale
             kwargs (dict): any other properties to pass to the constructor.
+            exp_comp_mode (str): mode to compute matrix exponential, can be expm or spectral
         """
         self.graph = graph
         self.with_spectral_gap = with_spectral_gap
         self.spectral_gap = None
+        self.exp_comp_mode = exp_comp_mode
 
-        # these two variable can be used in prepare method
+        # these three variable can be used in prepare method
         self.partial_quality_matrix = None
         self.partial_null_model = None
+        self.spectral_decomp = None, None, None
+        self.threshold = THRESHOLD
 
         self.prepare(**kwargs)
+
+    def _get_exp(self, scale):
+        """Compute matrix exponential at a given scale."""
+        if self.exp_comp_mode == "expm":
+            exp = sp.linalg.expm(-scale * self.partial_quality_matrix.toarray().astype(DTYPE))
+        if self.exp_comp_mode == "spectral":
+            lambdas, v, vinv = self.spectral_decomp
+            exp = v @ np.diag(np.exp(-scale * lambdas)) @ vinv
+
+        exp[np.abs(exp) < self.threshold * np.max(exp)] = 0.0
+        return sp.csc_matrix(exp)
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
@@ -153,13 +160,18 @@ class constructor_continuous_combinatorial(Constructor):
         self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
         if self.with_spectral_gap:
             self.spectral_gap = _get_spectral_gap(laplacian)
-        self.partial_quality_matrix = laplacian
+
+        if self.exp_comp_mode == "spectral":
+            self.spectral_decomp = _compute_spectral_decomp(laplacian)
+        if self.exp_comp_mode == "expm":
+            self.partial_quality_matrix = laplacian
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-        exp = _apply_expm(-scale * self.partial_quality_matrix)
+
+        exp = self._get_exp(scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -188,13 +200,18 @@ class constructor_continuous_normalized(Constructor):
 
         if self.with_spectral_gap:
             self.spectral_gap = _get_spectral_gap(normed_laplacian)
-        self.partial_quality_matrix = normed_laplacian
+
+        if self.exp_comp_mode == "spectral":
+            self.spectral_decomp = _compute_spectral_decomp(normed_laplacian)
+        if self.exp_comp_mode == "expm":
+            self.partial_quality_matrix = normed_laplacian
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-        exp = _apply_expm(-scale * self.partial_quality_matrix)
+
+        exp = self._get_exp(scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -247,35 +264,36 @@ class constructor_directed(Constructor):
 
     .. math::
 
-        F(t)=\Pi \exp\left(-\alpha L-\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)I\right)
+        F(t)=\Pi \exp\left(-\alpha L-\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        \boldsymbol{1}\boldsymbol{1}^T\right)
 
     where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
-    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`I` denotes the identity matrix
-    and :math:`0\le \alpha < 1` the damping factor, and associated null model
+    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`\boldsymbol{1}` denotes
+    the vector of ones and :math:`0\le \alpha < 1` the damping factor, and associated null model
     :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
     """
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
+        assert self.exp_comp_mode == "expm"
+
         alpha = kwargs.get("alpha", 0.8)
         n_nodes = self.graph.shape[0]
         ones = np.ones((n_nodes, n_nodes)) / n_nodes
 
         out_degrees = self.graph.toarray().sum(axis=1).flatten()
         dinv = np.divide(1, out_degrees, where=out_degrees != 0)
-
         self.partial_quality_matrix = sp.csr_matrix(
             alpha * np.diag(dinv).dot(self.graph.toarray())
             + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(ones)
             - np.eye(n_nodes)
         )
-
         pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
-        exp = _apply_expm(scale * self.partial_quality_matrix)
+        exp = self._get_exp(-scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
