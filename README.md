@@ -82,14 +82,23 @@ results  = identify_optimal_scales(results, block_size = 10, window_size = 5)
 plotting.plot_optimal_partitions(nx_graph, results)
 ```
 
-## Custom constructors
+## Constructors
  
+We provide an object-oriented module for constructing quality matrices and null models in `pygenstability/constructors.py`. Various constructors are implemented that can be used for multiscale clustering of different types of graphs:
+
+- `linearized` based on linearized MS for **large undirected** weighted graphs
+- `continuous_combinatorial` based on combinatorial Lablacian for undirected weighted graphs
+- `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs
+- `signed_modularity` based on signed modularity for signed graphs
+- `directed` based on random-walk Laplacian with teleportation for **directed** weighted graphs
+- `linearized_directed` based on random-walk Laplacian with teleportation for **large  directed** weighted graphs
+
+For large graphs we recommend using the `linearized` or `linearized_directed` constructors instead of `continuous_combinatorial`, `continuous_normalized` and `directed` that rely on the computation of matrix exponentials.
+
 For those of you that wish to implement their own constructor, you will need to design a function with the following properties:
 
 - take a scipy.csgraph `graph` and a float `time` as argument
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
-
-Please see `pygenstability/constructors.py` for the existing implemented constructors. 
 
 ## Contributers
 
