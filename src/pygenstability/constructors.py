@@ -264,10 +264,10 @@ class constructor_directed(Constructor):
 
     .. math::
 
-        F(t)=\Pi \exp\left(-\alpha L-\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
-        \boldsymbol{1}\boldsymbol{1}^T\right)
+        F(t)=\Pi \exp\left(t \left(\alpha L+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        \boldsymbol{1}\boldsymbol{1}^T-I\right)\right)
 
-    where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
+    where :math:`I` denotes the identidy matrix, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
     out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`\boldsymbol{1}` denotes
     the vector of ones and :math:`0\le \alpha < 1` the damping factor, and associated null model
     :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
@@ -296,4 +296,45 @@ class constructor_directed(Constructor):
         """Return quality and null model at given scale."""
         exp = self._get_exp(-scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
+
+
+class constructor_linearized_directed(Constructor):
+    r"""Constructor for directed Markov stability.
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t)=\Pi t \left(\alpha L+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        \boldsymbol{1}\boldsymbol{1}^T-I\right)
+
+    where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
+    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`\boldsymbol{1}` denotes
+    the vector of ones and :math:`0\le \alpha < 1` the damping factor, and associated null model
+    :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
+    """
+
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-scale dependent computations."""
+        alpha = kwargs.get("alpha", 0.8)
+        n_nodes = self.graph.shape[0]
+        ones = np.ones((n_nodes, n_nodes)) / n_nodes
+
+        out_degrees = self.graph.toarray().sum(axis=1).flatten()
+        dinv = np.divide(1, out_degrees, where=out_degrees != 0)
+
+        self.partial_quality_matrix = sp.csr_matrix(
+            alpha * np.diag(dinv).dot(self.graph.toarray())
+            + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(ones)
+            - np.eye(n_nodes)
+        )
+
+        pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
+        pi /= pi.sum()
+        self.partial_null_model = np.array([pi, pi])
+
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
+        quality_matrix = sp.diags(self.partial_null_model[0]).dot(scale * self.partial_quality_matrix)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
