@@ -84,16 +84,17 @@ plotting.plot_optimal_partitions(nx_graph, results)
 
 ## Constructors
  
-We provide an object-oriented module for constructing quality matrices and null models in `pygenstability/constructors.py`. Various constructors are implemented that can be used for multiscale clustering of different types of graphs:
+We provide an object-oriented module for constructing quality matrices and null models in `pygenstability/constructors.py`. Various constructors are implemented for different types of graphs:
 
-- `linearized` based on linearized MS for **large undirected** weighted graphs
-- `continuous_combinatorial` based on combinatorial Lablacian for undirected weighted graphs
-- `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs
-- `signed_modularity` based on signed modularity for signed graphs
-- `directed` based on random-walk Laplacian with teleportation for **directed** weighted graphs
-- `linearized_directed` based on random-walk Laplacian with teleportation for **large  directed** weighted graphs
+- `linearized` based on linearized MS for large undirected weighted graphs [2]
+- `continuous_combinatorial` based on combinatorial Lablacian for undirected weighted graphs [2]
+- `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs [2]
+- `signed_modularity` based on signed modularity for signed graphs [8]
+- `directed` based on random-walk Laplacian with teleportation for directed weighted graphs [2]
+- `linearized_directed` based on random-walk Laplacian with teleportation for large  directed weighted graphs
 
-For large graphs we recommend using the `linearized` or `linearized_directed` constructors instead of `continuous_combinatorial`, `continuous_normalized` and `directed` that rely on the computation of matrix exponentials.
+For the computationally efficient
+analysis of **large** graphs we recommend using the `linearized` or `linearized_directed` constructors instead of `continuous_combinatorial`, `continuous_normalized` and `directed` that rely on the computation of matrix exponentials.
 
 For those of you that wish to implement their own constructor, you will need to design a function with the following properties:
 
@@ -184,6 +185,8 @@ If you are interested in trying our other packages, see the below list:
 [6] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction of Human Movement’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2023, Available: https://arxiv.org/abs/2201.06323
 
 [7] Preprint incoming ...
+
+[8] Gómez, S., Jensen, P., & Arenas, A. (2009). ‘Analysis of community structure in            networks of correlated data‘. *Physical Review E*, 80(1), 016114.
 
 ## Licence
 
