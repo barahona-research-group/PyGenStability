@@ -38,9 +38,14 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5)
 
     # test we don't use spectral for directed
-    results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5, constructor='directed')
+    results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5, constructor="directed")
     assert results is not None
 
+    # test we don't use spectral for linearized_directed
+    results = pgs.run(
+        graph_directed, min_scale=-1, max_scale=0, n_scale=5, constructor="linearized_directed"
+    )
+    assert results is not None
     results = pgs.run(graph_signed, min_scale=-1, max_scale=0, n_scale=5)
 
     constructor = load_constructor("continuous_combinatorial", graph)

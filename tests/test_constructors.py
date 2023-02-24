@@ -14,6 +14,7 @@ CONSTRUCTORS = [
     "continuous_normalized",
     "signed_modularity",
     "directed",
+    "linearized_directed",
 ]
 DATA = Path(__file__).absolute().parent / "data"
 
@@ -60,9 +61,23 @@ def test_load_constructor(graph):
         assert_almost_equal(data["null_model"], expected_data["null_model"])
 
 
+def test_linearized_directed(graph_directed):
+    data = _list_data(
+        constructors.load_constructor(
+            "linearized_directed", graph_directed, exp_comp_mode="expm", alpha=1.0
+        ).get_data(1)
+    )
+    # yaml.dump(data, open(DATA / "test_constructor_linearized_directed_alpha.yaml", "w"))
+    expected_data = yaml.safe_load(
+        open(DATA / "test_constructor_linearized_directed_alpha.yaml", "r")
+    )
+    assert_almost_equal(data["quality"], expected_data["quality"])
+    assert_almost_equal(data["null_model"], expected_data["null_model"])
+
+
 def test_spectral_exp(graph):
     """Test spectral exp computation."""
-    for constr in CONSTRUCTORS[:-1]:
+    for constr in CONSTRUCTORS[:-2]:
         data = _list_data(
             constructors.load_constructor(constr, graph, exp_comp_mode="spectral").get_data(1)
         )
@@ -70,7 +85,7 @@ def test_spectral_exp(graph):
         assert_almost_equal(data["quality"], expected_data["quality"])
         assert_almost_equal(data["null_model"], expected_data["null_model"])
 
-    constr = CONSTRUCTORS[:-1]
+    constr = CONSTRUCTORS[-2]
     with pytest.raises(Exception):
         data = _list_data(
             constructors.load_constructor(constr, graph, exp_comp_mode="spectral").get_data(1)
