@@ -281,13 +281,16 @@ class constructor_directed(Constructor):
         n_nodes = self.graph.shape[0]
         ones = np.ones((n_nodes, n_nodes)) / n_nodes
 
-        out_degrees = self.graph.toarray().sum(axis=1).flatten()
+        out_degrees = np.array(self.graph.sum(1)).flatten()
+        _check_total_degree(out_degrees)
         dinv = np.divide(1, out_degrees, where=out_degrees != 0)
+
         self.partial_quality_matrix = sp.csr_matrix(
             alpha * np.diag(dinv).dot(self.graph.toarray())
             + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(ones)
             - np.eye(n_nodes)
         )
+
         pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
@@ -321,7 +324,8 @@ class constructor_linearized_directed(Constructor):
         alpha = kwargs.get("alpha", 1)
         n_nodes = self.graph.shape[0]
 
-        out_degrees = self.graph.toarray().sum(axis=1).flatten()
+        out_degrees = np.array(self.graph.sum(1)).flatten()
+        _check_total_degree(out_degrees)
         dinv = np.divide(1, out_degrees, where=out_degrees != 0)
 
         if alpha < 1:
@@ -335,7 +339,7 @@ class constructor_linearized_directed(Constructor):
 
         elif alpha == 1:
             self.partial_quality_matrix = sp.csr_matrix(
-                np.diag(dinv).dot(self.graph.toarray()) - np.eye(n_nodes)
+                sp.diags(dinv).dot(self.graph) - sp.diags(np.ones(n_nodes))
             )
 
 
