@@ -124,6 +124,7 @@ def run(
     with_optimal_scales=True,
     optimal_scales_kwargs=None,
     method="louvain",
+    constructor_kwargs=None,
 ):
     """This is the main function to compute graph clustering across scales with Markov Stability.
 
@@ -158,6 +159,7 @@ def run(
         optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection, see
             optimal_scale module.
         method (str): optimiation method, louvain or leiden
+        constructor_kwargs (dict): additional kwargs to pass to constructor prepare method
 
     Returns:
         Results dict with the following entries
@@ -178,14 +180,18 @@ def run(
         scales=scales,
     )
     assert exp_comp_mode in ["spectral", "expm"]
-    if constructor == "directed":
+    if constructor in ("directed", "linearized_directed"):
         L.info("We cannot use spectral exponential computation for directed contructor")
         exp_comp_mode = "expm"
 
+    if constructor_kwargs is None:
+        constructor_kwargs = {}
+    constructor_kwargs.update(
+        {"with_spectral_gap": with_spectral_gap, "exp_comp_mode": exp_comp_mode}
+    )
+
     with multiprocessing.Pool(n_workers) as pool:
-        constructor = load_constructor(
-            constructor, graph, with_spectral_gap=with_spectral_gap, exp_comp_mode=exp_comp_mode
-        )
+        constructor = load_constructor(constructor, graph, **constructor_kwargs)
 
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(

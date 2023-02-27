@@ -49,7 +49,6 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
                 with_postprocessing=True,
                 with_ttprime=True,
                 with_optimal_scales=False,
-                with_spectral_decomp=True,
                 method=method,
                 n_tries=50,
                 constructor=constructor,

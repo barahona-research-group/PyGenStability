@@ -95,6 +95,7 @@ number_of_communities:
 - 3.0
 run_params:
   constructor: linearized
+  constructor_kwargs: null
   exp_comp_mode: spectral
   log_scale: true
   max_scale: 0
