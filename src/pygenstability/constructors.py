@@ -329,7 +329,6 @@ class constructor_linearized_directed(Constructor):
         dinv = np.divide(1, out_degrees, where=out_degrees != 0)
 
         if alpha < 1:
-            print("alpha")
             ones = np.ones((n_nodes, n_nodes)) / n_nodes
 
             self.partial_quality_matrix = sp.csr_matrix(
@@ -341,7 +340,6 @@ class constructor_linearized_directed(Constructor):
             )
 
         if alpha == 1:
-            print("alpha1")
             self.partial_quality_matrix = sp.csr_matrix(
                 sp.diags(dinv).dot(self.graph) - sp.diags(np.ones(n_nodes))
             )
