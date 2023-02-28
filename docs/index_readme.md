@@ -60,13 +60,13 @@ results = run(graph, method = "leiden")
 
 There are also additional postprocessing and analysis functions, including:
 - Plotting via matplotlib and plotly (interactive).
-- Automated optimal scale detection.
+- Automated optimal scale selection.
 
-Optimal scale detection is performed by default with the run function but can be repeated with different parameters if needed. The optimial network partitions can then be plotted given a NetworkX nx_graph.
+Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimial network partitions can then be plotted given a NetworkX nx_graph.
 
 ```
 from pygenstability import optimal_scales
-results  = identify_optimal_scales(results, window_size = 2)
+results  = identify_optimal_scales(results, block_size = 10, window_size = 5)
 plotting.plot_optimal_partitions(nx_graph, results)
 ```
 
@@ -88,7 +88,6 @@ For those of you that wish to implement their own constructor, you will need to 
 
 - take a scipy.csgraph `graph` and a float `time` as argument
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
-
 
 ## Contributers
 
@@ -137,11 +136,16 @@ or using the click app:
 
 
 
-Other examples can be found as jupyter-notebooks in `examples/` directory, including:
+Other examples can be found as jupyter-notebooks in the `examples/` directory, including:
 * Example 1: Undirected SBM
-* Example 2: Directed networks
-* Example 3: Custom constructors
-* Example 4: Hypergraphs
+* Example 2: Multiscale
+* Example 3: Directed networks
+* Example 4: Custom constructors
+* Example 5: Hypergraphs
+
+Finally, we provide applications to real-world networks in the `examples/real_examples/` directory, including:
+* Powergrid network
+* Protein structures
 
 
 ## Our other available packages
@@ -166,7 +170,7 @@ If you are interested in trying our other packages, see the below list:
 
 [5] V. A. Traag, L. Waltman, and N. J. van Eck, ‘From Louvain to Leiden: guaranteeing well-connected communities’, *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
 
-[6] D. Schindler, J. Clarke, and M. Barahona, ‘Multiscale mobility patterns and the restriction of human mobility under lockdown’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2022.Available: https://arxiv.org/abs/2201.06323
+[6] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction of Human Movement’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2023, Available: https://arxiv.org/abs/2201.06323
 
 [7] Preprint incoming ...
 

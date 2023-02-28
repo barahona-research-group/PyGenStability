@@ -74,7 +74,7 @@ There are also additional postprocessing and analysis functions, including:
 - Plotting via matplotlib and plotly (interactive).
 - Automated optimal scale selection.
 
-Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see documentation . The optimial network partitions can then be plotted given a NetworkX nx_graph.
+Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimial network partitions can then be plotted given a NetworkX nx_graph.
 
 ```
 from pygenstability import optimal_scales
