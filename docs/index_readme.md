@@ -1,7 +1,7 @@
 # *PyGenStability*
 
 This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalized Markov Stability function [3]. To maximize the generalized Markov Stability cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
-We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic detection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
+We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the autmatic selection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
 
 ![illustration](../artwork/diffusion_schematic.png)
 
@@ -70,18 +70,25 @@ results  = identify_optimal_scales(results, window_size = 2)
 plotting.plot_optimal_partitions(nx_graph, results)
 ```
 
-## Custom constructors
+## Constructors
  
+We provide an object-oriented module for constructing quality matrices and null models in `pygenstability/constructors.py`. Various constructors are implemented for different types of graphs:
+
+- `linearized` based on linearized MS for large undirected weighted graphs [2]
+- `continuous_combinatorial` based on combinatorial Lablacian for undirected weighted graphs [2]
+- `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs [2]
+- `signed_modularity` based on signed modularity for signed graphs [8]
+- `directed` based on random-walk Laplacian with teleportation for directed weighted graphs [2]
+- `linearized_directed` based on random-walk Laplacian with teleportation for large  directed weighted graphs
+
+For the computationally efficient
+analysis of **large** graphs we recommend using the `linearized` or `linearized_directed` constructors instead of `continuous_combinatorial`, `continuous_normalized` and `directed` that rely on the computation of matrix exponentials.
+
 For those of you that wish to implement their own constructor, you will need to design a function with the following properties:
 
 - take a scipy.csgraph `graph` and a float `time` as argument
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
 
-Please see `pygenstability/constructors.py` for the existing implemented constructors. 
-
-## Documentation
-
-A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/
 
 ## Contributers
 
@@ -162,6 +169,8 @@ If you are interested in trying our other packages, see the below list:
 [6] D. Schindler, J. Clarke, and M. Barahona, ‘Multiscale mobility patterns and the restriction of human mobility under lockdown’, *arXiv:2201.06323 [physics.soc-ph]*, Jan. 2022.Available: https://arxiv.org/abs/2201.06323
 
 [7] Preprint incoming ...
+
+[8] Gómez, S., Jensen, P., & Arenas, A. (2009). ‘Analysis of community structure in            networks of correlated data‘. *Physical Review E*, 80(1), 016114.
 
 ## Licence
 

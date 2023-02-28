@@ -10,7 +10,6 @@ where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
 The choice of the quality matrix and null model vectors are arbitrary in the generalized
 Markov Stability setting, and can be parametrised via built-in constructors, or specified by
 the user via the constructor module.
-
 """
 import itertools
 import logging

@@ -264,7 +264,7 @@ class constructor_directed(Constructor):
 
     .. math::
 
-        F(t)=\Pi \exp\left(t M(\alpha)-I\right)\right)
+        F(t)=\Pi \exp\left(t M(\alpha)-I\right)
 
     where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a
     random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and
@@ -315,19 +315,6 @@ class constructor_directed(Constructor):
 
 class constructor_linearized_directed(Constructor):
     r"""Constructor for linearized directed Markov stability.
-
-    The quality matrix is:
-
-    .. math::
-
-        F(t)=\Pi t \left(\alpha M+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
-        \boldsymbol{1}\boldsymbol{1}^T-I\right)
-
-    where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
-    out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, :math:`\boldsymbol{1}` denotes
-    the vector of ones and :math:`0\le \alpha \le 1` the damping factor, and associated null model
-    :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`. For large graphs teleportation
-    leads to memory error and so we recommend `\alpha=1`.
 
     The quality matrix is:
 
