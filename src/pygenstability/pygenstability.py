@@ -7,9 +7,9 @@ The generalized Markov Stability is of the form
     Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
 
 where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
-The choice of the quality matrix and null model vectors are arbitrary in the generalized Markov Stability
-setting, and can be parametrised via built-in constructors, or specified by the user via the
-constructor module.
+The choice of the quality matrix and null model vectors are arbitrary in the generalized
+Markov Stability setting, and can be parametrised via built-in constructors, or specified by
+the user via the constructor module.
 
 """
 import itertools
@@ -146,8 +146,10 @@ def run(
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_tries (int): number of generalized Markov Stability optimisation evaluations
-        with_NVI (bool): compute NVI(t) between generalized Markov Stability optimisations at each scale t
-        n_NVI (int): number of randomly chosen generalized Markov Stability optimisations to estimate NVI
+        with_NVI (bool): compute NVI(t) between generalized Markov Stability optimisations
+            at each scale t
+        n_NVI (int): number of randomly chosen generalized Markov Stability optimisations
+            to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap

@@ -266,9 +266,9 @@ class constructor_directed(Constructor):
 
         F(t)=\Pi \exp\left(t M(\alpha)-I\right)\right)
 
-    where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a 
-    random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and 
-    :math:`\Pi=\mathrm{diag}(\pi)` for the associated null model :math:`v_0=v_1=\pi` given by the 
+    where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a
+    random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and
+    :math:`\Pi=\mathrm{diag}(\pi)` for the associated null model :math:`v_0=v_1=\pi` given by the
     eigenvector solving :math:`\pi M(\alpha) = \pi`, which is related to PageRank.
 
     The transition matrix :math:`M(\alpha)` is given by
@@ -278,9 +278,10 @@ class constructor_directed(Constructor):
         M(\alpha) = \alpha D^{-1}A+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
         \boldsymbol{1}\boldsymbol{1}^T,
 
-    where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the out-degree 
-    :math:`d_i=0`, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the out-degree 
-    :math:`d_i=0` and :math:`a_i=0` otherwise, and :math:`\boldsymbol{1}` denotes the vector of ones.
+    where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the
+    out-degree :math:`d_i=0`, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1`
+    if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, and :math:`\boldsymbol{1}` denotes
+    the vector of ones.
     """
 
     def prepare(self, **kwargs):
@@ -335,8 +336,8 @@ class constructor_linearized_directed(Constructor):
         F(t)=\Pi t M(\alpha)
 
     where :math:`M(\alpha)` is the transition matrix of a random walk with teleportation and
-    damping factor :math:`0\le \alpha < 1`, and :math:`\Pi=\mathrm{diag}(\pi)` for the associated 
-    null model :math:`v_0=v_1=\pi` given by the eigenvector solving :math:`\pi M(\alpha) = \pi`, 
+    damping factor :math:`0\le \alpha < 1`, and :math:`\Pi=\mathrm{diag}(\pi)` for the associated
+    null model :math:`v_0=v_1=\pi` given by the eigenvector solving :math:`\pi M(\alpha) = \pi`,
     which is related to PageRank.
 
     The transition matrix :math:`M(\alpha)` is given by
@@ -346,9 +347,10 @@ class constructor_linearized_directed(Constructor):
         M(\alpha) = \alpha D^{-1}A+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
         \boldsymbol{1}\boldsymbol{1}^T,
 
-    where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the out-degree 
-    :math:`d_i=0`, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the out-degree 
-    :math:`d_i=0` and :math:`a_i=0` otherwise, and :math:`\boldsymbol{1}` denotes the vector of ones.
+    where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the
+    out-degree :math:`d_i=0`, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1`
+    if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, and :math:`\boldsymbol{1}` denotes
+    the vector of ones.
     """
 
     def prepare(self, **kwargs):
