@@ -6,11 +6,11 @@ The generalized Markov Stability is given as
 
     Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=1}^m v_{2k} v_{2k+1}^T\right)H\right]
 
-where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors. 
+where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
 
-In the following we denote by :math:`A` the adjacency matrix of a graph with :math:`N` nodes and 
+In the following we denote by :math:`A` the adjacency matrix of a graph with :math:`N` nodes and
 :math:`M` edges. The out-degree of the graph is given by :math:`d=A\boldsymbol{1}`, where
-:math:`\boldsymbol{1}` is the vector of ones, and we denote the diagonal degree matrix by 
+:math:`\boldsymbol{1}` is the vector of ones, and we denote the diagonal degree matrix by
 :math:`D=\mathrm{diag}(d)`.
 """
 import logging
@@ -117,7 +117,7 @@ class constructor_linearized(Constructor):
 
         F(t) = tM,
 
-    where :math:`M=D^{-1}A` with is the transition matrix of a random walk and the associated null 
+    where :math:`M=D^{-1}A` with is the transition matrix of a random walk and the associated null
     model is :math:`v_1=v_2=\pi` for the stationary distribution :math:`\pi=\frac{d}{2M}`
     """
 
@@ -154,7 +154,7 @@ class constructor_continuous_combinatorial(Constructor):
 
         F(t) = \Pi\exp(-Lt)
 
-    where :math:`L=D-A` is the combinatorial Laplacian and :math:`\Pi=\mathrm{diag}(\pi)`, 
+    where :math:`L=D-A` is the combinatorial Laplacian and :math:`\Pi=\mathrm{diag}(\pi)`,
     with null model :math:`v_1=v_2=\pi=\frac{\boldsymbol{1}}{N}`.
     """
 
@@ -192,7 +192,7 @@ class constructor_continuous_normalized(Constructor):
 
         F(t) = \Pi\exp(-Lt)
 
-    where :math:`L=D^{-1}(D-A)` is the random-walk normalized Laplacian and 
+    where :math:`L=D^{-1}(D-A)` is the random-walk normalized Laplacian and
     :math:`\Pi=\mathrm{diag}(\pi)` with null model :math:`v_1=v_2=\pi=\frac{d}{2M}`.
     """
 
@@ -340,9 +340,10 @@ class constructor_linearized_directed(Constructor):
         M(\alpha) = \alpha D^{-1}A+\left((1-\alpha)I+\alpha \mathrm{diag}(a)\right)
         \frac{\boldsymbol{1}\boldsymbol{1}^T}{N},
 
-    where :math:`I` denotes the identity matrix, :math:`D` denotes the diagonal matrix of out-degrees 
-    with :math:`D_{ii}=1` if the out-degree :math:`d_i=0` and :math:`a` denotes the vector of dangling 
-    nodes, i.e. :math:`a_i=1` if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise.
+    where :math:`I` denotes the identity matrix, :math:`D` denotes the diagonal matrix of
+    out-degrees with :math:`D_{ii}=1` if the out-degree :math:`d_i=0` and :math:`a` denotes the
+    vector of dangling nodes, i.e. :math:`a_i=1` if the out-degree :math:`d_i=0` and :math:`a_i=0`
+    otherwise.
     """
 
     def prepare(self, **kwargs):
