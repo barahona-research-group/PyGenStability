@@ -1,6 +1,6 @@
 r"""Module to create constructors of quality matrix and null models.
 
-The generalized modularity is given as
+The generalized Markov Stability is given as
 
 .. math::
 
@@ -56,9 +56,9 @@ def _get_spectral_gap(laplacian):
 
 
 class Constructor:
-    """Parent class for generalized modularity constructor.
+    """Parent class for generalized Markov Stability constructor.
 
-    This class encodes generalized modularity through the quality matrix and null models.
+    This class encodes generalized Markov Stability through the quality matrix and null models.
     Use the method prepare to load and compute scale independent quantities, and the method get_data
     to return quality matrix, null model, and possible global shift.
     """
@@ -264,13 +264,24 @@ class constructor_directed(Constructor):
 
     .. math::
 
-        F(t)=\Pi \exp\left(t \left(\alpha L+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
-        \boldsymbol{1}\boldsymbol{1}^T-I\right)\right)
+        F(t)=\Pi \exp\left(t M(\alpha)-I\right)\right)
 
-    where :math:`I` denotes the identidy matrix, :math:`a` denotes the vector of dangling nodes,
-    i.e. :math:`a_i=1` if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise,
-    :math:`\boldsymbol{1}` denotes the vector of ones and :math:`0\le \alpha < 1` the damping
-    factor, and associated null model :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`.
+    where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a
+    random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and
+    :math:`\Pi=\mathrm{diag}(\pi)` for the associated null model :math:`v_0=v_1=\pi` given by the
+    eigenvector solving :math:`\pi M(\alpha) = \pi`, which is related to PageRank.
+
+    The transition matrix :math:`M(\alpha)` is given by
+
+    .. math::
+
+        M(\alpha) = \alpha D^{-1}A+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        \boldsymbol{1}\boldsymbol{1}^T,
+
+    where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the
+    out-degree :math:`d_i=0`, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1`
+    if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, and :math:`\boldsymbol{1}` denotes
+    the vector of ones.
     """
 
     def prepare(self, **kwargs):
@@ -303,13 +314,13 @@ class constructor_directed(Constructor):
 
 
 class constructor_linearized_directed(Constructor):
-    r"""Constructor for directed Markov stability.
+    r"""Constructor for linearized directed Markov stability.
 
     The quality matrix is:
 
     .. math::
 
-        F(t)=\Pi t \left(\alpha L+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        F(t)=\Pi t \left(\alpha M+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
         \boldsymbol{1}\boldsymbol{1}^T-I\right)
 
     where :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1` if the
@@ -317,6 +328,29 @@ class constructor_linearized_directed(Constructor):
     the vector of ones and :math:`0\le \alpha \le 1` the damping factor, and associated null model
     :math:`v_0=v_1=\pi` given by the PageRank vector :math:`\pi`. For large graphs teleportation
     leads to memory error and so we recommend `\alpha=1`.
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t)=\Pi t M(\alpha)
+
+    where :math:`M(\alpha)` is the transition matrix of a random walk with teleportation and
+    damping factor :math:`0\le \alpha < 1`, and :math:`\Pi=\mathrm{diag}(\pi)` for the associated
+    null model :math:`v_0=v_1=\pi` given by the eigenvector solving :math:`\pi M(\alpha) = \pi`,
+    which is related to PageRank.
+
+    The transition matrix :math:`M(\alpha)` is given by
+
+    .. math::
+
+        M(\alpha) = \alpha D^{-1}A+\left(\frac{1-\alpha}{N}+\alpha \mathrm{diag}(a)\right)
+        \boldsymbol{1}\boldsymbol{1}^T,
+
+    where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the
+    out-degree :math:`d_i=0`, :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1`
+    if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise, and :math:`\boldsymbol{1}` denotes
+    the vector of ones.
     """
 
     def prepare(self, **kwargs):

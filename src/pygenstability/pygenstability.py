@@ -1,15 +1,15 @@
-r"""PyGenStability code to solve generalized modularity including Markov stability.
+r"""PyGenStability code to solve generalized Markov Stability including Markov stability.
 
-The generalized modularity is of the form
+The generalized Markov Stability is of the form
 
 .. math::
 
     Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
 
 where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
-The choice of the quality matrix and null model vectors are arbitrary in the generalized modularity
-setting, and can be parametrised via built-in constructors, or specified by the user via the
-constructor module.
+The choice of the quality matrix and null model vectors are arbitrary in the generalized
+Markov Stability setting, and can be parametrised via built-in constructors, or specified by
+the user via the constructor module.
 
 """
 import itertools
@@ -134,20 +134,22 @@ def run(
     available to perform Markov Stability with matrix exponential computations. Custom constructors
     can be added via the constructor module.
     Additional parameters can be used to set the range and number of scales, number of trials for
-    generalized modularity optimisation, with Louvain or Leiden algorithm.
+    generalized Markov Stability optimisation, with Louvain or Leiden algorithm.
 
     Args:
         graph (scipy.csgraph): graph to cluster, if None, the constructor cannot be a str
-        constructor (str/function): name of the generalised modularity constructor,
+        constructor (str/function): name of the generalized Markov Stability constructor,
             or custom constructor function. It must have two arguments, graph and scale.
         min_scale (float): minimum Markov scale
         max_scale (float): maximum Markov scale
         n_scale (int): number of scale steps
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
-        n_tries (int): number of generalized modularity optimisation evaluations
-        with_NVI (bool): compute NVI(t) between generalized modularity optimisations at each scale t
-        n_NVI (int): number of randomly chosen generalized modularity optimisations to estimate NVI
+        n_tries (int): number of generalized Markov Stability optimisation evaluations
+        with_NVI (bool): compute NVI(t) between generalized Markov Stability optimisations
+            at each scale t
+        n_NVI (int): number of randomly chosen generalized Markov Stability optimisations
+            to estimate NVI
         with_postprocessing (bool): apply the final postprocessing step
         with_ttprime (bool): compute the NVI(t,tprime) matrix to compare scales t and tprime
         with_spectral_gap (bool): normalise scale by spectral gap
@@ -306,7 +308,7 @@ def _to_indices(matrix, directed=False):
 
 @_timing
 def _optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
-    """Worker for generalized modularity optimisation runs."""
+    """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
             quality_indices[0],
@@ -343,7 +345,7 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
 
 
 def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
-    """Worker for generalized modularity optimisation runs."""
+    """Worker for generalized Markov Stability optimisation runs."""
     quality = generalized_louvain.evaluate_quality(
         qualities_index[0][0],
         qualities_index[0][1],
@@ -358,7 +360,7 @@ def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
 
 
 def _run_optimisations(constructor, n_runs, pool, method="louvain"):
-    """Run several generalized modularity optimisation on the current quality matrix."""
+    """Run several generalized Markov Stability optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
     )
