@@ -4,7 +4,7 @@ The generalized Markov Stability is given as
 
 .. math::
 
-    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
+    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=1}^m v_{2k} v_{2k+1}^T\right)H\right]
 
 where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors. 
 
@@ -275,7 +275,7 @@ class constructor_directed(Constructor):
 
     where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a
     random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and
-    :math:`\Pi=\mathrm{diag}(\pi)` for the associated null model :math:`v_0=v_1=\pi` given by the
+    :math:`\Pi=\mathrm{diag}(\pi)` for the associated null model :math:`v_1=v_2=\pi` given by the
     eigenvector solving :math:`\pi M(\alpha) = \pi`, which is related to PageRank.
 
     The transition matrix :math:`M(\alpha)` is given by
@@ -330,7 +330,7 @@ class constructor_linearized_directed(Constructor):
 
     where :math:`M(\alpha)` is the transition matrix of a random walk with teleportation and
     damping factor :math:`0\le \alpha < 1`, and :math:`\Pi=\mathrm{diag}(\pi)` for the associated
-    null model :math:`v_0=v_1=\pi` given by the eigenvector solving :math:`\pi M(\alpha) = \pi`,
+    null model :math:`v_1=v_2=\pi` given by the eigenvector solving :math:`\pi M(\alpha) = \pi`,
     which is related to PageRank.
 
     The transition matrix :math:`M(\alpha)` is given by
