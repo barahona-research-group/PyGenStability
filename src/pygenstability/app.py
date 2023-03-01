@@ -125,7 +125,7 @@ def cli():
     "--with-optimal-scales/--no-with-optimal-scales",
     default=True,
     show_default=True,
-    help="Search for optimal scales"
+    help="Search for optimal scales",
 )
 def run(
     graph_file,
@@ -174,7 +174,6 @@ def run(
         tqdm_disable=tqdm_disable,
         method=method,
         with_optimal_scales=with_optimal_scales,
-
     )
 
 
