@@ -115,6 +115,18 @@ def cli():
     help="Number of workers for multiprocessing.",
 )
 @click.option("--tqdm-disable", default=False, show_default=True, help="disable progress bars")
+@click.option(
+    "--method",
+    default="louvain",
+    show_default=True,
+    help="Method to solve modularity, either Louvain or Leiden",
+)
+@click.option(
+    "--with-optimal-scales/--no-with-optimal-scales",
+    default=True,
+    show_default=True,
+    help="Search for optimal scales"
+)
 def run(
     graph_file,
     constructor,
@@ -131,6 +143,8 @@ def run(
     result_file,
     n_workers,
     tqdm_disable,
+    method,
+    with_optimal_scales,
 ):
     """Run pygenstability.
 
@@ -158,6 +172,9 @@ def run(
         result_file=result_file,
         n_workers=n_workers,
         tqdm_disable=tqdm_disable,
+        method=method,
+        with_optimal_scales=with_optimal_scales,
+
     )
 
 
