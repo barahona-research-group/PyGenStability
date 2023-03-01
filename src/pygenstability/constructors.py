@@ -271,7 +271,7 @@ class constructor_directed(Constructor):
 
     .. math::
 
-        F(t)=\Pi \exp\left(t M(\alpha)-I\right)
+        F(t)=\Pi \exp\left(t \left(M(\alpha)-I\right)\right)
 
     where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a
     random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and
