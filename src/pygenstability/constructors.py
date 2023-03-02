@@ -264,6 +264,44 @@ class constructor_signed_modularity(Constructor):
         }
 
 
+class constructor_signed_combinatorial(Constructor):
+    """Constructor for continuous signed combinatorial Markov Stability.
+
+    The quality matrix is:
+
+    .. math::
+
+        F(t) = \exp(-Lt)^T\exp(-Lt)
+
+    where :math:`L=D_{\abs}-A` is the signed combinatorial Laplacian and 
+    :math:`D_{\abs}=\mathrm{diag}(d_\abs)` with the absolute node strengths :math:`d_\abs`.
+    The associated null model :math:`v_1=v_2=\pi` is given by 
+    :math:`\pi=\exp(-Lt)^T\frac{\boldsymbol{1}}{N}`.
+
+    
+    """
+
+    def prepare(self, **kwargs):
+        """Prepare the constructor with non-scale dependent computations."""
+        # compute absolute degrees
+        degrees_abs = np.array(abs(self.graph).sum(1)).flatten()
+        # compute signed combinatorial Laplacian
+        laplacian = sp.diags(degrees_abs).dot(self.graph)
+
+        if self.exp_comp_mode == "spectral":
+            self.spectral_decomp = _compute_spectral_decomp(laplacian)
+        if self.exp_comp_mode == "expm":
+            self.partial_quality_matrix = laplacian
+
+    def get_data(self, scale):
+        """Return quality and null model at given scale."""
+        exp = self._get_exp(scale)
+        quality_matrix = exp.transpose().dot(exp)
+        n_nodes = self.graph.shape[0]
+        v = quality_matrix.transpose().dot(np.ones(n_nodes) / np.sqrt(n_nodes))
+        return {"quality": quality_matrix, "null_model": v}
+
+
 class constructor_directed(Constructor):
     r"""Constructor for directed Markov stability.
 
