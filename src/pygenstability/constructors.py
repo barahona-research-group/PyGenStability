@@ -119,7 +119,8 @@ class Constructor:
     def get_data(self, scale):
         """Return quality and null model at given scale as well as global shift (or None).
 
-        User has to define the _get_data so we can enure numpy does not use multiple threads"""
+        User has to define the _get_data so we can enure numpy does not use multiple threads
+        """
         return self._get_data(scale)
 
     def _get_data(self, scale):
