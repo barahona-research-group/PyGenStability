@@ -1,5 +1,6 @@
 import networkx as nx
 import math
+import time
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,7 +40,7 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
 
                 if Path("timing.csv").exists():
                     os.remove("timing.csv")
-
+                time.sleep(5)
                 pgs.run(
                     A,
                     min_scale=-1.5,
@@ -61,10 +62,8 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
                 _df = pd.concat([_df, __df])
             df[size] = _df["time"].groupby("function").mean()
 
-            # node_sizes.append(np.mean(_node_sizes))
             df.loc["node_size", size] = np.mean(_node_sizes)
             df.loc["edge_size", size] = np.mean(_edge_sizes)
-            # edge_sizes.append(np.mean(_edge_sizes))
         df = df.T
         df.to_csv(filename)
     else:

@@ -47,6 +47,7 @@ setup(
         "pandas>=1.0.0",
         "igraph",
         "leidenalg",
+        "threadpoolctl",
     ],
     zip_safe=False,
     extras_require={

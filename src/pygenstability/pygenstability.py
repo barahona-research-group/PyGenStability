@@ -11,6 +11,7 @@ The choice of the quality matrix and null model vectors are arbitrary in the gen
 Markov Stability setting, and can be parametrised via built-in constructors, or specified by
 the user via the constructor module.
 """
+
 import itertools
 import logging
 import multiprocessing
@@ -21,13 +22,9 @@ from time import time
 
 import igraph as ig
 import leidenalg
-import os
-
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREADS"] = "1"
-
 import numpy as np
+
+print(np.show_config())
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
 from sklearn.metrics.cluster import entropy
@@ -197,9 +194,11 @@ def run(
         {"with_spectral_gap": with_spectral_gap, "exp_comp_mode": exp_comp_mode}
     )
 
+    print('load constr')
+    constructor = load_constructor(constructor, graph, **constructor_kwargs)
     with multiprocessing.Pool(n_workers) as pool:
-        constructor = load_constructor(constructor, graph, **constructor_kwargs)
-
+        import time
+        time.sleep(10)
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
             constructor, scales, pool, tqdm_disable=tqdm_disable
