@@ -15,10 +15,11 @@ In the following we denote by :math:`A` the adjacency matrix of a graph with :ma
 """
 import logging
 import sys
-from threadpoolctl import threadpool_limits
+
 import numpy as np
 import scipy.linalg as la
 import scipy.sparse as sp
+from threadpoolctl import threadpool_limits
 
 L = logging.getLogger(__name__)
 _USE_CACHE = True
@@ -42,6 +43,7 @@ def load_constructor(constructor, graph, **kwargs):
 
 def _limit_numpy(f):
     """Wrapper to limit threads used by numpy."""
+
     @threadpool_limits.wrap(limits=1, user_api="blas")
     @threadpool_limits.wrap(limits=1, user_api="openmp")
     def limit(*args, **kwargs):

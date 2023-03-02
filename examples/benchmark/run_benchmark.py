@@ -1,6 +1,5 @@
 import networkx as nx
 import math
-import time
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,7 +30,7 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
                     probs = [[0.25, 0.05, 0.02], [0.05, 0.35, 0.07], [0.02, 0.07, 0.40]]
                     G = nx.stochastic_block_model(size * base_sizes, probs, seed=0)
                 if graph_type == "ER":
-                    # roughly played with number of edges to get something sort of consistent with SBM
+                    # played with number of edges to get something sort of consistent with SBM
                     G = nx.erdos_renyi_graph(size * 60, size * 1000.0 / math.comb(size * 60, 2))
                 _node_sizes.append(len(G))
                 _edge_sizes.append(len(G.edges))
@@ -40,7 +39,7 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
 
                 if Path("timing.csv").exists():
                     os.remove("timing.csv")
-                time.sleep(5)
+
                 pgs.run(
                     A,
                     min_scale=-1.5,
@@ -67,21 +66,21 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
         df = df.T
         df.to_csv(filename)
     else:
-        df = pd.read_csv(filename)
-
+        df = pd.read_csv(filename, index_col=0)
+    print(df)
     plt.figure(figsize=(6, 4))
     data_low = np.zeros(len(sizes))
     data_high = np.zeros(len(sizes))
     for col in df.columns:
-        if col != "run" and col != "without_run":
+        if col != "run" and col != "without_run" and col!='node_size' and col!='edge_size':
             data_low = data_high.copy()
             data_high += df[col].to_numpy()
             if col.startswith("_"):
                 col = col[1:]
             plt.fill_between(df["node_size"], data_low, data_high, label=col, alpha=0.5)
     plt.plot(df["node_size"], df["run"], "+-r", label="total")
+    #plt.yscale("log")
     plt.axis([df["node_size"].to_list()[0], df["node_size"].to_list()[-1], 0, 1.1 * max(df["run"])])
-    plt.yscale("log")
     plt.legend()
     plt.xlabel("Graph size [# nodes]")
     ax1 = plt.gca()
@@ -93,13 +92,13 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
 
 
 if __name__ == "__main__":
-    sizes = list(range(2, 15))
+    sizes = list(range(2, 20))
 
     get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="louvain")
-    # get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="leiden")
+    get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="leiden")
     get_comp_time(sizes, graph_type="SBM", constructor="continuous_combinatorial", method="louvain")
-    # get_comp_time(sizes, graph_type="SBM", constructor="continuous_combinatorial", method="leiden")
-    # get_comp_time(sizes, graph_type="ER", constructor="linearized", method="louvain")
-    # get_comp_time(sizes, graph_type="ER", constructor="linearized", method="leiden")
-    # get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial", method="louvain")
-    # get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial", method="leiden")
+    get_comp_time(sizes, graph_type="SBM", constructor="continuous_combinatorial", method="leiden")
+    get_comp_time(sizes, graph_type="ER", constructor="linearized", method="louvain")
+    get_comp_time(sizes, graph_type="ER", constructor="linearized", method="leiden")
+    get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial", method="louvain")
+    get_comp_time(sizes, graph_type="ER", constructor="continuous_combinatorial", method="leiden")
