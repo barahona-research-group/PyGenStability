@@ -21,6 +21,12 @@ from time import time
 
 import igraph as ig
 import leidenalg
+import os
+
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
@@ -373,7 +379,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
     )
 
     chunksize = _get_chunksize(n_runs, pool)
-    return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
+    return pool.map(worker, range(n_runs), chunksize=chunksize)
 
 
 @_timing
@@ -405,12 +411,10 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
             global_shift=constructor.get("shift", 0.0),
         )
         best_quality_id = np.argmax(
-            list(
-                pool.map(
-                    worker,
-                    all_results_raw["community_id"],
-                    chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
-                )
+            pool.map(
+                worker,
+                all_results_raw["community_id"],
+                chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
             )
         )
 
