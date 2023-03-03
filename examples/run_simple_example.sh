@@ -8,7 +8,7 @@ pygenstability run \
     --min-scale -2 \
     --max-scale 0\
     --n-scale 50 \
-    --n-louvain 100 \
+    --n-tries 100 \
     --n-workers 40 \
     edges.csv
 
