@@ -127,6 +127,12 @@ def cli():
     show_default=True,
     help="Search for optimal scales",
 )
+@click.option(
+    "--exp-comp-mode",
+    default="spectral",
+    show_default=True,
+    help="Method to compute matrix exponential, can be 'spectral' or 'expm'",
+)
 def run(
     graph_file,
     constructor,
@@ -145,6 +151,7 @@ def run(
     tqdm_disable,
     method,
     with_optimal_scales,
+    exp_comp_mode,
 ):
     """Run pygenstability.
 
@@ -174,6 +181,7 @@ def run(
         tqdm_disable=tqdm_disable,
         method=method,
         with_optimal_scales=with_optimal_scales,
+        exp_comp_mode=exp_comp_mode,
     )
 
 
