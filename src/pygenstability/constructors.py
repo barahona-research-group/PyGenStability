@@ -19,6 +19,7 @@ import sys
 import numpy as np
 import scipy.linalg as la
 import scipy.sparse as sp
+from threadpoolctl import threadpool_limits
 
 L = logging.getLogger(__name__)
 _USE_CACHE = True
@@ -38,6 +39,17 @@ def load_constructor(constructor, graph, **kwargs):
     if not isinstance(constructor, Constructor):
         raise Exception("Only Constructor class object can be used.")
     return constructor
+
+
+def _limit_numpy(f):
+    """Wrapper to limit threads used by numpy."""
+
+    @threadpool_limits.wrap(limits=1, user_api="blas")
+    @threadpool_limits.wrap(limits=1, user_api="openmp")
+    def limit(*args, **kwargs):
+        return f(*args, **kwargs)
+
+    return limit
 
 
 def _compute_spectral_decomp(matrix):
@@ -105,7 +117,14 @@ class Constructor:
         """Prepare the constructor with non-scale dependent computations."""
 
     def get_data(self, scale):
-        """Return quality and null model at given scale as well as global shift (or None)."""
+        """Return quality and null model at given scale as well as global shift (or None).
+
+        User has to define the _get_data so we can enure numpy does not use multiple threads
+        """
+        return self._get_data(scale)
+
+    def _get_data(self, scale):
+        """Method to be defined in child classes for get_data."""
 
 
 class constructor_linearized(Constructor):
@@ -121,6 +140,7 @@ class constructor_linearized(Constructor):
     model is :math:`v_1=v_2=\pi` for the stationary distribution :math:`\pi=\frac{d}{2M}`
     """
 
+    @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
         degrees = np.array(self.graph.sum(1)).flatten()
@@ -134,7 +154,8 @@ class constructor_linearized(Constructor):
             self.spectral_gap = _get_spectral_gap(laplacian)
         self.partial_quality_matrix = (self.graph / degrees.sum()).astype(DTYPE)
 
-    def get_data(self, scale):
+    @_limit_numpy
+    def _get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
@@ -158,6 +179,7 @@ class constructor_continuous_combinatorial(Constructor):
     with null model :math:`v_1=v_2=\pi=\frac{\boldsymbol{1}}{N}`.
     """
 
+    @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
@@ -173,7 +195,8 @@ class constructor_continuous_combinatorial(Constructor):
         if self.exp_comp_mode == "expm":
             self.partial_quality_matrix = laplacian
 
-    def get_data(self, scale):
+    @_limit_numpy
+    def _get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
@@ -196,6 +219,7 @@ class constructor_continuous_normalized(Constructor):
     :math:`\Pi=\mathrm{diag}(\pi)` with null model :math:`v_1=v_2=\pi=\frac{d}{2M}`.
     """
 
+    @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
@@ -213,7 +237,8 @@ class constructor_continuous_normalized(Constructor):
         if self.exp_comp_mode == "expm":
             self.partial_quality_matrix = normed_laplacian
 
-    def get_data(self, scale):
+    @_limit_numpy
+    def _get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
@@ -235,6 +260,7 @@ class constructor_signed_modularity(Constructor):
                 networks of correlated data. Physical Review E, 80(1), 016114.
     """
 
+    @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
         adj_pos = self.graph.copy()
@@ -256,7 +282,8 @@ class constructor_signed_modularity(Constructor):
         )
         self.partial_quality_matrix = self.graph / deg_norm
 
-    def get_data(self, scale):
+    @_limit_numpy
+    def _get_data(self, scale):
         """Return quality and null model at given scale."""
         return {
             "quality": scale * self.partial_quality_matrix,
@@ -290,6 +317,7 @@ class constructor_directed(Constructor):
     if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise.
     """
 
+    @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
         assert self.exp_comp_mode == "expm"
@@ -312,7 +340,8 @@ class constructor_directed(Constructor):
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
 
-    def get_data(self, scale):
+    @_limit_numpy
+    def _get_data(self, scale):
         """Return quality and null model at given scale."""
         exp = self._get_exp(-scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
@@ -346,6 +375,7 @@ class constructor_linearized_directed(Constructor):
     otherwise.
     """
 
+    @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
         alpha = kwargs.get("alpha", 0.8)
@@ -375,7 +405,8 @@ class constructor_linearized_directed(Constructor):
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
 
-    def get_data(self, scale):
+    @_limit_numpy
+    def _get_data(self, scale):
         """Return quality and null model at given scale."""
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(
             scale * self.partial_quality_matrix

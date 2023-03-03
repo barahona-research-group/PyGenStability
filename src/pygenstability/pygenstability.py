@@ -191,9 +191,8 @@ def run(
         {"with_spectral_gap": with_spectral_gap, "exp_comp_mode": exp_comp_mode}
     )
 
+    constructor = load_constructor(constructor, graph, **constructor_kwargs)
     with multiprocessing.Pool(n_workers) as pool:
-        constructor = load_constructor(constructor, graph, **constructor_kwargs)
-
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
             constructor, scales, pool, tqdm_disable=tqdm_disable
@@ -373,7 +372,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
     )
 
     chunksize = _get_chunksize(n_runs, pool)
-    return list(pool.imap(worker, range(n_runs), chunksize=chunksize))
+    return pool.map(worker, range(n_runs), chunksize=chunksize)
 
 
 @_timing
@@ -405,12 +404,10 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
             global_shift=constructor.get("shift", 0.0),
         )
         best_quality_id = np.argmax(
-            list(
-                pool.map(
-                    worker,
-                    all_results_raw["community_id"],
-                    chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
-                )
+            pool.map(
+                worker,
+                all_results_raw["community_id"],
+                chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
             )
         )
 
