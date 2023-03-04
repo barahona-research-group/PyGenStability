@@ -77,12 +77,12 @@ We provide an object-oriented module for constructing quality matrices and null 
 - `linearized` based on linearized MS for large undirected weighted graphs [2]
 - `continuous_combinatorial` based on combinatorial Lablacian for undirected weighted graphs [2]
 - `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs [2]
-- `signed_modularity` based on signed modularity for signed graphs [8]
+- `signed_modularity` based on signed modularity for large signed graphs [8]
+- `signed_combinatorial` based on signed combinatorial Laplacian for signed graphs [3]
 - `directed` based on random-walk Laplacian with teleportation for directed weighted graphs [2]
 - `linearized_directed` based on random-walk Laplacian with teleportation for large  directed weighted graphs
 
-For the computationally efficient
-analysis of **large** graphs we recommend using the `linearized` or `linearized_directed` constructors instead of `continuous_combinatorial`, `continuous_normalized` and `directed` that rely on the computation of matrix exponentials.
+For the computationally efficient analysis of **large** graphs we recommend using the `linearized`, `linearized_directed` or `signed_modularity` constructors instead of `continuous_combinatorial`, `continuous_normalized`, `directed` or `signed_combinatorial` that rely on the computation of matrix exponentials.
 
 For those of you that wish to implement their own constructor, you will need to design a function with the following properties:
 
@@ -138,10 +138,11 @@ or using the click app:
 
 Other examples can be found as jupyter-notebooks in the `examples/` directory, including:
 * Example 1: Undirected SBM
-* Example 2: Multiscale
+* Example 2: Multiscale SBM
 * Example 3: Directed networks
 * Example 4: Custom constructors
 * Example 5: Hypergraphs
+* Example 6: Signed networks
 
 Finally, we provide applications to real-world networks in the `examples/real_examples/` directory, including:
 * Powergrid network

@@ -273,12 +273,10 @@ class constructor_signed_combinatorial(Constructor):
 
         F(t) = \exp(-Lt)^T\exp(-Lt)
 
-    where :math:`L=D_{\abs}-A` is the signed combinatorial Laplacian and 
-    :math:`D_{\abs}=\mathrm{diag}(d_\abs)` with the absolute node strengths :math:`d_\abs`.
-    The associated null model :math:`v_1=v_2=\pi` is given by 
-    :math:`\pi=\exp(-Lt)^T\frac{\boldsymbol{1}}{N}`.
-
-    
+    where :math:`L=D_{\abs}-A` is the signed combinatorial Laplacian,
+    :math:`D_{\abs}=\mathrm{diag}(d_\abs)` the diagonal matrix of absolute node 
+    strengths :math:`d_\abs`, and the associated null model  is given by 
+    :math:`v_1=v_2=\boldsymbol{0}`, where :math:`\boldsymbol{0}` is the vector of zeros.    
     """
 
     def prepare(self, **kwargs):
@@ -286,20 +284,23 @@ class constructor_signed_combinatorial(Constructor):
         # compute absolute degrees
         degrees_abs = np.array(abs(self.graph).sum(1)).flatten()
         # compute signed combinatorial Laplacian
-        laplacian = sp.diags(degrees_abs).dot(self.graph)
+        laplacian = sp.diags(degrees_abs)-self.graph
 
         if self.exp_comp_mode == "spectral":
             self.spectral_decomp = _compute_spectral_decomp(laplacian)
         if self.exp_comp_mode == "expm":
             self.partial_quality_matrix = laplacian
 
+        zeros = np.zeros(self.graph.shape[0])
+        self.partial_null_model = np.array([zeros,zeros])
+
     def get_data(self, scale):
         """Return quality and null model at given scale."""
         exp = self._get_exp(scale)
         quality_matrix = exp.transpose().dot(exp)
-        n_nodes = self.graph.shape[0]
-        v = quality_matrix.transpose().dot(np.ones(n_nodes) / np.sqrt(n_nodes))
-        return {"quality": quality_matrix, "null_model": v}
+        # n_nodes = self.graph.shape[0]
+        # v = quality_matrix.transpose().dot(np.ones(n_nodes) / np.sqrt(n_nodes))
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}#[v,v]}
 
 
 class constructor_directed(Constructor):

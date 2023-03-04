@@ -181,7 +181,7 @@ def run(
         scales=scales,
     )
     assert exp_comp_mode in ["spectral", "expm"]
-    if constructor in ("directed", "linearized_directed"):
+    if constructor in ("directed", "linearized_directed","signed"):
         L.info("We cannot use spectral exponential computation for directed contructor")
         exp_comp_mode = "expm"
 
