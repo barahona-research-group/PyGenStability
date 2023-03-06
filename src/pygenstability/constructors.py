@@ -265,7 +265,7 @@ class constructor_signed_modularity(Constructor):
 
 
 class constructor_signed_combinatorial(Constructor):
-    """Constructor for continuous signed combinatorial Markov Stability.
+    r"""Constructor for continuous signed combinatorial Markov Stability.
 
     The quality matrix is:
 
@@ -274,17 +274,15 @@ class constructor_signed_combinatorial(Constructor):
         F(t) = \exp(-Lt)^T\exp(-Lt)
 
     where :math:`L=D_{\abs}-A` is the signed combinatorial Laplacian,
-    :math:`D_{\abs}=\mathrm{diag}(d_\abs)` the diagonal matrix of absolute node 
-    strengths :math:`d_\abs`, and the associated null model  is given by 
-    :math:`v_1=v_2=\boldsymbol{0}`, where :math:`\boldsymbol{0}` is the vector of zeros.    
+    :math:`D_{\abs}=\mathrm{diag}(d_\abs)` the diagonal matrix of absolute node
+    strengths :math:`d_\abs`, and the associated null model  is given by
+    :math:`v_1=v_2=\boldsymbol{0}`, where :math:`\boldsymbol{0}` is the vector of zeros.
     """
 
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
-        # compute absolute degrees
         degrees_abs = np.array(abs(self.graph).sum(1)).flatten()
-        # compute signed combinatorial Laplacian
-        laplacian = sp.diags(degrees_abs)-self.graph
+        laplacian = sp.diags(degrees_abs) - self.graph
 
         if self.exp_comp_mode == "spectral":
             self.spectral_decomp = _compute_spectral_decomp(laplacian)
@@ -292,15 +290,13 @@ class constructor_signed_combinatorial(Constructor):
             self.partial_quality_matrix = laplacian
 
         zeros = np.zeros(self.graph.shape[0])
-        self.partial_null_model = np.array([zeros,zeros])
+        self.partial_null_model = np.array([zeros, zeros])
 
     def get_data(self, scale):
         """Return quality and null model at given scale."""
         exp = self._get_exp(scale)
-        quality_matrix = exp.transpose().dot(exp)
-        # n_nodes = self.graph.shape[0]
-        # v = quality_matrix.transpose().dot(np.ones(n_nodes) / np.sqrt(n_nodes))
-        return {"quality": quality_matrix, "null_model": self.partial_null_model}#[v,v]}
+        quality_matrix = exp.T.dot(exp)
+        return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
 
 class constructor_directed(Constructor):
