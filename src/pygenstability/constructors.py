@@ -299,9 +299,9 @@ class constructor_signed_combinatorial(Constructor):
 
         F(t) = \exp(-Lt)^T\exp(-Lt)
 
-    where :math:`L=D_{\abs}-A` is the signed combinatorial Laplacian,
-    :math:`D_{\abs}=\mathrm{diag}(d_\abs)` the diagonal matrix of absolute node
-    strengths :math:`d_\abs`, and the associated null model  is given by
+    where :math:`L=D_{\mathrm{abs}}-A` is the signed combinatorial Laplacian,
+    :math:`D_{\mathrm{abs}}=\mathrm{diag}(d_\mathrm{abs})` the diagonal matrix of absolute node
+    strengths :math:`d_\mathrm{abs}`, and the associated null model  is given by
     :math:`v_1=v_2=\boldsymbol{0}`, where :math:`\boldsymbol{0}` is the vector of zeros.
     """
 
