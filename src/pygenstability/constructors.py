@@ -134,10 +134,9 @@ class constructor_linearized(Constructor):
 
     .. math::
 
-        F(t) = tM,
+        F(t) = t\frac{A}{2M},
 
-    where :math:`M=D^{-1}A` with is the transition matrix of a random walk and the associated null
-    model is :math:`v_1=v_2=\pi` for the stationary distribution :math:`\pi=\frac{d}{2M}`
+    and the associated null model is :math:`v_1=v_2=\frac{d}{2M}`.
     """
 
     @_limit_numpy
