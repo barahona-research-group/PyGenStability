@@ -4,7 +4,7 @@ The generalized Markov Stability is of the form
 
 .. math::
 
-    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=0}^m v_{2k} v_{2k+1}^T\right)H\right]
+    Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=1}^m v_{2k-1} v_{2k}^T\right)H\right]
 
 where :math:`F(t)` is the quality matrix and :math:`v_k` are null model vectors.
 The choice of the quality matrix and null model vectors are arbitrary in the generalized
