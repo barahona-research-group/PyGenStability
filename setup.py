@@ -24,7 +24,21 @@ test_require = [
     "diff-pdf-visually",
     "ipython!=8.7.0",  # see https://github.com/spatialaudio/nbsphinx/issues/687
 ]
-
+install_requires = [
+    "numpy>=1.18.1",
+    "scipy>=1.4.1",
+    "matplotlib>=3.1.3",
+    "networkx<3.0",
+    "scikit-learn",
+    "cmake>=3.16.3",
+    "click>=7.0",
+    "tqdm>=4.45.0",
+    "pybind11>=2.10.0",
+    "pandas>=1.0.0",
+    "igraph",
+    "leidenalg",
+    "threadpoolctl",
+]
 setup(
     name="PyGenStability",
     version=__version__,
@@ -32,23 +46,11 @@ setup(
     author_email="alexis.arnaudon@epfl.ch",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
     description="Python binding of generalised Louvain with Markov Stability",
+    long_description=open("README.md", "r").read(),
+    long_description_content_type="text/markdown",
     ext_modules=ext_modules,
     setup_requires=["pybind11>=2.10.0"],
-    install_requires=[
-        "numpy>=1.18.1",
-        "scipy>=1.4.1",
-        "matplotlib>=3.1.3",
-        "networkx<3.0",
-        "scikit-learn",
-        "cmake>=3.16.3",
-        "click>=7.0",
-        "tqdm>=4.45.0",
-        "pybind11>=2.10.0",
-        "pandas>=1.0.0",
-        "igraph",
-        "leidenalg",
-        "threadpoolctl",
-    ],
+    install_requires=install_requires,
     zip_safe=False,
     extras_require={
         "plotly": plotly_require,
