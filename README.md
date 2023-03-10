@@ -122,7 +122,14 @@ We are always on the look out for individuals that are interested in contributin
 Please cite our paper if you use this code in your own work:
 
 ```
-preprint incoming...
+@article{pygenstability,
+  author = {Arnaudon, Alexis and Schindler, Dominik J. and Peach, Robert L. and Gosztolai, Adam and Hodges, Maxwell and Schaub, Michael T. and Barahona, Mauricio},  
+  title = {PyGenStability: Multiscale community detection with generalized Markov Stability},
+  publisher = {arXiv},
+  year = {2023},
+  doi = {10.48550/ARXIV.2303.05385},
+  url = {https://arxiv.org/abs/2303.05385}
+}
 ```
 
 The original paper for Markov Stability can also be cited as:
