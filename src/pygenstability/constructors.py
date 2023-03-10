@@ -17,7 +17,7 @@ import logging
 import sys
 
 import numpy as np
-import scipy.linalg as la
+import numpy.linalg as la
 import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
