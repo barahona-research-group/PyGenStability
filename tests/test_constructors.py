@@ -85,6 +85,7 @@ def test_spectral_exp(graph):
                 constructors.load_constructor(constr, graph, exp_comp_mode="spectral").get_data(1)
             )
             expected_data = yaml.safe_load(open(DATA / f"test_constructor_{constr}.yaml", "r"))
+            print(constr)
             assert_almost_equal(data["quality"], expected_data["quality"])
             assert_almost_equal(data["null_model"], expected_data["null_model"])
 
