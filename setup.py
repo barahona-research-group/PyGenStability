@@ -9,7 +9,7 @@ ext_modules = [
     Pybind11Extension(
         "pygenstability.generalized_louvain",
         ["src/pygenstability/generalized_louvain/generalized_louvain.cpp"],
-        include_dirs=["extra"],
+        include_dirs=["extra", "generalizedLouvain"],
         extra_compile_args=["-std=c++11"],
     ),
 ]
