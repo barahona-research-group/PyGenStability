@@ -292,6 +292,36 @@ def plot_communities(
     matplotlib.use(mpl_backend)
 
 
+def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext=".pdf"):
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+    for scale_id in tqdm(range(len(all_results["scales"]))):
+        plt.figure()
+        com_ids = all_results["community_id"][scale_id]
+        ids = []
+        lines = [0]
+        for i in range(len(set(com_ids))):
+            _ids = list(np.argwhere(com_ids == i).flatten())
+            lines.append(len(_ids))
+            ids += _ids
+        plt.imshow(graph[ids][:, ids], origin='lower')
+        lines = np.cumsum(lines)
+        for i in range(len(lines) - 1):
+            print(
+                [lines[i], lines[i]],
+                [lines[i], lines[i + 1]],
+                [lines[i], lines[i]],
+                [lines[i + 1], lines[i]],
+            )
+            plt.plot((lines[i], lines[i+1]), (lines[i], lines[i]), c='k')
+            plt.plot((lines[i], lines[i]), (lines[i], lines[i+1]), c='k')
+            plt.plot((lines[i+1], lines[i+1]), (lines[i+1], lines[i]), c='k')
+            plt.plot((lines[i+1], lines[i]), (lines[i+1], lines[i+1]), c='k')
+
+        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
+
+
 def _get_scales(all_results, scale_axis=True):
     """Get the scale vector."""
     if not scale_axis:  # pragma: no cover
