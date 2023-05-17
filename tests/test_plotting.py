@@ -1,4 +1,4 @@
-"""Test plotting module."""
+"#" "Test plotting module." ""
 import numpy as np
 from pathlib import Path
 from diff_pdf_visually import pdf_similar
@@ -33,6 +33,12 @@ def test_plot_communities(graph_nx, results, tmp_path):
     np.random.seed(42)
     plotting.plot_communities(graph_nx, results, tmp_path / "communities")
     assert pdf_similar(DATA / "scale_0.pdf", tmp_path / "communities/scale_0.pdf")
+
+
+def test_plot_communities_matrix(graph, results, tmp_path):
+    np.random.seed(42)
+    plotting.plot_communities_matrix(graph.toarray(), results, tmp_path / "communities_matrix")
+    assert pdf_similar(DATA / "matrix_scale_0.pdf", tmp_path / "communities_matrix/scale_0.pdf")
 
 
 def test_plot_optimal_partitions(graph_nx, results, tmp_path):
