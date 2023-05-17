@@ -293,6 +293,14 @@ def plot_communities(
 
 
 def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext=".pdf"):
+    """Plot communities at all scales in matrix form.
+
+    Args:
+        graph (array) as a numpy matrix
+        all_results (dict): clustring results
+        folder (str): folder to save figures
+        ext (str): figure file format
+    """
     if not os.path.isdir(folder):
         os.mkdir(folder)
 
