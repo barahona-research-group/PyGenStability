@@ -66,7 +66,7 @@ export OPENBLAS_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 export NUMEXPR_MAX_THREADS=1
 ```
-to ensure numpy does not use multi-threadings, which may class with the parallelisation and slow down the computation. 
+to ensure numpy does not use multi-threadings, which may clash with the parallelisation and slow down the computation. 
 
 There are a variety of further choices that user can make that will impact the partitioning, including:
 - Constructor: Generalized Markov Stability requires the user to input a quality matrix and associated null models. We provide an object oriented module to write user-defined constructors for these objects, with several already implemented (see `pygenstability/constructors.py` for some classic examples).
