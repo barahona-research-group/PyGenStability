@@ -71,24 +71,29 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
     plt.figure(figsize=(5, 4))
     data_low = np.zeros(len(sizes))
     data_high = np.zeros(len(sizes))
-    for col in df.columns:
-        if col != "run" and col != "without_run" and col != "node_size" and col != "edge_size":
-            data_low = data_high.copy()
-            data_high += df[col].to_numpy()
-            if col.startswith("_"):
-                col = col[1:]
-            plt.fill_between(df["node_size"], data_low, data_high, label=col, alpha=0.5)
+    print(df.columns)
+    cols = [
+        "_get_constructor_data",
+        "_compute_ttprime",
+        "_compute_NVI",
+        "_apply_postprocessing",
+        "_optimise",
+    ]
+
+    for col in cols:
+        data_low = data_high.copy()
+        data_high += df[col].to_numpy()
+        if col.startswith("_"):
+            col = col[1:]
+        plt.fill_between(df["node_size"], data_low, data_high, label=col, alpha=0.5)
     plt.plot(df["node_size"], df["run"], "+-r", label="total")
     plt.yscale("log")
     plt.xscale("log")
     # plt.axis([df["node_size"].to_list()[0], df["node_size"].to_list()[-1], 0, 1.1 * max(df["run"])])
     x = np.linspace(200, 1000, 10)
     y = (0.015 * x) ** 2
-    print(y)
-    plt.plot(x, y, c="k", label="O(2)")
-    y = 0.1 * x
-    plt.plot(x, y, c="k", ls="--", label="O(1)")
-    plt.axis([df["node_size"].to_list()[0], df["node_size"].to_list()[-1], 0, 3e2])
+    plt.plot(x, y, c="k", label="O(E)")
+    plt.axis([df["node_size"].to_list()[0], df["node_size"].to_list()[-1], 5e-2, 3e2])
     plt.legend()
     plt.xlabel("Graph size [# nodes]")
     plt.ylabel("Computational time [s]")
@@ -99,6 +104,12 @@ def get_comp_time(sizes, graph_type="SBM", constructor="linearized", method="lou
     plt.xscale("log")
     plt.tight_layout()
     plt.savefig(f"comp_time_{constructor}_{graph_type}_{method}.pdf")
+    plt.figure()
+    plt.scatter(df["node_size"], df["edge_size"])
+    plt.plot(df["node_size"], 7e-2 * df["node_size"] ** 2, c="r")
+    plt.xlabel("# nodes")
+    plt.ylabel("# edges")
+    plt.savefig(f"edge_node_{constructor}_{graph_type}_{method}.pdf")
 
 
 if __name__ == "__main__":
