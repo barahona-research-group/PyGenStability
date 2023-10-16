@@ -89,7 +89,7 @@ class Constructor:
             kwargs (dict): any other properties to pass to the constructor.
             exp_comp_mode (str): mode to compute matrix exponential, can be expm or spectral
         """
-        self.graph = graph
+        self.graph = sp.csr_matrix(graph)
         self.with_spectral_gap = with_spectral_gap
         self.spectral_gap = None
         self.exp_comp_mode = exp_comp_mode
