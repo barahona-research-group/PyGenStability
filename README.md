@@ -16,7 +16,7 @@ We further provide specific analysis tools to process and analyse the results fr
 
 ## Documentation
 
-A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/
+A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/, or in pdf [here](pygenstability_doc.pdf).
 
 ## Installation
 
