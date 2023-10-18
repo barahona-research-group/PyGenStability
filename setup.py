@@ -42,8 +42,8 @@ install_requires = [
 setup(
     name="PyGenStability",
     version=__version__,
-    author="Alexis Arnaudon",
-    author_email="alexis.arnaudon@epfl.ch",
+    author="Alexis Arnaudon, Dominik Schindler",
+    author_email="alexis.arnaudon@epfl.ch, dominik.schindler19@imperial.ac.uk",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
     description="Python binding of generalised Louvain with Markov Stability",
     long_description=open("README.md", "r").read(),
