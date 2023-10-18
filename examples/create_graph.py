@@ -1,5 +1,6 @@
 """create graph for simple example"""
 import pandas as pd
+import pickle
 import matplotlib.pyplot as plt
 import pickle
 import networkx as nx
@@ -37,7 +38,8 @@ def create_sbm():
         pickle.dump(adjacency, pickle_file)
 
     # save .gpickle for community plotting
-    nx.write_gpickle(graph, "sbm_graph.gpickle")
+    with open("sbm_graph.gpickle", 'wb') as f:
+        pickle.dump(graph, f, pickle.HIGHEST_PROTOCOL)
 
     # save with text file as alternative format
     edges = pd.DataFrame()
