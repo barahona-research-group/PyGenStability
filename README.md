@@ -163,27 +163,30 @@ or using the click app:
 
 
 Other examples can be found as jupyter-notebooks in the `examples/` directory, including:
-* Example 1: Undirected SBM
-* Example 2: Multiscale SBM
-* Example 3: Directed networks
-* Example 4: Custom constructors
-* Example 5: Hypergraphs
-* Example 6: Signed networks
+
+- Example 1: Undirected SBM
+- Example 2: Multiscale SBM
+- Example 3: Directed networks
+- Example 4: Custom constructors
+- Example 5: Hypergraphs
+- Example 6: Signed networks
 
 Finally, we provide applications to real-world networks in the `examples/real_examples/` directory, including:
-* Power grid network
-* Protein structures
+
+- Power grid network
+- Protein structures
 
 
 ## Our other available packages
 
 If you are interested in trying our other packages, see the below list:
-* [GDR](https://github.com/barahona-research-group/GDR) : Graph diffusion reclassification. A methodology for node classification using graph semi-supervised learning.
-* [hcga](https://github.com/barahona-research-group/hcga) : Highly comparative graph analysis. A graph analysis toolbox that performs massive feature extraction from a set of graphs, and applies supervised classification methods.
-* [MSC](https://github.com/barahona-research-group/MultiscaleCentrality) : MultiScale Centrality: A scale dependent metric of node centrality.
-* [DynGDim](https://github.com/barahona-research-group/DynGDim) : Dynamic Graph Dimension: Computing the relative, local and global dimension of complex networks.
-* [RMST](https://github.com/barahona-research-group/RMST) : Relaxed Minimum Spanning Tree: Computing the relaxed minimum spanning tree to sparsify networks whilst retaining dynamic structure.
-* [StEP](https://github.com/barahona-research-group/StEP) : Spatial-temporal Epidemiological Proximity: Characterising contact in disease outbreaks via a network model of spatial-temporal proximity.
+
+- [GDR](https://github.com/barahona-research-group/GDR) : Graph diffusion reclassification. A methodology for node classification using graph semi-supervised learning.
+- [hcga](https://github.com/barahona-research-group/hcga) : Highly comparative graph analysis. A graph analysis toolbox that performs massive feature extraction from a set of graphs, and applies supervised classification methods.
+- [MSC](https://github.com/barahona-research-group/MultiscaleCentrality) : MultiScale Centrality: A scale dependent metric of node centrality.
+- [DynGDim](https://github.com/barahona-research-group/DynGDim) : Dynamic Graph Dimension: Computing the relative, local and global dimension of complex networks.
+- [RMST](https://github.com/barahona-research-group/RMST) : Relaxed Minimum Spanning Tree: Computing the relaxed minimum spanning tree to sparsify networks whilst retaining dynamic structure.
+- [StEP](https://github.com/barahona-research-group/StEP) : Spatial-temporal Epidemiological Proximity: Characterising contact in disease outbreaks via a network model of spatial-temporal proximity.
 
 ## References
 
@@ -210,4 +213,3 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
-
