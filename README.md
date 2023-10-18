@@ -33,14 +33,14 @@ Then, to install the package, simply run
 ```
 pip install . 
 ```
-using a fresh `virtualenv` in python3 may be recommanded to avoid conflict of python packages. 
+using a fresh `virtualenv` in python3 may be recommended to avoid conflict of python packages. 
 
-To use plotly for interacting plots in browser, install this package with 
+To use plotly for interactive plots in the browser, install this package with 
 ```
 pip install .[plotly]
 ```
 
-To use contrib module, with additional tools, run
+To use a contrib module, with additional tools, run
 ```
 pip install .[contrib]
 ```
@@ -52,7 +52,7 @@ pip install .[all]
 
 ## Using the code
 
-The code is simple to run with the default settings. We can input our graph (of type scipy.csgraph), run a scan in scales with a chosen Markov Stability constructor and plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with indication of optimal scales.
+The code is simple to run with the default settings. We can input our graph (of type scipy.csgraph), run a scan in scales with a chosen Markov Stability constructor and plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with an indication of optimal scales.
 
 ```
 import pygenstability as pgs
@@ -68,7 +68,7 @@ export NUMEXPR_MAX_THREADS=1
 ```
 to ensure numpy does not use multi-threadings, which may clash with the parallelisation and slow down the computation. 
 
-There are a variety of further choices that user can make that will impact the partitioning, including:
+There are a variety of further choices that users can make that will impact the partitioning, including:
 - Constructor: Generalized Markov Stability requires the user to input a quality matrix and associated null models. We provide an object-oriented module to write user-defined constructors for these objects, with several already implemented (see `pygenstability/constructors.py` for some classic examples).
 - Generalized Markov Stability maximizers: To maximize the NP-hard optimal generalized Markov Stability we interface with two algorithms: (i) Louvain and (ii) Leiden.
 
@@ -101,7 +101,7 @@ We provide an object-oriented module for constructing quality matrices and null 
 - `directed` based on random-walk Laplacian with teleportation for directed weighted graphs [2]
 - `linearized_directed` based on random-walk Laplacian with teleportation for large directed weighted graphs
 
-For the computationally efficient analysis of **large** graphs we recommend using the `linearized`, `linearized_directed` or `signed_modularity` constructors instead of `continuous_combinatorial`, `continuous_normalized`, `directed` or `signed_combinatorial` that rely on the computation of matrix exponentials.
+For the computationally efficient analysis of **large** graphs, we recommend using the `linearized`, `linearized_directed` or `signed_modularity` constructors instead of `continuous_combinatorial`, `continuous_normalized`, `directed` or `signed_combinatorial` that rely on the computation of matrix exponentials.
 
 For those of you that wish to implement their own constructor, you will need to design a function with the following properties:
 
@@ -137,7 +137,7 @@ The original paper for Markov Stability can also be cited as:
 @article{delvenne2010stability,
   title={Stability of graph communities across time scales},
   author={Delvenne, J-C and Yaliraki, Sophia N and Barahona, Mauricio},
-  journal={Proceedings of the national academy of sciences},
+  journal={Proceedings of the National Academy of Sciences},
   volume={107},
   number={29},
   pages={12755--12760},
@@ -150,7 +150,7 @@ The original paper for Markov Stability can also be cited as:
 ## Run example
 
 
-In the `example` folder, a demo script with stochastic block model can be tried with 
+In the `example` folder, a demo script with a stochastic block model can be tried with 
 
 ```
 python simple_example.py
@@ -183,7 +183,7 @@ If you are interested in trying our other packages, see the below list:
 
 - [GDR](https://github.com/barahona-research-group/GDR) : Graph diffusion reclassification. A methodology for node classification using graph semi-supervised learning.
 - [hcga](https://github.com/barahona-research-group/hcga) : Highly comparative graph analysis. A graph analysis toolbox that performs massive feature extraction from a set of graphs, and applies supervised classification methods.
-- [MSC](https://github.com/barahona-research-group/MultiscaleCentrality) : MultiScale Centrality: A scale dependent metric of node centrality.
+- [MSC](https://github.com/barahona-research-group/MultiscaleCentrality) : MultiScale Centrality: A scale-dependent metric of node centrality.
 - [DynGDim](https://github.com/barahona-research-group/DynGDim) : Dynamic Graph Dimension: Computing the relative, local and global dimension of complex networks.
 - [RMST](https://github.com/barahona-research-group/RMST) : Relaxed Minimum Spanning Tree: Computing the relaxed minimum spanning tree to sparsify networks whilst retaining dynamic structure.
 - [StEP](https://github.com/barahona-research-group/StEP) : Spatial-temporal Epidemiological Proximity: Characterising contact in disease outbreaks via a network model of spatial-temporal proximity.
