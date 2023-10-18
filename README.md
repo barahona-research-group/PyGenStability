@@ -52,12 +52,12 @@ pip install .[all]
 
 ## Using the code
 
-The code is simple to run with the default settings. We can import the run and plotting functions, input our graph (of type scipy.csgraph), and then plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with indication of optimal scales.
+The code is simple to run with the default settings. We can input our graph (of type scipy.csgraph), run a scan in scales with a chosen Markov Stability construcotr and plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with indication of optimal scales.
 
 ```
-from pygenstability import run, plotting
-results = run(graph)
-plotting.plot_scan(results)
+import pygenstability as pgs
+results = pgs.run(graph)
+pgs.plot_scan(results)
 ```
 
 Altough it is enforced in the code, it is advised to set environement variables
@@ -75,7 +75,7 @@ There are a variety of further choices that user can make that will impact the p
 While Louvain is defined as the default due to its familiarity within the research community, Leiden is known to produce better partitions and can be used by specifying the run function.
 
 ```
-results = run(graph, method = "leiden")
+results = pgs.run(graph, method="leiden")
 ```
 
 There are also additional postprocessing and analysis functions, including:
@@ -85,9 +85,8 @@ There are also additional postprocessing and analysis functions, including:
 Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimial network partitions can then be plotted given a NetworkX nx_graph.
 
 ```
-from pygenstability import optimal_scales
-results  = identify_optimal_scales(results, block_size = 10, window_size = 5)
-plotting.plot_optimal_partitions(nx_graph, results)
+results = pgs.identify_optimal_scales(results, block_size=10, window_size=5)
+pgs.plot_optimal_partitions(nx_graph, results)
 ```
 
 ## Constructors
