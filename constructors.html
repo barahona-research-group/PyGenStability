@@ -1,0 +1,610 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="The pygenstability cli" href="app.html" /><link rel="prev" title="PyGenStability module" href="pygenstability.html" />
+
+    <!-- Generated with Sphinx 5.2.3 and Furo 2022.12.07 -->
+        <title>Constructors module - PyGenStability documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">PyGenStability  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">PyGenStability  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="pygenstability.html">PyGenStability module</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Constructors module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="app.html">The pygenstability cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimal_scales.html">Optimal scales module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">I/O module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/example.html">Example: Markov Stability with PyGenStability</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-pygenstability.constructors">
+<span id="constructors-module"></span><h1>Constructors module<a class="headerlink" href="#module-pygenstability.constructors" title="Permalink to this heading">#</a></h1>
+<p>Module to create constructors of quality matrix and null models.</p>
+<p>The generalized Markov Stability is given as</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[Q_{gen}(t,H) = \mathrm{Tr} \left [H^T \left (F(t)-\sum_{k=1}^m v_{2k-1} v_{2k}^T\right)H\right]\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(F(t)\)</span> is the quality matrix and <span class="math notranslate nohighlight">\(v_k\)</span> are null model vectors.</p>
+<p>In the following we denote by <span class="math notranslate nohighlight">\(A\)</span> the adjacency matrix of a graph with <span class="math notranslate nohighlight">\(N\)</span> nodes and
+<span class="math notranslate nohighlight">\(M\)</span> edges. The out-degree of the graph is given by <span class="math notranslate nohighlight">\(d=A\boldsymbol{1}\)</span>, where
+<span class="math notranslate nohighlight">\(\boldsymbol{1}\)</span> is the vector of ones, and we denote the diagonal degree matrix by
+<span class="math notranslate nohighlight">\(D=\mathrm{diag}(d)\)</span>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygenstability.constructors.load_constructor">
+<span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">load_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constructor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#load_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.load_constructor" title="Permalink to this definition">#</a></dt>
+<dd><p>Load a constructor from its name, or as a custom Constructor class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.Constructor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">Constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#Constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.Constructor" title="Permalink to this definition">#</a></dt>
+<dd><p>Parent class for generalized Markov Stability constructor.</p>
+<p>This class encodes generalized Markov Stability through the quality matrix and null models.
+Use the method prepare to load and compute scale independent quantities, and the method get_data
+to return quality matrix, null model, and possible global shift.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.Constructor.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#Constructor.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.Constructor.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.Constructor.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#Constructor.get_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.Constructor.get_data" title="Permalink to this definition">#</a></dt>
+<dd><p>Return quality and null model at given scale as well as global shift (or None).</p>
+<p>User has to define the _get_data so we can enure numpy does not use multiple threads</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_linearized">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_linearized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor for continuous linearized Markov Stability.</p>
+<p>The quality matrix is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[F(t) = t\frac{A}{2M},\]</div>
+</div>
+<p>and the associated null model is <span class="math notranslate nohighlight">\(v_1=v_2=\frac{d}{2M}\)</span>.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_linearized.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_continuous_combinatorial">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_continuous_combinatorial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor for continuous combinatorial Markov Stability.</p>
+<p>The quality matrix is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[F(t) = \Pi\exp(-Lt)\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(L=D-A\)</span> is the combinatorial Laplacian and <span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span>,
+with null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi=\frac{\boldsymbol{1}}{N}\)</span>.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_continuous_combinatorial.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_continuous_normalized">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_continuous_normalized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor for continuous normalized Markov Stability.</p>
+<p>The quality matrix is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[F(t) = \Pi\exp(-Lt)\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(L=D^{-1}(D-A)\)</span> is the random-walk normalized Laplacian and
+<span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span> with null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi=\frac{d}{2M}\)</span>.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_continuous_normalized.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_modularity">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_signed_modularity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor of signed modularity.</p>
+<p>This implementation is equation (18) of <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>, where quality is the adjacency matrix and
+the null model is the difference between the standard modularity null models based on
+positive and negative degree vectors.</p>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Gómez, S., Jensen, P., &amp; Arenas, A. (2009). Analysis of community structure in
+networks of correlated data. Physical Review E, 80(1), 016114.</p>
+</aside>
+</aside>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_modularity.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_combinatorial">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_signed_combinatorial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_combinatorial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_combinatorial" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor for continuous signed combinatorial Markov Stability.</p>
+<p>The quality matrix is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[F(t) = \exp(-Lt)^T\exp(-Lt)\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(L=D_{\mathrm{abs}}-A\)</span> is the signed combinatorial Laplacian,
+<span class="math notranslate nohighlight">\(D_{\mathrm{abs}}=\mathrm{diag}(d_\mathrm{abs})\)</span> the diagonal matrix of absolute node
+strengths <span class="math notranslate nohighlight">\(d_\mathrm{abs}\)</span>, and the associated null model  is given by
+<span class="math notranslate nohighlight">\(v_1=v_2=\boldsymbol{0}\)</span>, where <span class="math notranslate nohighlight">\(\boldsymbol{0}\)</span> is the vector of zeros.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_combinatorial.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_combinatorial.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_combinatorial.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_combinatorial.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_combinatorial.get_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_combinatorial.get_data" title="Permalink to this definition">#</a></dt>
+<dd><p>Return quality and null model at given scale.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_directed">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_directed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor for directed Markov stability.</p>
+<p>The quality matrix is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[F(t)=\Pi \exp\left(t \left(M(\alpha)-I\right)\right)\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(I\)</span> denotes the identity matrix, <span class="math notranslate nohighlight">\(M(\alpha)\)</span> is the transition matrix of a
+random walk with teleportation and damping factor <span class="math notranslate nohighlight">\(0\le \alpha &lt; 1\)</span>, and
+<span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span> for the associated null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi\)</span> given by the
+eigenvector solving <span class="math notranslate nohighlight">\(\pi M(\alpha) = \pi\)</span>, which is related to PageRank.</p>
+<p>The transition matrix <span class="math notranslate nohighlight">\(M(\alpha)\)</span> is given by</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[M(\alpha) = \alpha D^{-1}A+\left((1-\alpha)I+\alpha \mathrm{diag}(a)\right)
+\frac{\boldsymbol{1}\boldsymbol{1}^T}{N},\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(D\)</span> denotes the diagonal matrix of out-degrees with <span class="math notranslate nohighlight">\(D_{ii}=1\)</span> if the
+out-degree <span class="math notranslate nohighlight">\(d_i=0\)</span> and <span class="math notranslate nohighlight">\(a\)</span> denotes the vector of dangling nodes, i.e. <span class="math notranslate nohighlight">\(a_i=1\)</span>
+if the out-degree <span class="math notranslate nohighlight">\(d_i=0\)</span> and <span class="math notranslate nohighlight">\(a_i=0\)</span> otherwise.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_directed.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_directed.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_directed.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_linearized_directed">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_linearized_directed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized_directed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized_directed" title="Permalink to this definition">#</a></dt>
+<dd><p>Constructor for linearized directed Markov stability.</p>
+<p>The quality matrix is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[F(t)=\Pi t M(\alpha)\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(M(\alpha)\)</span> is the transition matrix of a random walk with teleportation and
+damping factor <span class="math notranslate nohighlight">\(0\le \alpha &lt; 1\)</span>, and <span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span> for the associated
+null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi\)</span> given by the eigenvector solving <span class="math notranslate nohighlight">\(\pi M(\alpha) = \pi\)</span>,
+which is related to PageRank.</p>
+<p>The transition matrix <span class="math notranslate nohighlight">\(M(\alpha)\)</span> is given by</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[M(\alpha) = \alpha D^{-1}A+\left((1-\alpha)I+\alpha \mathrm{diag}(a)\right)
+\frac{\boldsymbol{1}\boldsymbol{1}^T}{N},\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(I\)</span> denotes the identity matrix, <span class="math notranslate nohighlight">\(D\)</span> denotes the diagonal matrix of
+out-degrees with <span class="math notranslate nohighlight">\(D_{ii}=1\)</span> if the out-degree <span class="math notranslate nohighlight">\(d_i=0\)</span> and <span class="math notranslate nohighlight">\(a\)</span> denotes the
+vector of dangling nodes, i.e. <span class="math notranslate nohighlight">\(a_i=1\)</span> if the out-degree <span class="math notranslate nohighlight">\(d_i=0\)</span> and <span class="math notranslate nohighlight">\(a_i=0\)</span>
+otherwise.</p>
+<p>The constructor calls the prepare method upon initialisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>csgraph</em>) – graph for which to run clustering</p></li>
+<li><p><strong>with_spectral_gap</strong> (<em>bool</em>) – set to True to use spectral gap to rescale</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – any other properties to pass to the constructor.</p></li>
+<li><p><strong>exp_comp_mode</strong> (<em>str</em>) – mode to compute matrix exponential, can be expm or spectral</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygenstability.constructors.constructor_linearized_directed.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_linearized_directed.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_linearized_directed.prepare" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare the constructor with non-scale dependent computations.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="app.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">The pygenstability cli</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="pygenstability.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">PyGenStability module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023, Alexis Arnaudon, Dominik Schindler
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Constructors module</a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.load_constructor"><code class="docutils literal notranslate"><span class="pre">load_constructor()</span></code></a></li>
+<li><a class="reference internal" href="#pygenstability.constructors.Constructor"><code class="docutils literal notranslate"><span class="pre">Constructor</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.Constructor.prepare"><code class="docutils literal notranslate"><span class="pre">Constructor.prepare()</span></code></a></li>
+<li><a class="reference internal" href="#pygenstability.constructors.Constructor.get_data"><code class="docutils literal notranslate"><span class="pre">Constructor.get_data()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_linearized"><code class="docutils literal notranslate"><span class="pre">constructor_linearized</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_linearized.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_linearized.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_continuous_combinatorial"><code class="docutils literal notranslate"><span class="pre">constructor_continuous_combinatorial</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_continuous_combinatorial.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_continuous_combinatorial.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_continuous_normalized"><code class="docutils literal notranslate"><span class="pre">constructor_continuous_normalized</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_continuous_normalized.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_continuous_normalized.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_signed_modularity"><code class="docutils literal notranslate"><span class="pre">constructor_signed_modularity</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_signed_modularity.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_signed_modularity.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_signed_combinatorial"><code class="docutils literal notranslate"><span class="pre">constructor_signed_combinatorial</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_signed_combinatorial.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_signed_combinatorial.prepare()</span></code></a></li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_signed_combinatorial.get_data"><code class="docutils literal notranslate"><span class="pre">constructor_signed_combinatorial.get_data()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_directed"><code class="docutils literal notranslate"><span class="pre">constructor_directed</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_directed.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_directed.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_linearized_directed"><code class="docutils literal notranslate"><span class="pre">constructor_linearized_directed</span></code></a><ul>
+<li><a class="reference internal" href="#pygenstability.constructors.constructor_linearized_directed.prepare"><code class="docutils literal notranslate"><span class="pre">constructor_linearized_directed.prepare()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>
