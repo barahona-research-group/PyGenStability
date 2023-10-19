@@ -316,12 +316,6 @@ def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext
         plt.imshow(graph[ids][:, ids], origin="lower")
         lines = np.cumsum(lines)
         for i in range(len(lines) - 1):
-            print(
-                [lines[i], lines[i]],
-                [lines[i], lines[i + 1]],
-                [lines[i], lines[i]],
-                [lines[i + 1], lines[i]],
-            )
             plt.plot((lines[i], lines[i + 1]), (lines[i], lines[i]), c="k")
             plt.plot((lines[i], lines[i]), (lines[i], lines[i + 1]), c="k")
             plt.plot((lines[i + 1], lines[i + 1]), (lines[i + 1], lines[i]), c="k")

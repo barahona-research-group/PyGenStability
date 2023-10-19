@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath("../../"))
 # -- Project information -----------------------------------------------------
 
 project = "PyGenStability"
-copyright = "2021, Alexis Arnaudon"
-author = "Alexis Arnaudon"
+copyright = "2023, Alexis Arnaudon, Dominik Schindler"
+author = "Alexis Arnaudon, Dominik Schindler"
 
 autodoc_member_order = 'bysource'
 # -- General configuration ---------------------------------------------------

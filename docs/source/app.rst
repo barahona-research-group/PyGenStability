@@ -1,5 +1,5 @@
-The cli app
-===========
+The pygenstability cli
+======================
 
 .. automodule:: pygenstability.app
    :members:
