@@ -2,7 +2,7 @@
     :start-line: 0
 
 API documentation
-*****************
+=================
 
 Documentation of the API of *PyGenStability*. 
 
@@ -16,11 +16,3 @@ Documentation of the API of *PyGenStability*.
    optimal_scales
    io
    examples/example
- 
-
-Indices and tables
-******************
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
