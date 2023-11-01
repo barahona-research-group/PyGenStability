@@ -21,10 +21,9 @@ import numpy.linalg as la
 import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
-from pygenstability import DTYPE
-
 L = logging.getLogger(__name__)
 THRESHOLD = 1e-8
+_DTYPE = np.float64
 
 
 def load_constructor(constructor, graph, **kwargs):
@@ -105,7 +104,7 @@ class Constructor:
     def _get_exp(self, scale):
         """Compute matrix exponential at a given scale."""
         if self.exp_comp_mode == "expm":
-            exp = sp.linalg.expm(-scale * self.partial_quality_matrix.toarray().astype(DTYPE))
+            exp = sp.linalg.expm(-scale * self.partial_quality_matrix.toarray().astype(_DTYPE))
         if self.exp_comp_mode == "spectral":
             lambdas, v, vinv = self.spectral_decomp
             exp = v @ np.diag(np.exp(-scale * lambdas)) @ vinv
@@ -151,7 +150,7 @@ class constructor_linearized(Constructor):
         if self.with_spectral_gap:
             laplacian = sp.csgraph.laplacian(self.graph, normed=False)
             self.spectral_gap = _get_spectral_gap(laplacian)
-        self.partial_quality_matrix = (self.graph / degrees.sum()).astype(DTYPE)
+        self.partial_quality_matrix = (self.graph / degrees.sum()).astype(_DTYPE)
 
     @_limit_numpy
     def _get_data(self, scale):
@@ -185,7 +184,7 @@ class constructor_continuous_combinatorial(Constructor):
         _check_total_degree(degrees)
         laplacian /= degrees.mean()
         pi = np.ones(self.graph.shape[0]) / self.graph.shape[0]
-        self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
+        self.partial_null_model = np.array([pi, pi], dtype=_DTYPE)
         if self.with_spectral_gap:
             self.spectral_gap = _get_spectral_gap(laplacian)
 
@@ -226,7 +225,7 @@ class constructor_continuous_normalized(Constructor):
         normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
         pi = degrees / degrees.sum()
-        self.partial_null_model = np.array([pi, pi], dtype=DTYPE)
+        self.partial_null_model = np.array([pi, pi], dtype=_DTYPE)
 
         if self.with_spectral_gap:
             self.spectral_gap = _get_spectral_gap(normed_laplacian)

@@ -27,13 +27,13 @@ from sklearn.metrics import mutual_info_score
 from sklearn.metrics.cluster import entropy
 from tqdm import tqdm
 
-from pygenstability import DTYPE
 from pygenstability import generalized_louvain
 from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
+_DTYPE = np.float64
 
 
 def _timing(f):  # pragma: no cover
@@ -59,7 +59,7 @@ def _get_chunksize(n_comp, pool):
     return max(1, int(n_comp / pool._processes))  # pylint: disable=protected-access
 
 
-def _graph_checks(graph, dtype=DTYPE):
+def _graph_checks(graph, dtype=_DTYPE):
     """Do some checks and preprocessing of the graph."""
     graph = sp.csr_matrix(graph, dtype=dtype)
     if sp.csgraph.connected_components(graph)[0] > 1:
