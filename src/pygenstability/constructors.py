@@ -21,7 +21,7 @@ import numpy.linalg as la
 import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
-from pygenstability.pygen import _DTYPE
+from pygenstability.pygenstability import _DTYPE
 
 L = logging.getLogger(__name__)
 THRESHOLD = 1e-8
