@@ -193,7 +193,6 @@ def run(
             - 'ttprime': ttprime matrix
     """
     method = _check_method(method)
-    print(method)
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
     scales = _get_scales(
