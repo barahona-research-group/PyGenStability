@@ -117,7 +117,7 @@ def _check_method(method):
 
     if method == "leiden" and _NO_LEIDEN:
         print("Leiden is not available, we fallback to louvain.")
-        return _check_method("louvain")
+        return "louvain"
 
     return method
 
