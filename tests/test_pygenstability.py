@@ -168,3 +168,8 @@ def test__evaluate_quality(graph):
     qualities_index = pgs._to_indices(data["quality"])
     quality = pgs._evaluate_quality(community_id, qualities_index, data["null_model"], 0)
     assert_almost_equal(quality, 0.5590341906608186)
+
+    quality = pgs._evaluate_quality(
+        community_id, qualities_index, data["null_model"], 0, method="leiden"
+    )
+    assert_almost_equal(quality, 0.2741359784037568)

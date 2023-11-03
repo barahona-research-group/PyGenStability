@@ -19,8 +19,14 @@ from functools import partial
 from functools import wraps
 from time import time
 
-import igraph as ig
-import leidenalg
+try:
+    import igraph as ig
+    import leidenalg
+
+    _NO_LEIDEN = False
+except ImportError:  # pragma: no cover
+    _NO_LEIDEN = True
+
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
@@ -101,6 +107,21 @@ def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     )
 
 
+def _check_method(method):  # pragma: no cover
+    if _NO_LEIDEN and not hasattr(generalized_louvain, "evaluate_quality"):
+        raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
+
+    if method == "louvain" and not hasattr(generalized_louvain, "evaluate_quality"):
+        print("Louvain is not available, we fallback to leiden.")
+        return "leiden"
+
+    if method == "leiden" and _NO_LEIDEN:
+        print("Leiden is not available, we fallback to louvain.")
+        return "louvain"
+
+    return method
+
+
 @_timing
 def run(
     graph=None,
@@ -171,6 +192,7 @@ def run(
             - 'NVI': NVI at each scale
             - 'ttprime': ttprime matrix
     """
+    method = _check_method(method)
     run_params = _get_params(locals())
     graph = _graph_checks(graph)
     scales = _get_scales(
@@ -217,7 +239,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable)
+            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -342,18 +364,34 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
     return stability + global_shift, community_id
 
 
-def _evaluate_quality(partition_id, qualities_index, null_model, global_shift):
+def _evaluate_quality(partition_id, qualities_index, null_model, global_shift, method="louvain"):
     """Worker for generalized Markov Stability optimisation runs."""
-    quality = generalized_louvain.evaluate_quality(
-        qualities_index[0][0],
-        qualities_index[0][1],
-        qualities_index[1],
-        len(qualities_index[1]),
-        null_model,
-        np.shape(null_model)[0],
-        1.0,
-        partition_id,
-    )
+    if method == "louvain":
+        quality = generalized_louvain.evaluate_quality(
+            qualities_index[0][0],
+            qualities_index[0][1],
+            qualities_index[1],
+            len(qualities_index[1]),
+            null_model,
+            np.shape(null_model)[0],
+            1.0,
+            partition_id,
+        )
+
+    if method == "leiden":
+        quality = np.mean(
+            [
+                leidenalg.CPMVertexPartition(
+                    ig.Graph(edges=zip(*qualities_index[0]), directed=True),
+                    initial_membership=partition_id,
+                    weights=qualities_index[1],
+                    node_sizes=null.tolist(),
+                    correct_self_loops=True,
+                ).quality()
+                for null in null_model[::2]
+            ]
+        )
+
     return quality + global_shift
 
 
@@ -390,7 +428,7 @@ def _compute_ttprime(all_results, pool):
 
 
 @_timing
-def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
+def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -402,6 +440,7 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False):
             qualities_index=_to_indices(constructor["quality"]),
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
+            method=method,
         )
         best_quality_id = np.argmax(
             pool.map(

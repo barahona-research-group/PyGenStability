@@ -11,6 +11,7 @@ ext_modules = [
         ["src/pygenstability/generalized_louvain/generalized_louvain.cpp"],
         include_dirs=["extra", "generalizedLouvain"],
         extra_compile_args=["-std=c++11"],
+        optional=True,
     ),
 ]
 plotly_require = ["plotly>=3.6.0"]
@@ -28,17 +29,17 @@ install_requires = [
     "numpy>=1.18.1",
     "scipy>=1.4.1",
     "matplotlib>=3.1.3",
-    "networkx>=3.0",
     "scikit-learn",
     "cmake>=3.16.3",
     "click>=7.0",
     "tqdm>=4.45.0",
     "pybind11>=2.10.0",
     "pandas>=1.0.0",
-    "igraph",
-    "leidenalg",
     "threadpoolctl",
 ]
+leiden_install = ["igraph", "leidenalg"]
+networkx_install = ["networkx>=3.0"]
+
 setup(
     name="PyGenStability",
     version=__version__,
@@ -54,7 +55,9 @@ setup(
     zip_safe=False,
     extras_require={
         "plotly": plotly_require,
-        "all": plotly_require + test_require,
+        "leiden": leiden_install,
+        "networkx": networkx_install,
+        "all": plotly_require + test_require + leiden_install + networkx_install,
     },
     entry_points={"console_scripts": ["pygenstability=pygenstability.app:cli"]},
     packages=find_namespace_packages("src"),
