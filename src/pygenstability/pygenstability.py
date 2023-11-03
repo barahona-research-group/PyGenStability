@@ -107,7 +107,7 @@ def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     )
 
 
-def _check_method(method):
+def _check_method(method):  # pragma: no cover
     if _NO_LEIDEN and not hasattr(generalized_louvain, "evaluate_quality"):
         raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
 
