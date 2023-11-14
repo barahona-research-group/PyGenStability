@@ -33,7 +33,13 @@ from sklearn.metrics import mutual_info_score
 from sklearn.metrics.cluster import entropy
 from tqdm import tqdm
 
-from pygenstability import generalized_louvain
+try:
+    from pygenstability import generalized_louvain
+
+    _NO_LOUVAIN = False
+except ImportError:
+    _NO_LOUVAIN = True
+
 from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
@@ -108,10 +114,10 @@ def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
 
 
 def _check_method(method):  # pragma: no cover
-    if _NO_LEIDEN and not hasattr(generalized_louvain, "evaluate_quality"):
+    if _NO_LEIDEN and _NO_LOUVAIN:
         raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
 
-    if method == "louvain" and not hasattr(generalized_louvain, "evaluate_quality"):
+    if method == "louvain" and _NO_LOUVAIN:
         print("Louvain is not available, we fallback to leiden.")
         return "leiden"
 
