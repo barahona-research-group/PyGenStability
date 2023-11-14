@@ -254,7 +254,7 @@ class constructor_signed_modularity(Constructor):
     positive and negative degree vectors.
 
     References:
-        .. [1] Gómez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
+        .. [1] Gomez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
                 networks of correlated data. Physical Review E, 80(1), 016114.
     """
 
