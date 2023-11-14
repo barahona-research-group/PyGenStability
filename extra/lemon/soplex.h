@@ -40,7 +40,7 @@ namespace lemon {
   ///
   /// This class implements an interface for the SoPlex LP solver.
   /// The SoPlex library is an object oriented lp solver library
-  /// developed at the Konrad-Zuse-Zentrum für Informationstechnik
+  /// developed at the Konrad-Zuse-Zentrum fur Informationstechnik
   /// Berlin (ZIB). You can find detailed information about it at the
   /// <tt>http://soplex.zib.de</tt> address.
   class SoplexLp : public LpSolver {
