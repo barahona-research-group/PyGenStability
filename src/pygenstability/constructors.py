@@ -254,7 +254,7 @@ class constructor_signed_modularity(Constructor):
     positive and negative degree vectors.
 
     References:
-        .. [1] Gómez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
+        .. [1] Gomez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
                 networks of correlated data. Physical Review E, 80(1), 016114.
     """
 
@@ -309,7 +309,7 @@ class constructor_signed_combinatorial(Constructor):
         degrees_abs = np.array(abs(self.graph).sum(1)).flatten()
         laplacian = sp.diags(degrees_abs) - self.graph
 
-        if self.exp_comp_mode == "spectral":
+        if self.exp_comp_mode == "spectral":  # pragma: no cover
             self.spectral_decomp = _compute_spectral_decomp(laplacian)
         if self.exp_comp_mode == "expm":
             self.partial_quality_matrix = laplacian
