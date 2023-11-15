@@ -37,7 +37,7 @@ try:
     from pygenstability import generalized_louvain
 
     _NO_LOUVAIN = False
-except ImportError:
+except ImportError:  # pragma: no cover
     _NO_LOUVAIN = True
 
 from pygenstability.constructors import load_constructor
