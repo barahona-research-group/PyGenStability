@@ -7,34 +7,32 @@ We further provide specific analysis tools to process and analyse the results fr
 
 ## Installation
 
-
-The wrapper uses Pybind11 https://github.com/pybind/pybind11 and the package can simply be installed by first cloning this repo with
+Install the package using [pypi](https://pypi.org/project/PyGenStability/):
 
 ```
-git clone --recurse-submodules https://github.com/ImperialCollegeLondon/PyGenStability.git
-```
-
-(if the `--recurse-submodules` has not been used, just do `git submodule update --init --recursive` to fetch the submodule with M. Schaub's code). 
-
-Then, to install the package, simply run
-```
-pip install . 
-```
-using a fresh `virtualenv` in python3 may be recommended to avoid conflict of python packages. 
-
-To use plotly for interactive plots in the browser, install this package with 
-```
-pip install .[plotly]
+pip install pygenstability
 ```
 
-To use a contrib module, with additional tools, run
+Using a fresh python3 virtual environment, e.g. conda, may be recommended to avoid conflicts with other python packages. 
+
+By default, the package uses the Louvain algorithm [4] for optimizing generalized Markov Stability. To use the Leiden algorithm [5], install this package with:
 ```
-pip install .[contrib]
+pip install pygenstability[leiden]
 ```
 
-To install all dependencies, run
+To plot network partitions using `networkx`, install this package with:
 ```
-pip install .[all]
+pip install pygenstability[networkx]
+```
+
+To use `plotly` for interactive plots in the browser, install this package with: 
+```
+pip install pygenstability[plotly]
+```
+
+To install all dependencies, run:
+```
+pip install pygenstability[all]
 ```
 
 ## Using the code
