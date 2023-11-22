@@ -7,7 +7,7 @@ We further provide specific analysis tools to process and analyse the results fr
 
 ## Installation
 
-Install the package using [pypi](https://pypi.org/project/PyGenStability/):
+You can install the package using [pypi](https://pypi.org/project/PyGenStability/):
 
 ```
 pip install pygenstability
@@ -33,6 +33,24 @@ pip install pygenstability[plotly]
 To install all dependencies, run:
 ```
 pip install pygenstability[all]
+```
+
+### Installation from GitHub
+
+You can also install the source code of this package from GitHub directly by first cloning this repo with:
+```
+git clone --recurse-submodules https://github.com/ImperialCollegeLondon/PyGenStability.git
+```
+
+(if the `--recurse-submodules` has not been used, just do `git submodule update --init --recursive` to fetch the submodule with M. Schaub's code).
+
+The wrapper for the submodule uses Pybind11 https://github.com/pybind/pybind11 and, to install the package, simply run (within the `PyGenStability` directory):
+```
+pip install . 
+```
+using a fresh python3 virtual environment to avoid conflicts. Similar to above, you can also specify additional dependencies, e.g. to install the package with `networkx` run:
+```
+pip install .[networkx]
 ```
 
 ## Using the code
