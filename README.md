@@ -20,34 +20,50 @@ A documentation of all features of the *PyGenStability* is available here: https
 
 ## Installation
 
+You can install the package using [pypi](https://pypi.org/project/PyGenStability/):
 
-The wrapper uses Pybind11 https://github.com/pybind/pybind11 and the package can simply be installed by first cloning this repo with
+```
+pip install pygenstability
+```
 
+Using a fresh python3 virtual environment, e.g. conda, may be recommended to avoid conflicts with other python packages. 
+
+By default, the package uses the Louvain algorithm [4] for optimizing generalized Markov Stability. To use the Leiden algorithm [5], install this package with:
+```
+pip install pygenstability[leiden]
+```
+
+To plot network partitions using `networkx`, install this package with:
+```
+pip install pygenstability[networkx]
+```
+
+To use `plotly` for interactive plots in the browser, install this package with: 
+```
+pip install pygenstability[plotly]
+```
+
+To install all dependencies, run:
+```
+pip install pygenstability[all]
+```
+
+### Installation from GitHub
+
+You can also install the source code of this package from GitHub directly by first cloning this repo with:
 ```
 git clone --recurse-submodules https://github.com/ImperialCollegeLondon/PyGenStability.git
 ```
 
-(if the `--recurse-submodules` has not been used, just do `git submodule update --init --recursive` to fetch the submodule with M. Schaub's code). 
+(if the `--recurse-submodules` has not been used, just do `git submodule update --init --recursive` to fetch the submodule with M. Schaub's code).
 
-Then, to install the package, simply run
+The wrapper for the submodule uses Pybind11 https://github.com/pybind/pybind11 and, to install the package, simply run (within the `PyGenStability` directory):
 ```
 pip install . 
 ```
-using a fresh `virtualenv` in python3 may be recommended to avoid conflict of python packages. 
-
-To use plotly for interactive plots in the browser, install this package with 
+using a fresh python3 virtual environment to avoid conflicts. Similar to above, you can also specify additional dependencies, e.g. to install the package with `networkx` run:
 ```
-pip install .[plotly]
-```
-
-To use a contrib module, with additional tools, run
-```
-pip install .[contrib]
-```
-
-To install all dependencies, run
-```
-pip install .[all]
+pip install .[networkx]
 ```
 
 ## Using the code
