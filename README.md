@@ -6,6 +6,8 @@
 [![License](https://img.shields.io/badge/License-GPLv3-blue)](https://github.com/barahona-research-group/PyGenStability/blob/master/LICENSE)
 [![DOI](https://zenodo.org/badge/183625721.svg)](https://zenodo.org/badge/latestdoi/183625721)
 
+[![Downloads](https://static.pepy.tech/badge/pygenstability)](https://pepy.tech/project/pygenstability)
+[![Downloads](https://static.pepy.tech/badge/pygenstability/month)](https://pepy.tech/project/pygenstability)
 
 # *PyGenStability*
 
