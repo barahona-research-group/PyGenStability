@@ -11,6 +11,7 @@ The choice of the quality matrix and null model vectors are arbitrary in the gen
 Markov Stability setting, and can be parametrised via built-in constructors, or specified by
 the user via the constructor module.
 """
+
 import itertools
 import logging
 import multiprocessing

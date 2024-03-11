@@ -1,4 +1,5 @@
 """Sankey diagram plots."""
+
 import numpy as np  # pragma: no cover
 import plotly.graph_objects as go  # pragma: no cover
 from plotly.offline import plot  # pragma: no cover

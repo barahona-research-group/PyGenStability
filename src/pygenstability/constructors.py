@@ -13,6 +13,7 @@ In the following we denote by :math:`A` the adjacency matrix of a graph with :ma
 :math:`\boldsymbol{1}` is the vector of ones, and we denote the diagonal degree matrix by
 :math:`D=\mathrm{diag}(d)`.
 """
+
 import logging
 import sys
 
