@@ -1,4 +1,5 @@
 """Detect optimal scales from a scale scan."""
+
 import numpy as np
 import pandas as pd
 from numpy.lib.stride_tricks import as_strided

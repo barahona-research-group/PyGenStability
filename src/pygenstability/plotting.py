@@ -1,4 +1,5 @@
 """Plotting functions."""
+
 import logging
 import os
 
