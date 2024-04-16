@@ -8,6 +8,7 @@ from scipy.sparse import csr_matrix
 
 from pygenstability.pygenstability import run as pgs_run
 from pygenstability.plotting import plot_scan as pgs_plot_scan
+from pygenstability.optimal_scales import identify_optimal_scales
 
 
 def compute_kNN(D, k=5):
@@ -194,6 +195,16 @@ class DataClustering(GraphConstruction):
         )
 
         # store labels of robust partitions
+        self._postprocess_selected_partitions()
+
+        return self.results_
+
+    def _postprocess_selected_partitions(self):
+        """Postprocess selected partitions."""
+
+        self.labels_ = []
+
+        # store labels of robust partitions
         for i in self.results_["selected_partitions"]:
 
             # only store non-trivial robust partitions
@@ -201,7 +212,32 @@ class DataClustering(GraphConstruction):
             if not np.allclose(robust_partition, np.zeros(self.adjacency_.shape[0])):
                 self.labels_.append(robust_partition)
 
-        return self.results_
+    def scale_selection(
+        self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01
+    ):
+        """Identify optimal scales."""
+
+        # transform relative values to absolute values
+        if kernel_size < 1:
+            kernel_size = int(kernel_size * self.results_["run_params"]["n_scale"])
+        if window_size < 1:
+            window_size = int(window_size * self.results_["run_params"]["n_scale"])
+        if basin_radius < 1:
+            basin_radius = int(basin_radius * self.results_["run_params"]["n_scale"])
+
+        # apply scale selection algorithm
+        self.results_ = identify_optimal_scales(
+            self.results_,
+            kernel_size=kernel_size,
+            window_size=window_size,
+            max_nvi=max_nvi,
+            basin_radius=basin_radius,
+        )
+
+        # store labels of robust partitions
+        self._postprocess_selected_partitions()
+
+        return self.labels_
 
     def plot_scan(self):
         """Plot PyGenStability scan."""
