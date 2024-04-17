@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial.distance import pdist, squareform
 from scipy.sparse.csgraph import minimum_spanning_tree
 from scipy.sparse import csr_matrix
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import kneighbors_graph
 
 from pygenstability.pygenstability import run as pgs_run
 from pygenstability.plotting import plot_scan as pgs_plot_scan
@@ -67,9 +67,9 @@ class GraphConstruction:
             sparse = compute_CkNN(D_norm, self.k, self.delta)
 
         elif self.method == "knn":
-            neigh = NearestNeighbors(n_neighbors=self.k, metric="precomputed")
-            neigh.fit(D_norm)
-            sparse = neigh.kneighbors_graph(X).toarray()
+            sparse = kneighbors_graph(
+                D_norm, n_neighbors=self.k, metric="precomputed"
+            ).toarray()
 
         # undirected distance backbone is given by sparse graph and MST
         mst = minimum_spanning_tree(D_norm)
@@ -94,26 +94,7 @@ class DataClustering(GraphConstruction):
         k=5,
         delta=1.0,
         distance_threshold=np.inf,
-        constructor="linearized",
-        min_scale=-3.0,
-        max_scale=0.0,
-        n_scale=50,
-        log_scale=True,
-        scales=None,
-        n_tries=100,
-        with_NVI=True,
-        n_NVI=20,
-        with_postprocessing=True,
-        with_ttprime=True,
-        with_spectral_gap=True,
-        exp_comp_mode="spectral",
-        result_file="results.pkl",
-        n_workers=4,
-        tqdm_disable=False,
-        with_optimal_scales=True,
-        optimal_scales_kwargs=None,
-        ms_method="louvain",
-        constructor_kwargs=None,
+        **pgs_kwargs,
     ):
 
         # initialise parameters for graph construction
@@ -125,27 +106,8 @@ class DataClustering(GraphConstruction):
             distance_threshold=distance_threshold,
         )
 
-        # initialise parameters for PyGenStability
-        self.constructor = constructor
-        self.min_scale = min_scale
-        self.max_scale = max_scale
-        self.n_scale = n_scale
-        self.log_scale = log_scale
-        self.scales = scales
-        self.n_tries = n_tries
-        self.with_NVI = with_NVI
-        self.n_NVI = n_NVI
-        self.with_postprocessing = with_postprocessing
-        self.with_ttprime = with_ttprime
-        self.with_spectral_gap = with_spectral_gap
-        self.exp_comp_mode = exp_comp_mode
-        self.result_file = result_file
-        self.n_workers = n_workers
-        self.tqdm_disable = tqdm_disable
-        self.with_optimal_scales = with_optimal_scales
-        self.optimal_scales_kwargs = optimal_scales_kwargs
-        self.MS_method = ms_method
-        self.constructor_kwargs = constructor_kwargs
+        # store PyGenStability kwargs
+        self.pgs_kwargs = pgs_kwargs
 
         # attributes
         self.results_ = {}
@@ -174,34 +136,8 @@ class DataClustering(GraphConstruction):
         # construct graph
         self.adjacency_ = csr_matrix(super().fit(X))
 
-        # adapt optimal scales parameters
-        if self.optimal_scales_kwargs is None:
-            self.optimal_scales_kwargs = {"kernel_size": int(0.2 * self.n_scale)}
-
         # run PyGenStability
-        self.results_ = pgs_run(
-            self.adjacency_,
-            self.constructor,
-            self.min_scale,
-            self.max_scale,
-            self.n_scale,
-            self.log_scale,
-            self.scales,
-            self.n_tries,
-            self.with_NVI,
-            self.n_NVI,
-            self.with_postprocessing,
-            self.with_ttprime,
-            self.with_spectral_gap,
-            self.exp_comp_mode,
-            self.result_file,
-            self.n_workers,
-            self.tqdm_disable,
-            self.with_optimal_scales,
-            self.optimal_scales_kwargs,
-            self.MS_method,
-            self.constructor_kwargs,
-        )
+        self.results_ = pgs_run(self.adjacency_, **self.pgs_kwargs)
 
         return self.results_
 
@@ -216,7 +152,9 @@ class DataClustering(GraphConstruction):
         if window_size < 1:
             window_size = int(window_size * self.results_["run_params"]["n_scale"])
         if basin_radius < 1:
-            basin_radius = int(basin_radius * self.results_["run_params"]["n_scale"])
+            basin_radius = max(
+                1, int(basin_radius * self.results_["run_params"]["n_scale"])
+            )
 
         # apply scale selection algorithm
         self.results_ = identify_optimal_scales(
