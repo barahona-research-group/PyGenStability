@@ -1,34 +1,16 @@
 """Construct geometric graphs from data for multiscale clustering."""
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from scipy.spatial.distance import pdist, squareform
 from scipy.sparse.csgraph import minimum_spanning_tree
 from scipy.sparse import csr_matrix
+from sklearn.neighbors import NearestNeighbors
 
 from pygenstability.pygenstability import run as pgs_run
 from pygenstability.plotting import plot_scan as pgs_plot_scan
 from pygenstability.optimal_scales import identify_optimal_scales
-
-
-def compute_kNN(D, k=5):
-    """Computes kNN graph."""
-
-    N = D.shape[0]
-
-    # get k nearest neighbours for each point
-    k_neighbours = np.argsort(D, axis=1)[:, 1 : k + 1]
-
-    # initialise adjacency matrix
-    A = np.zeros((N, N))
-
-    # build kNN graph
-    for i in range(N):
-        for neighbour in k_neighbours[i]:
-            A[i, neighbour] = D[i, neighbour]
-            A[neighbour, i] = A[i, neighbour]
-
-    return A
 
 
 def compute_CkNN(D, k=5, delta=1):
@@ -60,7 +42,7 @@ class GraphConstruction:
         self.distance_threshold = distance_threshold
 
         # attributes
-        self.adjacency_ = csr_matrix
+        self.adjacency_ = None
 
     def fit(self, X):
         """Construct graph from samples-by-features matrix."""
@@ -85,7 +67,9 @@ class GraphConstruction:
             sparse = compute_CkNN(D_norm, self.k, self.delta)
 
         elif self.method == "knn":
-            sparse = compute_kNN(D_norm, self.k)
+            neigh = NearestNeighbors(n_neighbors=self.k, metric="precomputed")
+            neigh.fit(D_norm)
+            sparse = neigh.kneighbors_graph(X).toarray()
 
         # undirected distance backbone is given by sparse graph and MST
         mst = minimum_spanning_tree(D_norm)
@@ -164,9 +148,26 @@ class DataClustering(GraphConstruction):
         self.constructor_kwargs = constructor_kwargs
 
         # attributes
-        self.adjacency_ = csr_matrix
         self.results_ = {}
-        self.labels_ = []
+
+    @property
+    def labels_(self):
+        """Return labels for robust paritions."""
+        labels = []
+
+        assert (
+            "selected_partitions" in self.results_.keys()
+        ), "Run PyGenStability with optimal scale selection first."
+
+        # store labels of robust partitions
+        for i in self.results_["selected_partitions"]:
+
+            # only store non-trivial robust partitions
+            robust_partition = self.results_["community_id"][i]
+            if not np.allclose(robust_partition, np.zeros(self.adjacency_.shape[0])):
+                labels.append(robust_partition)
+
+        return labels
 
     def fit(self, X):
 
@@ -202,23 +203,7 @@ class DataClustering(GraphConstruction):
             self.constructor_kwargs,
         )
 
-        # store labels of robust partitions
-        self._postprocess_selected_partitions()
-
         return self.results_
-
-    def _postprocess_selected_partitions(self):
-        """Postprocess selected partitions."""
-
-        self.labels_ = []
-
-        # store labels of robust partitions
-        for i in self.results_["selected_partitions"]:
-
-            # only store non-trivial robust partitions
-            robust_partition = self.results_["community_id"][i]
-            if not np.allclose(robust_partition, np.zeros(self.adjacency_.shape[0])):
-                self.labels_.append(robust_partition)
 
     def scale_selection(
         self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01
@@ -242,11 +227,6 @@ class DataClustering(GraphConstruction):
             basin_radius=basin_radius,
         )
 
-        # store labels of robust partitions
-        self._postprocess_selected_partitions()
-
-        return self.labels_
-
     def plot_scan(self):
         """Plot PyGenStability scan."""
         if self.results_ is None:
@@ -258,8 +238,6 @@ class DataClustering(GraphConstruction):
         self, x_coord, y_coord, edge_width=1, node_size=20, cmap="tab20"
     ):
         """Plot robust partitions."""
-
-        import matplotlib.pyplot as plt
 
         for m, partition in enumerate(self.labels_):
 
