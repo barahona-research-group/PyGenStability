@@ -65,6 +65,14 @@ class GraphConstruction:
     def fit(self, X):
         """Construct graph from samples-by-features matrix."""
 
+        # if precomputed take X as adjacency matrix
+        if self.method == "precomputed":
+            assert (
+                X.shape[0] == X.shape[1]
+            ), "Precomputed matrix should be a square matrix."
+            self.adjacency_ = X
+            return self.adjacency_
+
         # compute normalised distance matrix
         D = squareform(pdist(X, metric=self.metric))
         D_norm = D / np.amax(D)
