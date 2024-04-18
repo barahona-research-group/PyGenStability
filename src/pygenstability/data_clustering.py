@@ -44,7 +44,7 @@ class GraphConstruction:
         # attributes
         self.adjacency_ = None
 
-    def fit(self, X):
+    def get_graph(self, X):
         """Construct graph from samples-by-features matrix."""
 
         # if precomputed take X as adjacency matrix
@@ -132,9 +132,10 @@ class DataClustering(GraphConstruction):
         return labels
 
     def fit(self, X):
+        """Construct graph and run PyGenStability for multiscale data clustering."""
 
         # construct graph
-        self.adjacency_ = csr_matrix(super().fit(X))
+        self.adjacency_ = csr_matrix(self.get_graph(X))
 
         # run PyGenStability
         self.results_ = pgs_run(self.adjacency_, **self.pgs_kwargs)
@@ -198,5 +199,9 @@ class DataClustering(GraphConstruction):
             ax.scatter(x_coord, y_coord, s=node_size, c=partition, zorder=10, cmap=cmap)
 
             # set labels
-            ax.set(xlabel="x", ylabel="y", title=f"Robust Partion {m+1}")
+            ax.set(
+                xlabel="x",
+                ylabel="y",
+                title=f"Robust Partion {m+1} (with {len(np.unique(partition))} clusters)",
+            )
             plt.show()
