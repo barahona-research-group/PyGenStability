@@ -111,6 +111,33 @@ For those of you that wish to implement their own constructor, you will need to 
 - take a scipy.csgraph `graph` and a float `time` as argument
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
 
+## Graph-based data clustering
+
+PyGenStability can also be used to perform multiscale graph-based data clustering on data that comes in the form of a sample-by-feature matrix. This approach was shown to achieve better performance than other popular clustering methods without the need of setting the number of clusters externally [9]. 
+
+We provide an easy-to-use interface in our `pygenstability.data_clustering.py` module. Given a sample-by-feature matrix `X`, one can apply graph-based data clustering as follows:
+
+```
+clustering = pgs.DataClustering(
+    graph_method="cknn",
+    k=5,
+    constructor="continuous_normalized")
+
+# apply graph-based data clustering to X
+results = clustering.fit(X)
+
+# identify optimal scales and plot scan
+clustering.scale_selection(kernel_size=0.2)
+clustering.plot_scan()
+```
+
+We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by `graph_method`) and `k` refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:
+
+```
+# plot robust partitions
+clustering.plot_robust_partitions(x_coord=x_coord,y_coord=y_coord)
+```
+
 ## Contributors
 
 - Alexis Arnaudon, GitHub: `arnaudon <https://github.com/arnaudon>`
@@ -173,6 +200,7 @@ Other examples can be found as jupyter-notebooks in the `examples/` directory, i
 - Example 4: Custom constructors
 - Example 5: Hypergraphs
 - Example 6: Signed networks
+- Example 7: Graph-based data clustering
 
 Finally, we provide applications to real-world networks in the `examples/real_examples/` directory, including:
 
@@ -193,21 +221,25 @@ If you are interested in trying our other packages, see the below list:
 
 ## References
 
-[1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, ‘Stability of graph communities across time scales’, *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010, doi: 10.1073/pnas.0903215107.
+[1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, 'Stability of graph communities across time scales', *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010, doi: 10.1073/pnas.0903215107.
 
-[2] R. Lambiotte, J.-C. Delvenne, and M. Barahona, ‘Random Walks, Markov Processes and the Multiscale Modular Organization of Complex Networks’, *IEEE Trans. Netw. Sci. Eng.*, vol. 1, no. 2, pp. 76–90, Jul. 2014, doi: 10.1109/TNSE.2015.2391998.
+[2] R. Lambiotte, J.-C. Delvenne, and M. Barahona, 'Random Walks, Markov Processes and the Multiscale Modular Organization of Complex Networks', *IEEE Trans. Netw. Sci. Eng.*, vol. 1, no. 2, pp. 76–90, Jul. 2014, doi: 10.1109/TNSE.2015.2391998.
 
-[3] M. T. Schaub, J.-C. Delvenne, R. Lambiotte, and M. Barahona, ‘Multiscale dynamical embeddings of complex networks’, *Phys. Rev. E*, vol. 99, no. 6, Jun. 2019, doi: 10.1103/PhysRevE.99.062308.
+[3] M. T. Schaub, J.-C. Delvenne, R. Lambiotte, and M. Barahona, 'Multiscale dynamical embeddings of complex networks', *Phys. Rev. E*, vol. 99, no. 6, Jun. 2019, doi: 10.1103/PhysRevE.99.062308.
 
-[4] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, ‘Fast unfolding of communities in large networks’, *J. Stat. Mech.*, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.
+[4] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, 'Fast unfolding of communities in large networks', *J. Stat. Mech.*, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.
 
-[5] V. A. Traag, L. Waltman, and N. J. van Eck, ‘From Louvain to Leiden: guaranteeing well-connected communities’, *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
+[5] V. A. Traag, L. Waltman, and N. J. van Eck, 'From Louvain to Leiden: guaranteeing well-connected communities', *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
 
-[6] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction of Human Movement’, *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
+[6] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and the Restriction of Human Movement', *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
 
-[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, ‘PyGenStability: Multiscale community detection with generalized Markov Stability‘, *arXiv pre-print*, Mar. 2023, doi: 10.48550/arXiv.2303.05385.
+[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'PyGenStability: Multiscale community detection with generalized Markov Stability', *arXiv pre-print*, Mar. 2023, doi: 10.48550/arXiv.2303.05385.
 
-[8] S. Gómez, P. Jensen, and A. Arenas, ‘Analysis of community structure in networks of correlated data‘. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
+[8] S. Gomez, P. Jensen, and A. Arenas, 'Analysis of community structure in networks of correlated data'. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
+
+[9] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale community detection', *Applied Network Science*, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.
+
+[10] T. Berry and T. Suaer, 'Consistent manifold representation for topological data analysis', *Foundations of Data Science*, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001
 
 ## Licence
 
