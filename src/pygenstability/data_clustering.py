@@ -47,7 +47,6 @@ class GraphConstruction:
 
     def get_graph(self, X):
         """Construct graph from samples-by-features matrix."""
-
         # if precomputed take X as adjacency matrix
         if self.method == "precomputed":
             assert (
@@ -134,7 +133,6 @@ class DataClustering(GraphConstruction):
 
     def fit(self, X):
         """Construct graph and run PyGenStability for multiscale data clustering."""
-
         # construct graph
         self.adjacency_ = csr_matrix(self.get_graph(X))
 
@@ -147,7 +145,6 @@ class DataClustering(GraphConstruction):
         self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01
     ):
         """Identify optimal scales."""
-
         # transform relative values to absolute values
         if kernel_size < 1:
             kernel_size = int(kernel_size * self.results_["run_params"]["n_scale"])
@@ -178,7 +175,6 @@ class DataClustering(GraphConstruction):
         self, x_coord, y_coord, edge_width=1, node_size=20, cmap="tab20"
     ):
         """Plot robust partitions."""
-
         for m, partition in enumerate(self.labels_):
 
             # plot
@@ -215,7 +211,6 @@ class DataClustering(GraphConstruction):
         scale_index=None,
     ):
         """Plot Sankey diagram."""
-
         # plot non-trivial optimal scales only
         if optimal_scales:
             n_partitions = len(self.labels_)
