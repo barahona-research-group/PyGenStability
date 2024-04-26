@@ -254,7 +254,7 @@ If you are interested in trying our other packages, see the below list:
 
 [9] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale community detection', *Applied Network Science*, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.
 
-[10] T. Berry and T. Suaer, 'Consistent manifold representation for topological data analysis', *Foundations of Data Science*, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.
+[10] T. Berry and T. Sauer, 'Consistent manifold representation for topological data analysis', *Foundations of Data Science*, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.
 
 ## Licence
 
