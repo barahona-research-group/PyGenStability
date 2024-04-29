@@ -10,19 +10,9 @@ from dictdiffer import diff
 from pygenstability.constructors import load_constructor
 from pygenstability import pygenstability as pgs
 
+from .utils import _to_list
+
 DATA = Path(__file__).absolute().parent / "data"
-
-
-def _to_list(data):
-    """Convert dict to list with floats for yaml encoding."""
-    data.pop("NVI", None)  # NVI computation is unstable, we don't test it
-    data.pop("ttprime", None)  # ttprime computation is unstable, we don't test it
-    for key, val in data.items():
-        if isinstance(val, dict):
-            data[key] = _to_list(data[key])
-        if isinstance(val, (np.ndarray, list)):
-            data[key] = np.array(val, dtype=float).tolist()
-    return data
 
 
 def test_run(graph, graph_non_connected, graph_directed, graph_signed):

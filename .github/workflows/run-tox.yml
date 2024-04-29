@@ -30,11 +30,3 @@ jobs:
     - name: Run tox
       run: |
         tox
-    - name: Upload to codecov
-      if: ${{matrix.python-version == '3.10'}}
-      uses: codecov/codecov-action@v1
-      with:
-        fail_ci_if_error: false
-        files: ./coverage.xml
-        flags: pytest
-        name: "PyGenStability-py310"

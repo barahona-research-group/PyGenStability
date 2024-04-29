@@ -110,7 +110,11 @@ def _get_params(all_locals):
 @_timing
 def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     return list(
-        tqdm(pool.imap(constructor.get_data, scales), total=len(scales), disable=tqdm_disable)
+        tqdm(
+            pool.imap(constructor.get_data, scales),
+            total=len(scales),
+            disable=tqdm_disable,
+        )
     )
 
 
@@ -195,9 +199,12 @@ def run(
             - 'run_params': dict with parameters used to run the code
             - 'scales': scales of the scan
             - 'number_of_communities': number of communities at each scale
+            - 'stability': value of stability cost function at each scale
             - 'community_id': community node labels at each scale
-            - 'NVI': NVI at each scale
-            - 'ttprime': ttprime matrix
+            - 'NVI': NVI(t) at each scale
+            - 'ttprime': NVI(t,tprime) matrix
+            - 'block_detection_curve': block detection curve (included if with_optimal_scales==True)
+            - 'selected_partitions': selected partitions (included if with_optimal_scales==True)
     """
     method = _check_method(method)
     run_params = _get_params(locals())
@@ -357,7 +364,10 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
         for null in null_model[::2]:
             partitions.append(
                 leidenalg.CPMVertexPartition(
-                    G, weights=quality_values, node_sizes=null.tolist(), correct_self_loops=True
+                    G,
+                    weights=quality_values,
+                    node_sizes=null.tolist(),
+                    correct_self_loops=True,
                 )
             )
         optimiser = leidenalg.Optimiser()

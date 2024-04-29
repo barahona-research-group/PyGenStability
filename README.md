@@ -18,53 +18,53 @@ We further provide specific analysis tools to process and analyse the results fr
 
 ## Documentation
 
-A documentation of all features of the *PyGenStability* is available here: https://barahona-research-group.github.io/PyGenStability/, or in pdf [here](pygenstability_doc.pdf).
+A documentation of all features of the *PyGenStability* package is available here: https://barahona-research-group.github.io/PyGenStability/, or in pdf [here](pygenstability_doc.pdf).
 
 ## Installation
 
 You can install the package using [pypi](https://pypi.org/project/PyGenStability/):
 
-```
+```bash
 pip install pygenstability
 ```
 
 Using a fresh python3 virtual environment, e.g. conda, may be recommended to avoid conflicts with other python packages. 
 
 By default, the package uses the Louvain algorithm [4] for optimizing generalized Markov Stability. To use the Leiden algorithm [5], install this package with:
-```
+```bash
 pip install pygenstability[leiden]
 ```
 
 To plot network partitions using `networkx`, install this package with:
-```
+```bash
 pip install pygenstability[networkx]
 ```
 
 To use `plotly` for interactive plots in the browser, install this package with: 
-```
+```bash
 pip install pygenstability[plotly]
 ```
 
 To install all dependencies, run:
-```
+```bash
 pip install pygenstability[all]
 ```
 
 ### Installation from GitHub
 
 You can also install the source code of this package from GitHub directly by first cloning this repo with:
-```
+```bash
 git clone --recurse-submodules https://github.com/ImperialCollegeLondon/PyGenStability.git
 ```
 
 (if the `--recurse-submodules` has not been used, just do `git submodule update --init --recursive` to fetch the submodule with M. Schaub's code).
 
 The wrapper for the submodule uses Pybind11 https://github.com/pybind/pybind11 and, to install the package, simply run (within the `PyGenStability` directory):
-```
+```bash
 pip install . 
 ```
 using a fresh python3 virtual environment to avoid conflicts. Similar to above, you can also specify additional dependencies, e.g. to install the package with `networkx` run:
-```
+```bash
 pip install .[networkx]
 ```
 
@@ -72,14 +72,14 @@ pip install .[networkx]
 
 The code is simple to run with the default settings. We can input our graph (of type scipy.csgraph), run a scan in scales with a chosen Markov Stability constructor and plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with an indication of optimal scales.
 
-```
+```python
 import pygenstability as pgs
 results = pgs.run(graph)
 pgs.plot_scan(results)
 ```
 
 Although it is enforced in the code, it is advised to set environment variables
-```
+```bash
 export OPENBLAS_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 export NUMEXPR_MAX_THREADS=1
@@ -92,7 +92,7 @@ There are a variety of further choices that users can make that will impact the 
 
 While Louvain is defined as the default due to its familiarity within the research community, Leiden is known to produce better partitions and can be used by specifying the run function.
 
-```
+```python
 results = pgs.run(graph, method="leiden")
 ```
 
@@ -102,7 +102,7 @@ There are also additional post-processing and analysis functions, including:
 
 Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimal network partitions can then be plotted given a NetworkX nx_graph.
 
-```
+```python
 results = pgs.identify_optimal_scales(results, block_size=10, window_size=5)
 pgs.plot_optimal_partitions(nx_graph, results)
 ```
@@ -125,6 +125,33 @@ For those of you that wish to implement their own constructor, you will need to 
 
 - take a scipy.csgraph `graph` and a float `time` as argument
 - return a `quality_matrix` (sparse scipy matrix) and a `null_model` (multiples of two, in a numpy array)
+
+## Graph-based data clustering
+
+PyGenStability can also be used to perform multiscale graph-based data clustering on data that comes in the form of a sample-by-feature matrix. This approach was shown to achieve better performance than other popular clustering methods without the need of setting the number of clusters externally [9]. 
+
+We provide an easy-to-use interface in our `pygenstability.data_clustering.py` module. Given a sample-by-feature matrix `X`, one can apply graph-based data clustering as follows:
+
+```python
+clustering = pgs.DataClustering(
+    graph_method="cknn",
+    k=5,
+    constructor="continuous_normalized")
+
+# apply graph-based data clustering to X
+results = clustering.fit(X)
+
+# identify optimal scales and plot scan
+clustering.scale_selection(kernel_size=0.2)
+clustering.plot_scan()
+```
+
+We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by `graph_method`) and `k` refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:
+
+```python
+# plot robust partitions
+clustering.plot_robust_partitions(x_coord=x_coord,y_coord=y_coord)
+```
 
 ## Contributors
 
@@ -170,11 +197,11 @@ The original paper for Markov Stability can also be cited as:
 
 In the `example` folder, a demo script with a stochastic block model can be tried with 
 
-```
+```bash
 python simple_example.py
 ```
 or using the click app:
-```
+```bash
 ./run_simple_example.sh
 ```
 
@@ -188,6 +215,7 @@ Other examples can be found as jupyter-notebooks in the `examples/` directory, i
 - Example 4: Custom constructors
 - Example 5: Hypergraphs
 - Example 6: Signed networks
+- Example 7: Graph-based data clustering
 
 Finally, we provide applications to real-world networks in the `examples/real_examples/` directory, including:
 
@@ -224,6 +252,10 @@ If you are interested in trying our other packages, see the below list:
 
 [8] S. Gomez, P. Jensen, and A. Arenas, 'Analysis of community structure in networks of correlated data'. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
 
+[9] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale community detection', *Applied Network Science*, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.
+
+[10] T. Berry and T. Sauer, 'Consistent manifold representation for topological data analysis', *Foundations of Data Science*, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.
+
 ## Licence
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -231,3 +263,4 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+
