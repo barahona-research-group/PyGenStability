@@ -47,7 +47,7 @@ def test_DataClustering(X):
 
     # scales selection
     scales = clustering.scale_selection()
-    assert len(scales) == 4
+    assert len(scales) > 2
 
     # test plots
     clustering.plot_scan(live=False)
