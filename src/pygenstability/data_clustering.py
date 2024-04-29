@@ -2,16 +2,16 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from scipy.spatial.distance import pdist, squareform
-from scipy.sparse.csgraph import minimum_spanning_tree
 from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import minimum_spanning_tree
+from scipy.spatial.distance import pdist
+from scipy.spatial.distance import squareform
 from sklearn.neighbors import kneighbors_graph
 
-from pygenstability.pygenstability import run as pgs_run
-from pygenstability.plotting import plot_scan as pgs_plot_scan
-from pygenstability.optimal_scales import identify_optimal_scales
 from pygenstability.contrib.sankey import plot_sankey as pgs_plot_sankey
+from pygenstability.optimal_scales import identify_optimal_scales
+from pygenstability.plotting import plot_scan as pgs_plot_scan
+from pygenstability.pygenstability import run as pgs_run
 
 
 def _compute_CkNN(D, k=5, delta=1):
@@ -49,9 +49,7 @@ class _GraphConstruction:
         """Construct graph from samples-by-features matrix."""
         # if precomputed take X as adjacency matrix
         if self.method == "precomputed":
-            assert (
-                X.shape[0] == X.shape[1]
-            ), "Precomputed matrix should be a square matrix."
+            assert X.shape[0] == X.shape[1], "Precomputed matrix should be a square matrix."
             self.adjacency_ = X
             return self.adjacency_
 
@@ -67,9 +65,7 @@ class _GraphConstruction:
             sparse = _compute_CkNN(D_norm, self.k, self.delta)
 
         elif self.method == "knn-mst":
-            sparse = kneighbors_graph(
-                D_norm, n_neighbors=self.k, metric="precomputed"
-            ).toarray()
+            sparse = kneighbors_graph(D_norm, n_neighbors=self.k, metric="precomputed").toarray()
 
         # undirected distance backbone is given by sparse graph and MST
         mst = minimum_spanning_tree(D_norm)
@@ -200,6 +196,7 @@ class DataClustering(_GraphConstruction):
         -----------
         X : {array-like, sparse matrix} of shape (n_samples,n_features) or \
             (n_samples,n_samples) if graph_method='precomputed'
+            Data to fit
 
         Returns:
         -------
@@ -214,9 +211,7 @@ class DataClustering(_GraphConstruction):
 
         return self
 
-    def scale_selection(
-        self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01
-    ):
+    def scale_selection(self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01):
         """Identify optimal scales [3].
 
         Parameters:
@@ -252,9 +247,7 @@ class DataClustering(_GraphConstruction):
         if window_size < 1:
             window_size = int(window_size * self.results_["run_params"]["n_scale"])
         if basin_radius < 1:
-            basin_radius = max(
-                1, int(basin_radius * self.results_["run_params"]["n_scale"])
-            )
+            basin_radius = max(1, int(basin_radius * self.results_["run_params"]["n_scale"]))
 
         # apply scale selection algorithm
         self.results_ = identify_optimal_scales(
@@ -267,15 +260,15 @@ class DataClustering(_GraphConstruction):
 
         return self.labels_
 
-    def plot_scan(self):
+    def plot_scan(self, *args, **kwargs):
         """Plot summary figure for PyGenStability scan."""
         if self.results_ is None:
             return
 
-        pgs_plot_scan(self.results_)
+        pgs_plot_scan(self.results_, *args, **kwargs)
 
     def plot_robust_partitions(
-        self, x_coord, y_coord, edge_width=1.0, node_size=20.0, cmap="tab20"
+        self, x_coord, y_coord, edge_width=1.0, node_size=20.0, cmap="tab20", show=True
     ):
         """Plot robust partitions with graph layout.
 
@@ -293,13 +286,21 @@ class DataClustering(_GraphConstruction):
         node_size : float, default=20.0
             Node size in graph. This parameter is expected to be positive.
 
-        cmap : str, default:'tab20'
+        cmap : str, default='tab20'
             Color map for cluster colors.
-        """
-        for m, partition in enumerate(self.labels_):
 
-            # plot
-            _, ax = plt.subplots(1, figsize=(10, 10))
+        show : book, default=True
+            Show the figures.
+
+        Returns:
+        --------
+        figs : All matplotlib figures
+
+        """
+        figs = []
+        for m, partition in enumerate(self.labels_):
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+            figs.append(fig)
 
             # plot edges
             for i in range(self.adjacency_.shape[0]):
@@ -322,6 +323,7 @@ class DataClustering(_GraphConstruction):
                 ylabel="y",
                 title=f"Robust Partion {m+1} (with {len(np.unique(partition))} clusters)",
             )
+        if show:
             plt.show()
 
     def plot_sankey(
