@@ -13,6 +13,7 @@ Documentation of the API of *PyGenStability*.
    constructors
    app
    plotting
+   dataclustering
    optimal_scales
    io
    examples/example

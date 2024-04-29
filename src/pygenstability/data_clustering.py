@@ -100,33 +100,34 @@ class DataClustering(_GraphConstruction):
 
         - 'knn-mst' will use k-Nearest Neighbor graph combined with Miniumus Spanning Tree.
         - 'cknn-mst' will use Continunous k-Nearest Neighbor graph [2]_ combined with
-        Miniumus Spanning Tree.
+            Miniumus Spanning Tree.
         - 'precomputed' assumes that data is already provided as adjacency matrix of a
-        sparse graph.
+            sparse graph.
 
     k : int, default=5
         Number of neighbors considered in graph construction. This parameter is expected
         to be positive.
 
     delta : float, default=1.0
-        Density parameter for Continunous k-Nearest Neighbor graph. This parameter is
-        expected to be positive.
+        Density parameter for Continunous k-Nearest Neighbor graph. This parameter is expected
+        to be positive.
 
     distance_threshold : float, optional
         Optional thresholding of distance matrix.
 
-    **pgs_kwargs : dict, optional
+    pgs_kwargs : dict, optional
         Parameters for PyGenStability, see documentation. Some possible arguments:
+
         - constructor (str/function): name of the generalized Markov Stability constructor,
-        or custom constructor function. It must have two arguments, graph and scale.
+            or custom constructor function. It must have two arguments, graph and scale.
         - min_scale (float): minimum Markov scale
         - max_scale (float): maximum Markov scale
         - n_scale (int): number of scale steps
         - with_spectral_gap (bool): normalise scale by spectral gap
 
-    Attributes:
-    -----------
-    adjacency_ : sparse matrix of shape (n_samples,n_samples)
+    Attributes
+    ----------
+    adjacency_ : sparse matrix of shape (n_samples, n_samples)
         Sparse adjacency matrix of constructed graph.
 
     results_ : dict
@@ -135,12 +136,12 @@ class DataClustering(_GraphConstruction):
     labels_ : list of ndarray
         List of robust partitions identified with optimal scale selection.
 
-    References:
-    -----------
-        .. [1] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale
+    References
+    ----------
+    .. [1] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale
         community detection', *Applied Network Science*, vol. 5, no. 1, p. 3,
         Dec. 2020, doi: 10.1007/s41109-019-0248-7.
-        .. [2] T. Berry and T. Sauer, 'Consistent manifold representation for
+    .. [2] T. Berry and T. Sauer, 'Consistent manifold representation for
         topological data analysis', *Foundations of Data Science*, vol. 1, no. 1,
         p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.
     """
@@ -192,13 +193,13 @@ class DataClustering(_GraphConstruction):
     def fit(self, X):
         """Fit multiscale graph-based data clustering with PyGenStability from data.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         X : {array-like, sparse matrix} of shape (n_samples,n_features) or \
             (n_samples,n_samples) if graph_method='precomputed'
             Data to fit
 
-        Returns:
+        Returns
         -------
         self : DataClustering
             The fitted multiscale graph-based data clustering.
@@ -214,8 +215,8 @@ class DataClustering(_GraphConstruction):
     def scale_selection(self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01):
         """Identify optimal scales [3].
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         kernel_size : int or float, default=0.1
             Size of kernel for average-pooling of the NVI(t,t') matrix. If float smaller
             than one it's the relative number of scales.
@@ -231,13 +232,13 @@ class DataClustering(_GraphConstruction):
             Radius of basin around local minima of the pooled diagonal. If float smaller
             than one it's the relative number of scales.
 
-        Returns:
-        --------
+        Returns
+        -------
         labels_ : list of ndarray
             List of robust partitions identified with optimal scale selection.
 
-        References:
-        -----------
+        References
+        ----------
         .. [3] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
@@ -272,7 +273,7 @@ class DataClustering(_GraphConstruction):
     ):
         """Plot robust partitions with graph layout.
 
-        Parameters:
+        Parameters
         ----------
         x_coord : ndarray of shape (n_samples,)
             X-coordinates provided for samples.
@@ -292,8 +293,8 @@ class DataClustering(_GraphConstruction):
         show : book, default=True
             Show the figures.
 
-        Returns:
-        --------
+        Returns
+        -------
         figs : All matplotlib figures
 
         """
@@ -335,8 +336,8 @@ class DataClustering(_GraphConstruction):
     ):
         """Plot Sankey diagram.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         optimal_scales : bool, default=True
             Plot Sankey diagram of robust partitions only or not.
 
@@ -349,8 +350,8 @@ class DataClustering(_GraphConstruction):
         scale_index : bool
             Plot Sankey diagram for provided scale indices.
 
-        Returns:
-        --------
+        Returns
+        -------
         fig : plotly figure
             Sankey diagram figure.
         """
