@@ -158,6 +158,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../constructors.html">Constructors module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../app.html">The pygenstability cli</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dataclustering.html">DataClustering module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../optimal_scales.html">Optimal scales module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../io.html">I/O module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/example.html">Example: Markov Stability with PyGenStability</a></li>
@@ -196,12 +197,18 @@
         <article role="main">
           <h1>Source code for pygenstability.plotting</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Plotting functions.&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">matplotlib</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Please install networkx via pip install &quot;pygenstability[networkx]&quot; for full plotting.&#39;</span><span class="p">)</span>
+
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">gridspec</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">patches</span>

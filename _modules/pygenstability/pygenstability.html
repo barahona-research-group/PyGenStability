@@ -158,6 +158,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../constructors.html">Constructors module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../app.html">The pygenstability cli</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dataclustering.html">DataClustering module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../optimal_scales.html">Optimal scales module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../io.html">I/O module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/example.html">Example: Markov Stability with PyGenStability</a></li>
@@ -208,6 +209,7 @@
 <span class="sd">Markov Stability setting, and can be parametrised via built-in constructors, or specified by</span>
 <span class="sd">the user via the constructor module.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
@@ -216,15 +218,27 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
 
-<span class="kn">import</span> <span class="nn">igraph</span> <span class="k">as</span> <span class="nn">ig</span>
-<span class="kn">import</span> <span class="nn">leidenalg</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">igraph</span> <span class="k">as</span> <span class="nn">ig</span>
+    <span class="kn">import</span> <span class="nn">leidenalg</span>
+
+    <span class="n">_NO_LEIDEN</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">_NO_LEIDEN</span> <span class="o">=</span> <span class="kc">True</span>
+
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">mutual_info_score</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics.cluster</span> <span class="kn">import</span> <span class="n">entropy</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span> <span class="nn">pygenstability</span> <span class="kn">import</span> <span class="n">generalized_louvain</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">pygenstability</span> <span class="kn">import</span> <span class="n">generalized_louvain</span>
+
+    <span class="n">_NO_LOUVAIN</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">_NO_LOUVAIN</span> <span class="o">=</span> <span class="kc">True</span>
+
 <span class="kn">from</span> <span class="nn">pygenstability.constructors</span> <span class="kn">import</span> <span class="n">load_constructor</span>
 <span class="kn">from</span> <span class="nn">pygenstability.io</span> <span class="kn">import</span> <span class="n">save_results</span>
 <span class="kn">from</span> <span class="nn">pygenstability.optimal_scales</span> <span class="kn">import</span> <span class="n">identify_optimal_scales</span>
@@ -294,8 +308,27 @@
 <span class="nd">@_timing</span>
 <span class="k">def</span> <span class="nf">_get_constructor_data</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">tqdm_disable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
-        <span class="n">tqdm</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">constructor</span><span class="o">.</span><span class="n">get_data</span><span class="p">,</span> <span class="n">scales</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scales</span><span class="p">),</span> <span class="n">disable</span><span class="o">=</span><span class="n">tqdm_disable</span><span class="p">)</span>
+        <span class="n">tqdm</span><span class="p">(</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">constructor</span><span class="o">.</span><span class="n">get_data</span><span class="p">,</span> <span class="n">scales</span><span class="p">),</span>
+            <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">scales</span><span class="p">),</span>
+            <span class="n">disable</span><span class="o">=</span><span class="n">tqdm_disable</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_method</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+    <span class="k">if</span> <span class="n">_NO_LEIDEN</span> <span class="ow">and</span> <span class="n">_NO_LOUVAIN</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Without Louvain or Leiden solver, we cannot run PyGenStability&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;louvain&quot;</span> <span class="ow">and</span> <span class="n">_NO_LOUVAIN</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Louvain is not available, we fallback to leiden.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;leiden&quot;</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;leiden&quot;</span> <span class="ow">and</span> <span class="n">_NO_LEIDEN</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Leiden is not available, we fallback to louvain.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;louvain&quot;</span>
+
+    <span class="k">return</span> <span class="n">method</span>
 
 
 <div class="viewcode-block" id="run"><a class="viewcode-back" href="../../pygenstability.html#pygenstability.pygenstability.run">[docs]</a><span class="nd">@_timing</span>
@@ -364,10 +397,14 @@
 <span class="sd">            - &#39;run_params&#39;: dict with parameters used to run the code</span>
 <span class="sd">            - &#39;scales&#39;: scales of the scan</span>
 <span class="sd">            - &#39;number_of_communities&#39;: number of communities at each scale</span>
+<span class="sd">            - &#39;stability&#39;: value of stability cost function at each scale</span>
 <span class="sd">            - &#39;community_id&#39;: community node labels at each scale</span>
-<span class="sd">            - &#39;NVI&#39;: NVI at each scale</span>
-<span class="sd">            - &#39;ttprime&#39;: ttprime matrix</span>
+<span class="sd">            - &#39;NVI&#39;: NVI(t) at each scale</span>
+<span class="sd">            - &#39;ttprime&#39;: NVI(t,tprime) matrix</span>
+<span class="sd">            - &#39;block_detection_curve&#39;: block detection curve (included if with_optimal_scales==True)</span>
+<span class="sd">            - &#39;selected_partitions&#39;: selected partitions (included if with_optimal_scales==True)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">_check_method</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
     <span class="n">run_params</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">_graph_checks</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">_get_scales</span><span class="p">(</span>
@@ -414,7 +451,7 @@
 
         <span class="k">if</span> <span class="n">with_postprocessing</span><span class="p">:</span>
             <span class="n">L</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Apply postprocessing...&quot;</span><span class="p">)</span>
-            <span class="n">_apply_postprocessing</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">constructor_data</span><span class="p">,</span> <span class="n">tqdm_disable</span><span class="p">)</span>
+            <span class="n">_apply_postprocessing</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">constructor_data</span><span class="p">,</span> <span class="n">tqdm_disable</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">with_ttprime</span> <span class="ow">or</span> <span class="n">with_optimal_scales</span><span class="p">:</span>
             <span class="n">L</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Compute ttprimes...&quot;</span><span class="p">)</span>
@@ -525,7 +562,10 @@
         <span class="k">for</span> <span class="n">null</span> <span class="ow">in</span> <span class="n">null_model</span><span class="p">[::</span><span class="mi">2</span><span class="p">]:</span>
             <span class="n">partitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">leidenalg</span><span class="o">.</span><span class="n">CPMVertexPartition</span><span class="p">(</span>
-                    <span class="n">G</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">quality_values</span><span class="p">,</span> <span class="n">node_sizes</span><span class="o">=</span><span class="n">null</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">correct_self_loops</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="n">G</span><span class="p">,</span>
+                    <span class="n">weights</span><span class="o">=</span><span class="n">quality_values</span><span class="p">,</span>
+                    <span class="n">node_sizes</span><span class="o">=</span><span class="n">null</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="n">correct_self_loops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="n">optimiser</span> <span class="o">=</span> <span class="n">leidenalg</span><span class="o">.</span><span class="n">Optimiser</span><span class="p">()</span>
@@ -539,18 +579,34 @@
     <span class="k">return</span> <span class="n">stability</span> <span class="o">+</span> <span class="n">global_shift</span><span class="p">,</span> <span class="n">community_id</span>
 
 
-<span class="k">def</span> <span class="nf">_evaluate_quality</span><span class="p">(</span><span class="n">partition_id</span><span class="p">,</span> <span class="n">qualities_index</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_evaluate_quality</span><span class="p">(</span><span class="n">partition_id</span><span class="p">,</span> <span class="n">qualities_index</span><span class="p">,</span> <span class="n">null_model</span><span class="p">,</span> <span class="n">global_shift</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;louvain&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Worker for generalized Markov Stability optimisation runs.&quot;&quot;&quot;</span>
-    <span class="n">quality</span> <span class="o">=</span> <span class="n">generalized_louvain</span><span class="o">.</span><span class="n">evaluate_quality</span><span class="p">(</span>
-        <span class="n">qualities_index</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-        <span class="n">qualities_index</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
-        <span class="n">qualities_index</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-        <span class="nb">len</span><span class="p">(</span><span class="n">qualities_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="n">null_model</span><span class="p">,</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">null_model</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-        <span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">partition_id</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;louvain&quot;</span><span class="p">:</span>
+        <span class="n">quality</span> <span class="o">=</span> <span class="n">generalized_louvain</span><span class="o">.</span><span class="n">evaluate_quality</span><span class="p">(</span>
+            <span class="n">qualities_index</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">qualities_index</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">qualities_index</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">qualities_index</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">null_model</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">null_model</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">partition_id</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;leiden&quot;</span><span class="p">:</span>
+        <span class="n">quality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">leidenalg</span><span class="o">.</span><span class="n">CPMVertexPartition</span><span class="p">(</span>
+                    <span class="n">ig</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">edges</span><span class="o">=</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">qualities_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">directed</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                    <span class="n">initial_membership</span><span class="o">=</span><span class="n">partition_id</span><span class="p">,</span>
+                    <span class="n">weights</span><span class="o">=</span><span class="n">qualities_index</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">node_sizes</span><span class="o">=</span><span class="n">null</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="n">correct_self_loops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">quality</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">null</span> <span class="ow">in</span> <span class="n">null_model</span><span class="p">[::</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">quality</span> <span class="o">+</span> <span class="n">global_shift</span>
 
 
@@ -587,7 +643,7 @@
 
 
 <span class="nd">@_timing</span>
-<span class="k">def</span> <span class="nf">_apply_postprocessing</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">constructors</span><span class="p">,</span> <span class="n">tqdm_disable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_apply_postprocessing</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">constructors</span><span class="p">,</span> <span class="n">tqdm_disable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;louvain&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Apply postprocessing.&quot;&quot;&quot;</span>
     <span class="n">all_results_raw</span> <span class="o">=</span> <span class="n">all_results</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
@@ -599,6 +655,7 @@
             <span class="n">qualities_index</span><span class="o">=</span><span class="n">_to_indices</span><span class="p">(</span><span class="n">constructor</span><span class="p">[</span><span class="s2">&quot;quality&quot;</span><span class="p">]),</span>
             <span class="n">null_model</span><span class="o">=</span><span class="n">constructor</span><span class="p">[</span><span class="s2">&quot;null_model&quot;</span><span class="p">],</span>
             <span class="n">global_shift</span><span class="o">=</span><span class="n">constructor</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shift&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">best_quality_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span>
             <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>

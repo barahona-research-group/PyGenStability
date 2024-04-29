@@ -159,6 +159,7 @@
 <li class="toctree-l1"><a class="reference internal" href="constructors.html">Constructors module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="app.html">The pygenstability cli</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataclustering.html">DataClustering module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optimal_scales.html">Optimal scales module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io.html">I/O module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/example.html">Example: Markov Stability with PyGenStability</a></li>
@@ -203,41 +204,56 @@ We further provide specific analysis tools to process and analyse the results fr
 <a class="reference external image-reference" href="../artwork/diffusion_schematic.png"><img alt="illustration" src="_images/diffusion_schematic.png" /></a>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
-<p>The wrapper uses Pybind11 <a class="reference external" href="https://github.com/pybind/pybind11">https://github.com/pybind/pybind11</a> and the package can simply be installed by first cloning this repo with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="o">--</span><span class="n">recurse</span><span class="o">-</span><span class="n">submodules</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">ImperialCollegeLondon</span><span class="o">/</span><span class="n">PyGenStability</span><span class="o">.</span><span class="n">git</span>
+<p>You can install the package using <a class="reference external" href="https://pypi.org/project/PyGenStability/">pypi</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygenstability
+</pre></div>
+</div>
+<p>Using a fresh python3 virtual environment, e.g. conda, may be recommended to avoid conflicts with other python packages.</p>
+<p>By default, the package uses the Louvain algorithm [4] for optimizing generalized Markov Stability. To use the Leiden algorithm [5], install this package with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygenstability<span class="o">[</span>leiden<span class="o">]</span>
+</pre></div>
+</div>
+<p>To plot network partitions using <code class="docutils literal notranslate"><span class="pre">networkx</span></code>, install this package with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygenstability<span class="o">[</span>networkx<span class="o">]</span>
+</pre></div>
+</div>
+<p>To use <code class="docutils literal notranslate"><span class="pre">plotly</span></code> for interactive plots in the browser, install this package with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygenstability<span class="o">[</span>plotly<span class="o">]</span>
+</pre></div>
+</div>
+<p>To install all dependencies, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygenstability<span class="o">[</span>all<span class="o">]</span>
+</pre></div>
+</div>
+<section id="installation-from-github">
+<h3>Installation from GitHub<a class="headerlink" href="#installation-from-github" title="Permalink to this heading">#</a></h3>
+<p>You can also install the source code of this package from GitHub directly by first cloning this repo with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone --recurse-submodules https://github.com/ImperialCollegeLondon/PyGenStability.git
 </pre></div>
 </div>
 <p>(if the <code class="docutils literal notranslate"><span class="pre">--recurse-submodules</span></code> has not been used, just do <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">update</span> <span class="pre">--init</span> <span class="pre">--recursive</span></code> to fetch the submodule with M. Schaub’s code).</p>
-<p>Then, to install the package, simply run</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
+<p>The wrapper for the submodule uses Pybind11 <a class="reference external" href="https://github.com/pybind/pybind11">https://github.com/pybind/pybind11</a> and, to install the package, simply run (within the <code class="docutils literal notranslate"><span class="pre">PyGenStability</span></code> directory):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install .
 </pre></div>
 </div>
-<p>using a fresh <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code> in python3 may be recommended to avoid conflict of python packages.</p>
-<p>To use plotly for interactive plots in the browser, install this package with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span><span class="p">[</span><span class="n">plotly</span><span class="p">]</span>
+<p>using a fresh python3 virtual environment to avoid conflicts. Similar to above, you can also specify additional dependencies, e.g. to install the package with <code class="docutils literal notranslate"><span class="pre">networkx</span></code> run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install .<span class="o">[</span>networkx<span class="o">]</span>
 </pre></div>
 </div>
-<p>To use a contrib module, with additional tools, run</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span><span class="p">[</span><span class="n">contrib</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>To install all dependencies, run</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span><span class="p">[</span><span class="nb">all</span><span class="p">]</span>
-</pre></div>
-</div>
+</section>
 </section>
 <section id="using-the-code">
 <h2>Using the code<a class="headerlink" href="#using-the-code" title="Permalink to this heading">#</a></h2>
 <p>The code is simple to run with the default settings. We can input our graph (of type scipy.csgraph), run a scan in scales with a chosen Markov Stability constructor and plot the results in a summary figure presenting different partition quality measures across scales (values of MS cost function, number of communities, etc.) with an indication of optimal scales.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pygenstability</span> <span class="k">as</span> <span class="nn">pgs</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pygenstability</span> <span class="k">as</span> <span class="nn">pgs</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
 <span class="n">pgs</span><span class="o">.</span><span class="n">plot_scan</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Although it is enforced in the code, it is advised to set environment variables</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">OPENBLAS_NUM_THREADS</span><span class="o">=</span><span class="mi">1</span>
-<span class="n">export</span> <span class="n">OMP_NUM_THREADS</span><span class="o">=</span><span class="mi">1</span>
-<span class="n">export</span> <span class="n">NUMEXPR_MAX_THREADS</span><span class="o">=</span><span class="mi">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">OPENBLAS_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span> <span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span> <span class="nv">NUMEXPR_MAX_THREADS</span><span class="o">=</span><span class="m">1</span>
 </pre></div>
 </div>
 <p>to ensure numpy does not use multi-threadings, which may clash with the parallelisation and slow down the computation.</p>
@@ -247,7 +263,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <li><p>Generalized Markov Stability maximizers: To maximize the NP-hard optimal generalized Markov Stability we interface with two algorithms: (i) Louvain and (ii) Leiden.</p></li>
 </ul>
 <p>While Louvain is defined as the default due to its familiarity within the research community, Leiden is known to produce better partitions and can be used by specifying the run function.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;leiden&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;leiden&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>There are also additional post-processing and analysis functions, including:</p>
@@ -256,7 +272,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <li><p>Automated optimal scale selection.</p></li>
 </ul>
 <p>Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see <code class="docutils literal notranslate"><span class="pre">pygenstability/optimal_scales.py</span></code>. To reduce noise, e.g., one can increase the parameter values for <code class="docutils literal notranslate"><span class="pre">block_size</span></code> and <code class="docutils literal notranslate"><span class="pre">window_size</span></code>. The optimal network partitions can then be plotted given a NetworkX nx_graph.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">identify_optimal_scales</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">identify_optimal_scales</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">pgs</span><span class="o">.</span><span class="n">plot_optimal_partitions</span><span class="p">(</span><span class="n">nx_graph</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -279,6 +295,29 @@ We further provide specific analysis tools to process and analyse the results fr
 <li><p>take a scipy.csgraph <code class="docutils literal notranslate"><span class="pre">graph</span></code> and a float <code class="docutils literal notranslate"><span class="pre">time</span></code> as argument</p></li>
 <li><p>return a <code class="docutils literal notranslate"><span class="pre">quality_matrix</span></code> (sparse scipy matrix) and a <code class="docutils literal notranslate"><span class="pre">null_model</span></code> (multiples of two, in a numpy array)</p></li>
 </ul>
+</section>
+<section id="graph-based-data-clustering">
+<h2>Graph-based data clustering<a class="headerlink" href="#graph-based-data-clustering" title="Permalink to this heading">#</a></h2>
+<p>PyGenStability can also be used to perform multiscale graph-based data clustering on data that comes in the form of a sample-by-feature matrix. This approach was shown to achieve better performance than other popular clustering methods without the need of setting the number of clusters externally [9].</p>
+<p>We provide an easy-to-use interface in our <code class="docutils literal notranslate"><span class="pre">pygenstability.data_clustering.py</span></code> module. Given a sample-by-feature matrix <code class="docutils literal notranslate"><span class="pre">X</span></code>, one can apply graph-based data clustering as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">clustering</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">DataClustering</span><span class="p">(</span>
+    <span class="n">graph_method</span><span class="o">=</span><span class="s2">&quot;cknn&quot;</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">constructor</span><span class="o">=</span><span class="s2">&quot;continuous_normalized&quot;</span><span class="p">)</span>
+
+<span class="c1"># apply graph-based data clustering to X</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">clustering</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1"># identify optimal scales and plot scan</span>
+<span class="n">clustering</span><span class="o">.</span><span class="n">scale_selection</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">clustering</span><span class="o">.</span><span class="n">plot_scan</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by <code class="docutils literal notranslate"><span class="pre">graph_method</span></code>) and <code class="docutils literal notranslate"><span class="pre">k</span></code> refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot robust partitions</span>
+<span class="n">clustering</span><span class="o">.</span><span class="n">plot_robust_partitions</span><span class="p">(</span><span class="n">x_coord</span><span class="o">=</span><span class="n">x_coord</span><span class="p">,</span><span class="n">y_coord</span><span class="o">=</span><span class="n">y_coord</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="contributors">
 <h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this heading">#</a></h2>
@@ -319,11 +358,11 @@ We further provide specific analysis tools to process and analyse the results fr
 <section id="run-example">
 <h2>Run example<a class="headerlink" href="#run-example" title="Permalink to this heading">#</a></h2>
 <p>In the <code class="docutils literal notranslate"><span class="pre">example</span></code> folder, a demo script with a stochastic block model can be tried with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">simple_example</span><span class="o">.</span><span class="n">py</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python simple_example.py
 </pre></div>
 </div>
 <p>or using the click app:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run_simple_example</span><span class="o">.</span><span class="n">sh</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./run_simple_example.sh
 </pre></div>
 </div>
 <p>Other examples can be found as jupyter-notebooks in the <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory, including:</p>
@@ -334,6 +373,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <li><p>Example 4: Custom constructors</p></li>
 <li><p>Example 5: Hypergraphs</p></li>
 <li><p>Example 6: Signed networks</p></li>
+<li><p>Example 7: Graph-based data clustering</p></li>
 </ul>
 <p>Finally, we provide applications to real-world networks in the <code class="docutils literal notranslate"><span class="pre">examples/real_examples/</span></code> directory, including:</p>
 <ul class="simple">
@@ -361,8 +401,10 @@ We further provide specific analysis tools to process and analyse the results fr
 <p>[4] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, ‘Fast unfolding of communities in large networks’, <em>J. Stat. Mech.</em>, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.</p>
 <p>[5] V. A. Traag, L. Waltman, and N. J. van Eck, ‘From Louvain to Leiden: guaranteeing well-connected communities’, <em>Sci Rep</em>, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.</p>
 <p>[6] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction of Human Movement’, <em>Royal Society Open Science</em>, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.</p>
-<p>[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, ‘PyGenStability: Multiscale community detection with generalized Markov Stability‘, <em>arXiv pre-print</em>, Mar. 2023, doi: 10.48550/arXiv.2303.05385.</p>
-<p>[8] S. Gómez, P. Jensen, and A. Arenas, ‘Analysis of community structure in networks of correlated data‘. <em>Physical Review E</em>, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.</p>
+<p>[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, ‘PyGenStability: Multiscale community detection with generalized Markov Stability’, <em>arXiv pre-print</em>, Mar. 2023, doi: 10.48550/arXiv.2303.05385.</p>
+<p>[8] S. Gomez, P. Jensen, and A. Arenas, ‘Analysis of community structure in networks of correlated data’. <em>Physical Review E</em>, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.</p>
+<p>[9] Z. Liu and M. Barahona, ‘Graph-based data clustering via multiscale community detection’, <em>Applied Network Science</em>, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.</p>
+<p>[10] T. Berry and T. Sauer, ‘Consistent manifold representation for topological data analysis’, <em>Foundations of Data Science</em>, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.</p>
 </section>
 <section id="licence">
 <h2>Licence<a class="headerlink" href="#licence" title="Permalink to this heading">#</a></h2>
@@ -406,6 +448,12 @@ We further provide specific analysis tools to process and analyse the results fr
 <li class="toctree-l2"><a class="reference internal" href="plotting.html#pygenstability.plotting.plot_communities_matrix"><code class="docutils literal notranslate"><span class="pre">plot_communities_matrix()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="plotting.html#pygenstability.plotting.plot_scan_plt"><code class="docutils literal notranslate"><span class="pre">plot_scan_plt()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="plotting.html#pygenstability.plotting.plot_clustered_adjacency"><code class="docutils literal notranslate"><span class="pre">plot_clustered_adjacency()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dataclustering.html">DataClustering module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataclustering.html#pygenstability.DataClustering.adjacency_"><code class="docutils literal notranslate"><span class="pre">adjacency_</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataclustering.html#pygenstability.DataClustering.results_"><code class="docutils literal notranslate"><span class="pre">results_</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataclustering.html#pygenstability.DataClustering.labels_"><code class="docutils literal notranslate"><span class="pre">labels_</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="optimal_scales.html">Optimal scales module</a><ul>
@@ -468,9 +516,13 @@ We further provide specific analysis tools to process and analyse the results fr
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#"><em>PyGenStability</em></a><ul>
-<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#installation-from-github">Installation from GitHub</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#using-the-code">Using the code</a></li>
 <li><a class="reference internal" href="#constructors">Constructors</a></li>
+<li><a class="reference internal" href="#graph-based-data-clustering">Graph-based data clustering</a></li>
 <li><a class="reference internal" href="#contributors">Contributors</a></li>
 <li><a class="reference internal" href="#cite">Cite</a></li>
 <li><a class="reference internal" href="#run-example">Run example</a></li>

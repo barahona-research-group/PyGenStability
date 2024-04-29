@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Example: Markov Stability with PyGenStability" href="examples/example.html" /><link rel="prev" title="Optimal scales module" href="optimal_scales.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Optimal scales module" href="optimal_scales.html" /><link rel="prev" title="Plotting module" href="plotting.html" />
 
     <!-- Generated with Sphinx 5.2.3 and Furo 2022.12.07 -->
-        <title>I/O module - PyGenStability documentation</title>
+        <title>DataClustering module - PyGenStability documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -159,9 +159,9 @@
 <li class="toctree-l1"><a class="reference internal" href="constructors.html">Constructors module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="app.html">The pygenstability cli</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dataclustering.html">DataClustering module</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">DataClustering module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optimal_scales.html">Optimal scales module</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">I/O module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">I/O module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/example.html">Example: Markov Stability with PyGenStability</a></li>
 </ul>
 
@@ -197,21 +197,127 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-pygenstability.io">
-<span id="i-o-module"></span><h1>I/O module<a class="headerlink" href="#module-pygenstability.io" title="Permalink to this heading">#</a></h1>
-<p>I/O functions.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="pygenstability.io.save_results">
-<span class="sig-prename descclassname"><span class="pre">pygenstability.io.</span></span><span class="sig-name descname"><span class="pre">save_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'results.pkl'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/io.html#save_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.io.save_results" title="Permalink to this definition">#</a></dt>
-<dd><p>Save results in a pickle.</p>
+          <section id="module-pygenstability.DataClustering">
+<span id="dataclustering-module"></span><h1>DataClustering module<a class="headerlink" href="#module-pygenstability.DataClustering" title="Permalink to this heading">#</a></h1>
+<p>Class for multiscale graph-based data clustering.</p>
+<p>This class provides an interface for multiscale graph-based data clustering <a class="footnote-reference brackets" href="#id3" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>
+with PyGenStability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param metric<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The distance metric to use. The distance function can be ‘braycurtis’, ‘canberra’,
+‘chebyshev’, ‘cityblock’, ‘correlation’, ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’,
+‘jaccard’, ‘jensenshannon’, ‘kulczynski1’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
+‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’,
+‘sqeuclidean’, ‘yule’.</p>
+</dd>
+<dt class="field-even">type metric<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or function, default=’euclidean’</p>
+</dd>
+<dt class="field-odd">param graph_method<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Method to construct graph from sample-by-feature matrix:</p>
+<ul class="simple">
+<li><p>‘knn-mst’ will use k-Nearest Neighbor graph combined with Miniumus Spanning Tree.</p></li>
+<li><dl class="simple">
+<dt>‘cknn-mst’ will use Continunous k-Nearest Neighbor graph <a class="footnote-reference brackets" href="#id4" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> combined with</dt><dd><p>Miniumus Spanning Tree.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>‘precomputed’ assumes that data is already provided as adjacency matrix of a</dt><dd><p>sparse graph.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt class="field-even">type graph_method<span class="colon">:</span></dt>
+<dd class="field-even"><p>{‘knn-mst’, ‘cknn-mst’, ‘precomputed’}, default=’cknn-mst’</p>
+</dd>
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of neighbors considered in graph construction. This parameter is expected
+to be positive.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, default=5</p>
+</dd>
+<dt class="field-odd">param delta<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Density parameter for Continunous k-Nearest Neighbor graph. This parameter is expected
+to be positive.</p>
+</dd>
+<dt class="field-even">type delta<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, default=1.0</p>
+</dd>
+<dt class="field-odd">param distance_threshold<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional thresholding of distance matrix.</p>
+</dd>
+<dt class="field-even">type distance_threshold<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional</p>
+</dd>
+<dt class="field-odd">param pgs_kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Parameters for PyGenStability, see documentation. Some possible arguments:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>constructor (str/function): name of the generalized Markov Stability constructor,</dt><dd><p>or custom constructor function. It must have two arguments, graph and scale.</p>
+</dd>
+</dl>
+</li>
+<li><p>min_scale (float): minimum Markov scale</p></li>
+<li><p>max_scale (float): maximum Markov scale</p></li>
+<li><p>n_scale (int): number of scale steps</p></li>
+<li><p>with_spectral_gap (bool): normalise scale by spectral gap</p></li>
+</ul>
+</dd>
+<dt class="field-even">type pgs_kwargs<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict, optional</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pygenstability.DataClustering.adjacency_">
+<span class="sig-prename descclassname"><span class="pre">pygenstability.DataClustering.</span></span><span class="sig-name descname"><span class="pre">adjacency_</span></span><a class="headerlink" href="#pygenstability.DataClustering.adjacency_" title="Permalink to this definition">#</a></dt>
+<dd><p>Sparse adjacency matrix of constructed graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sparse matrix of shape (n_samples, n_samples)</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="pygenstability.io.load_results">
-<span class="sig-prename descclassname"><span class="pre">pygenstability.io.</span></span><span class="sig-name descname"><span class="pre">load_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'results.pkl'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/io.html#load_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.io.load_results" title="Permalink to this definition">#</a></dt>
-<dd><p>Load results from a pickle.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pygenstability.DataClustering.results_">
+<span class="sig-prename descclassname"><span class="pre">pygenstability.DataClustering.</span></span><span class="sig-name descname"><span class="pre">results_</span></span><a class="headerlink" href="#pygenstability.DataClustering.results_" title="Permalink to this definition">#</a></dt>
+<dd><p>PyGenStability results dictionary, see documentation for all arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pygenstability.DataClustering.labels_">
+<span class="sig-prename descclassname"><span class="pre">pygenstability.DataClustering.</span></span><span class="sig-name descname"><span class="pre">labels_</span></span><a class="headerlink" href="#pygenstability.DataClustering.labels_" title="Permalink to this definition">#</a></dt>
+<dd><p>List of robust partitions identified with optimal scale selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id3" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Z. Liu and M. Barahona, ‘Graph-based data clustering via multiscale
+community detection’, <em>Applied Network Science</em>, vol. 5, no. 1, p. 3,
+Dec. 2020, doi: 10.1007/s41109-019-0248-7.</p>
+</aside>
+<aside class="footnote brackets" id="id4" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
+<p>T. Berry and T. Sauer, ‘Consistent manifold representation for
+topological data analysis’, <em>Foundations of Data Science</em>, vol. 1, no. 1,
+p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.</p>
+</aside>
+</aside>
 </section>
 
         </article>
@@ -219,23 +325,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="examples/example.html">
+          <a class="next-page" href="optimal_scales.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Example: Markov Stability with PyGenStability</div>
+                <div class="title">Optimal scales module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="optimal_scales.html">
+          <a class="prev-page" href="plotting.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Optimal scales module</div>
+                <div class="title">Plotting module</div>
                 
               </div>
             </a>
@@ -269,9 +375,10 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">I/O module</a><ul>
-<li><a class="reference internal" href="#pygenstability.io.save_results"><code class="docutils literal notranslate"><span class="pre">save_results()</span></code></a></li>
-<li><a class="reference internal" href="#pygenstability.io.load_results"><code class="docutils literal notranslate"><span class="pre">load_results()</span></code></a></li>
+<li><a class="reference internal" href="#">DataClustering module</a><ul>
+<li><a class="reference internal" href="#pygenstability.DataClustering.adjacency_"><code class="docutils literal notranslate"><span class="pre">adjacency_</span></code></a></li>
+<li><a class="reference internal" href="#pygenstability.DataClustering.results_"><code class="docutils literal notranslate"><span class="pre">results_</span></code></a></li>
+<li><a class="reference internal" href="#pygenstability.DataClustering.labels_"><code class="docutils literal notranslate"><span class="pre">labels_</span></code></a></li>
 </ul>
 </li>
 </ul>
