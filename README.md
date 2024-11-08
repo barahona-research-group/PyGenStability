@@ -103,7 +103,7 @@ There are also additional post-processing and analysis functions, including:
 Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimal network partitions can then be plotted given a NetworkX nx_graph.
 
 ```python
-results = pgs.identify_optimal_scales(results, block_size=10, window_size=5)
+results = pgs.identify_optimal_scales(results, kernel_size=10, window_size=5)
 pgs.plot_optimal_partitions(nx_graph, results)
 ```
 
@@ -134,7 +134,7 @@ We provide an easy-to-use interface in our `pygenstability.data_clustering.py` m
 
 ```python
 clustering = pgs.DataClustering(
-    graph_method="cknn",
+    graph_method="cknn-mst",
     k=5,
     constructor="continuous_normalized")
 
@@ -146,7 +146,7 @@ clustering.scale_selection(kernel_size=0.2)
 clustering.plot_scan()
 ```
 
-We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by `graph_method`) and `k` refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:
+We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by `graph_method`) augmented with the minimum spanning tree to guarentee connectivity, where `k` refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:
 
 ```python
 # plot robust partitions
@@ -168,11 +168,13 @@ Please cite our paper if you use this code in your own work:
 ```
 @article{pygenstability,
   author = {Arnaudon, Alexis and Schindler, Dominik J. and Peach, Robert L. and Gosztolai, Adam and Hodges, Maxwell and Schaub, Michael T. and Barahona, Mauricio},  
-  title = {PyGenStability: Multiscale community detection with generalized Markov Stability},
-  publisher = {arXiv},
-  year = {2023},
-  doi = {10.48550/ARXIV.2303.05385},
-  url = {https://arxiv.org/abs/2303.05385}
+  title = {Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability},
+  journal = {ACM Trans. Math. Softw.},
+  volume = {50},
+  number = {2},
+  pages = {15:1–15:8}
+  year = {2024},
+  doi = {10.1145/3651225}
 }
 ```
 
@@ -248,7 +250,7 @@ If you are interested in trying our other packages, see the below list:
 
 [6] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and the Restriction of Human Movement', *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
 
-[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'PyGenStability: Multiscale community detection with generalized Markov Stability', *arXiv pre-print*, Mar. 2023, doi: 10.48550/arXiv.2303.05385.
+[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability', *ACM Trans. Math. Softw.*, vol. 50, no. 2, p. 15:1–15:8, Jun. 2024, doi: 10.1145/3651225.
 
 [8] S. Gomez, P. Jensen, and A. Arenas, 'Analysis of community structure in networks of correlated data'. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
 
