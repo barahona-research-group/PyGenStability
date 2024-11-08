@@ -1800,7 +1800,7 @@ labels:
   - 25.0
   - 25.0
 results:
-  block_detection_curve:
+  block_nvi:
   - .nan
   - 0.10668153950024195
   - 0.08542249390900095

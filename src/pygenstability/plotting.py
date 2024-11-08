@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 try:
     import networkx as nx
 except ImportError:  # pragma: no cover
-    print('Please install networkx via pip install "pygenstability[networkx]" for full plotting.')
+    print(
+        'Please install networkx via pip install "pygenstability[networkx]" for full plotting.'
+    )
 
 import numpy as np
 from matplotlib import gridspec
@@ -48,7 +50,9 @@ def plot_scan(
         plotly_filename (str): filename of .html figure from plotly
     """
     if len(all_results["scales"]) == 1:  # pragma: no cover
-        L.info("Cannot plot the results if only one scale point, we display the result instead:")
+        L.info(
+            "Cannot plot the results if only one scale point, we display the result instead:"
+        )
         L.info(all_results)
         return None
 
@@ -263,7 +267,11 @@ def plot_optimal_partitions(
 
     for optimal_scale_id in selected_scales:
         plot_single_partition(
-            graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
+            graph,
+            all_results,
+            optimal_scale_id,
+            edge_color=edge_color,
+            edge_width=edge_width,
         )
         plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
         if show:  # pragma: no cover
@@ -271,7 +279,12 @@ def plot_optimal_partitions(
 
 
 def plot_communities(
-    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
+    graph,
+    all_results,
+    folder="communities",
+    edge_color="0.5",
+    edge_width=0.5,
+    ext=".pdf",
 ):
     """Plot the community structures at each scale in a folder.
 
@@ -293,12 +306,16 @@ def plot_communities(
         plot_single_partition(
             graph, all_results, scale_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
+        plt.savefig(
+            os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight"
+        )
         plt.close()
     matplotlib.use(mpl_backend)
 
 
-def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext=".pdf"):
+def plot_communities_matrix(
+    graph, all_results, folder="communities_matrix", ext=".pdf"
+):
     """Plot communities at all scales in matrix form.
 
     Args:
@@ -327,7 +344,9 @@ def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext
             plt.plot((lines[i + 1], lines[i + 1]), (lines[i + 1], lines[i]), c="k")
             plt.plot((lines[i + 1], lines[i]), (lines[i + 1], lines[i + 1]), c="k")
 
-        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
+        plt.savefig(
+            os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight"
+        )
 
 
 def _get_scales(all_results, scale_axis=True):
@@ -341,7 +360,9 @@ def _get_scales(all_results, scale_axis=True):
 
 def _plot_number_comm(all_results, ax, scales):
     """Plot number of communities."""
-    ax.plot(scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
+    ax.plot(
+        scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0
+    )
     ax.set_ylim(0, 1.1 * max(all_results["number_of_communities"]))
     ax.set_ylabel("# clusters", color="C3")
     ax.tick_params("y", colors="C3")
@@ -349,7 +370,9 @@ def _plot_number_comm(all_results, ax, scales):
 
 def _plot_ttprime(all_results, ax, scales):
     """Plot ttprime."""
-    contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min")
+    contourf_ = ax.contourf(
+        scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min"
+    )
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
@@ -394,7 +417,7 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
     """Plot stability."""
     ax.plot(
         scales,
-        all_results["block_detection_curve"],
+        all_results["block_nvi"],
         "-",
         lw=2.0,
         c="C4",
@@ -402,7 +425,7 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
     )
     ax.plot(
         scales[all_results["selected_partitions"]],
-        all_results["block_detection_curve"][all_results["selected_partitions"]],
+        all_results["block_nvi"][all_results["selected_partitions"]],
         "o",
         lw=2.0,
         c="C4",
@@ -456,7 +479,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
         _plot_number_comm(all_results, ax=ax3, scales=scales)
         axes.append(ax3)
 
-    if "block_detection_curve" in all_results:
+    if "block_nvi" in all_results:
         ax4 = plt.subplot(gs[2, 0])
         _plot_optimal_scales(all_results, ax=ax4, scales=scales, ax1=ax1, ax2=ax2)
         axes.append(ax4)

@@ -2400,7 +2400,7 @@ labels:
   - 31.0
   - 31.0
 results:
-  block_detection_curve:
+  block_nvi:
   - .nan
   - 0.0680975542371894
   - 0.05125455197832432

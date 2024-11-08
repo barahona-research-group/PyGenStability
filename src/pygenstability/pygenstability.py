@@ -210,7 +210,7 @@ def run(
                 optimisation evaluations at each scale (included if with_all_tries==True)
             - 'NVI': NVI(t) at each scale
             - 'ttprime': NVI(t,tprime) matrix
-            - 'block_detection_curve': block detection curve (included if with_optimal_scales==True)
+            - 'block_nvi': block NVI curve (included if with_optimal_scales==True)
             - 'selected_partitions': selected partitions (included if with_optimal_scales==True)
 
     """
