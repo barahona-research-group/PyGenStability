@@ -120,7 +120,9 @@ def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
 
 def _check_method(method):  # pragma: no cover
     if _NO_LEIDEN and _NO_LOUVAIN:
-        raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
+        raise Exception(
+            "Without Louvain or Leiden solver, we cannot run PyGenStability"
+        )
 
     if method == "louvain" and _NO_LOUVAIN:
         print("Louvain is not available, we fallback to leiden.")
@@ -143,6 +145,7 @@ def run(
     log_scale=True,
     scales=None,
     n_tries=100,
+    with_all_tries=False,
     with_NVI=True,
     n_NVI=20,
     with_postprocessing=True,
@@ -177,6 +180,8 @@ def run(
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_tries (int): number of generalized Markov Stability optimisation evaluations
+        with_all_tries (bools): store all partitions with stability values found in different
+            optimisation evaluations
         with_NVI (bool): compute NVI(t) between generalized Markov Stability optimisations
             at each scale t
         n_NVI (int): number of randomly chosen generalized Markov Stability optimisations
@@ -201,10 +206,13 @@ def run(
             - 'number_of_communities': number of communities at each scale
             - 'stability': value of stability cost function at each scale
             - 'community_id': community node labels at each scale
+            - 'all_tries': all community node labels with stability values found in different
+                optimisation evaluations at each scale (included if with_all_tries==True)
             - 'NVI': NVI(t) at each scale
             - 'ttprime': NVI(t,tprime) matrix
             - 'block_detection_curve': block detection curve (included if with_optimal_scales==True)
             - 'selected_partitions': selected partitions (included if with_optimal_scales==True)
+
     """
     method = _check_method(method)
     run_params = _get_params(locals())
@@ -247,13 +255,20 @@ def run(
             communities = _process_runs(t, results, all_results)
 
             if with_NVI:
-                _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
+                _compute_NVI(
+                    communities, all_results, pool, n_partitions=min(n_NVI, n_tries)
+                )
+
+            if with_all_tries:
+                all_results["all_tries"].append(results)
 
             save_results(all_results, filename=result_file)
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
+            _apply_postprocessing(
+                all_results, pool, constructor_data, tqdm_disable, method=method
+            )
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -267,7 +282,9 @@ def run(
                         "window_size": max(2, int(0.1 * n_scale)),
                         "basin_radius": max(1, int(0.01 * n_scale)),
                     }
-                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
+                all_results = identify_optimal_scales(
+                    all_results, **optimal_scales_kwargs
+                )
 
     save_results(all_results, filename=result_file)
 
@@ -296,7 +313,9 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     worker = partial(evaluate_NVI, partitions=selected_partitions)
     index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
+    all_results["NVI"].append(
+        np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize)))
+    )
 
 
 def evaluate_NVI(index_pair, partitions):
@@ -341,7 +360,9 @@ def _to_indices(matrix, directed=False):
 
 
 @_timing
-def _optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+def _optimise(
+    _, quality_indices, quality_values, null_model, global_shift, method="louvain"
+):
     """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
@@ -381,7 +402,9 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
     return stability + global_shift, community_id
 
 
-def _evaluate_quality(partition_id, qualities_index, null_model, global_shift, method="louvain"):
+def _evaluate_quality(
+    partition_id, qualities_index, null_model, global_shift, method="louvain"
+):
     """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
         quality = generalized_louvain.evaluate_quality(
@@ -438,14 +461,18 @@ def _compute_ttprime(all_results, pool):
     chunksize = _get_chunksize(len(index_pairs), pool)
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
 
-    all_results["ttprime"] = np.zeros([len(all_results["scales"]), len(all_results["scales"])])
+    all_results["ttprime"] = np.zeros(
+        [len(all_results["scales"]), len(all_results["scales"])]
+    )
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
 
 
 @_timing
-def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
+def _apply_postprocessing(
+    all_results, pool, constructors, tqdm_disable=False, method="louvain"
+):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -467,8 +494,10 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
             )
         )
 
-        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
-        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
+        all_results["community_id"][i] = all_results_raw["community_id"][
             best_quality_id
         ]
+        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        all_results["number_of_communities"][i] = all_results_raw[
+            "number_of_communities"
+        ][best_quality_id]
