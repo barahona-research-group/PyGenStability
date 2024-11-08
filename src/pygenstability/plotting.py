@@ -33,6 +33,7 @@ L = logging.getLogger(__name__)
 
 def plot_scan(
     all_results,
+    figsize=(6, 5),
     scale_axis=True,
     figure_name="scan_results.pdf",
     use_plotly=False,
@@ -43,6 +44,7 @@ def plot_scan(
 
     Args:
         all_results (dict): results of pygenstability scan
+        figsize (tuple): matplotlib figure size
         scale_axis (bool): display scale of scale index on scale axis
         figure_name (str): name of matplotlib figure
         use_plotly (bool): use matplotlib or plotly backend
@@ -58,7 +60,9 @@ def plot_scan(
 
     if use_plotly:
         return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
-    return plot_scan_plt(all_results, scale_axis=scale_axis, figure_name=figure_name)
+    return plot_scan_plt(
+        all_results, figsize=figsize, scale_axis=scale_axis, figure_name=figure_name
+    )
 
 
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
@@ -443,9 +447,12 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
         ax2.axvline(scale, ls="--", color="C4")
 
 
-def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
+def plot_scan_plt(
+    all_results, figsize=(6, 5), scale_axis=True, figure_name="scan_results.svg"
+):
     """Plot results of pygenstability with matplotlib."""
     scales = _get_scales(all_results, scale_axis=scale_axis)
+    plt.figure(figsize=figsize)
     gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     axes = []
