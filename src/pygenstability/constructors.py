@@ -178,7 +178,7 @@ class constructor_linearized(Constructor):
 class constructor_continuous_combinatorial(Constructor):
     r"""Constructor for continuous combinatorial Markov Stability.
 
-    The quality matrix is:
+    This implementation follows equation (16) in [1]_. The quality matrix is:
 
     .. math::
 
@@ -187,6 +187,11 @@ class constructor_continuous_combinatorial(Constructor):
     where :math:`<d>=(\boldsymbol{1}^T D \boldsymbol{1})/N` is the average degree,
     :math:`L=D-A` is the combinatorial Laplacian and :math:`\Pi=\mathrm{diag}(\pi)`,
     with null model :math:`v_1=v_2=\pi=\frac{\boldsymbol{1}}{N}`.
+
+    References:
+        .. [1]  Lambiotte, R., Delvenne, J.-C., & Barahona, M. (2019). Random Walks, Markov
+                  Processes and the Multiscale Modular Organization of Complex Networks.
+                  IEEE Trans. Netw. Sci. Eng., 1(2), p. 76-90.
     """
 
     @_limit_numpy
@@ -221,7 +226,7 @@ class constructor_continuous_combinatorial(Constructor):
 class constructor_continuous_normalized(Constructor):
     r"""Constructor for continuous normalized Markov Stability.
 
-    The quality matrix is:
+    This implementation follows equation (10) in [1]_. The quality matrix is:
 
     .. math::
 
@@ -229,6 +234,11 @@ class constructor_continuous_normalized(Constructor):
 
     where :math:`L=D^{-1}(D-A)` is the random-walk normalized Laplacian and
     :math:`\Pi=\mathrm{diag}(\pi)` with null model :math:`v_1=v_2=\pi=\frac{d}{2M}`.
+
+    References:
+        .. [1]  Lambiotte, R., Delvenne, J.-C., & Barahona, M. (2019). Random Walks, Markov
+                  Processes and the Multiscale Modular Organization of Complex Networks.
+                  IEEE Trans. Netw. Sci. Eng., 1(2), p. 76-90.
     """
 
     @_limit_numpy
@@ -265,12 +275,12 @@ class constructor_continuous_normalized(Constructor):
 class constructor_signed_modularity(Constructor):
     """Constructor of signed modularity.
 
-    This implementation is equation (18) of [1]_, where quality is the adjacency matrix and
+    This implementation is equation (18) of [2]_, where quality is the adjacency matrix and
     the null model is the difference between the standard modularity null models based on
     positive and negative degree vectors.
 
     References:
-        .. [1] Gomez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
+        .. [2] Gomez, S., Jensen, P., & Arenas, A. (2009). Analysis of community structure in
                 networks of correlated data. Physical Review E, 80(1), 016114.
     """
 
@@ -308,7 +318,7 @@ class constructor_signed_modularity(Constructor):
 class constructor_signed_combinatorial(Constructor):
     r"""Constructor for continuous signed combinatorial Markov Stability.
 
-    The quality matrix is:
+    This implementation follows equation (19) in [3]_. The quality matrix is:
 
     .. math::
 
@@ -318,6 +328,10 @@ class constructor_signed_combinatorial(Constructor):
     :math:`D_{\mathrm{abs}}=\mathrm{diag}(d_\mathrm{abs})` the diagonal matrix of absolute node
     strengths :math:`d_\mathrm{abs}`, and the associated null model  is given by
     :math:`v_1=v_2=\boldsymbol{0}`, where :math:`\boldsymbol{0}` is the vector of zeros.
+
+    References:
+        .. [3]  Schaub, M., Delvenne, J.-C., Lambiotte, R., & Barahona, M. (2019). Multiscale
+                  dynamical embeddings of complex networks. Physical Review E, 99(6), 062308.
     """
 
     def prepare(self, **kwargs):
@@ -352,7 +366,8 @@ class constructor_directed(Constructor):
     where :math:`I` denotes the identity matrix, :math:`M(\alpha)` is the transition matrix of a
     random walk with teleportation and damping factor :math:`0\le \alpha < 1`, and
     :math:`\Pi=\mathrm{diag}(\pi)` for the associated null model :math:`v_1=v_2=\pi` given by the
-    eigenvector solving :math:`\pi M(\alpha) = \pi`, which is related to PageRank.
+    eigenvector solving :math:`\pi M(\alpha) = \pi`, which is related to PageRank. See [1]_ for
+    details.
 
     The transition matrix :math:`M(\alpha)` is given by
 
@@ -364,6 +379,11 @@ class constructor_directed(Constructor):
     where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the
     out-degree :math:`d_i=0` and :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1`
     if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise.
+
+    References:
+        .. [1]  Lambiotte, R., Delvenne, J.-C., & Barahona, M. (2019). Random Walks, Markov
+                  Processes and the Multiscale Modular Organization of Complex Networks.
+                  IEEE Trans. Netw. Sci. Eng., 1(2), p. 76-90.
     """
 
     @_limit_numpy
