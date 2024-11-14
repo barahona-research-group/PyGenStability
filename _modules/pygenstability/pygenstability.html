@@ -341,6 +341,7 @@
     <span class="n">log_scale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">n_tries</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">with_all_tries</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">with_NVI</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">n_NVI</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
     <span class="n">with_postprocessing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -375,6 +376,8 @@
 <span class="sd">        log_scale (bool): use linear or log scales for scales</span>
 <span class="sd">        scales (array): custom scale vector, if provided, it will override the other scale arguments</span>
 <span class="sd">        n_tries (int): number of generalized Markov Stability optimisation evaluations</span>
+<span class="sd">        with_all_tries (bools): store all partitions with stability values found in different</span>
+<span class="sd">            optimisation evaluations</span>
 <span class="sd">        with_NVI (bool): compute NVI(t) between generalized Markov Stability optimisations</span>
 <span class="sd">            at each scale t</span>
 <span class="sd">        n_NVI (int): number of randomly chosen generalized Markov Stability optimisations</span>
@@ -399,10 +402,13 @@
 <span class="sd">            - &#39;number_of_communities&#39;: number of communities at each scale</span>
 <span class="sd">            - &#39;stability&#39;: value of stability cost function at each scale</span>
 <span class="sd">            - &#39;community_id&#39;: community node labels at each scale</span>
+<span class="sd">            - &#39;all_tries&#39;: all community node labels with stability values found in different</span>
+<span class="sd">                optimisation evaluations at each scale (included if with_all_tries==True)</span>
 <span class="sd">            - &#39;NVI&#39;: NVI(t) at each scale</span>
 <span class="sd">            - &#39;ttprime&#39;: NVI(t,tprime) matrix</span>
-<span class="sd">            - &#39;block_detection_curve&#39;: block detection curve (included if with_optimal_scales==True)</span>
+<span class="sd">            - &#39;block_nvi&#39;: block NVI curve (included if with_optimal_scales==True)</span>
 <span class="sd">            - &#39;selected_partitions&#39;: selected partitions (included if with_optimal_scales==True)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">method</span> <span class="o">=</span> <span class="n">_check_method</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
     <span class="n">run_params</span> <span class="o">=</span> <span class="n">_get_params</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
@@ -446,6 +452,9 @@
 
             <span class="k">if</span> <span class="n">with_NVI</span><span class="p">:</span>
                 <span class="n">_compute_NVI</span><span class="p">(</span><span class="n">communities</span><span class="p">,</span> <span class="n">all_results</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">n_NVI</span><span class="p">,</span> <span class="n">n_tries</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">with_all_tries</span><span class="p">:</span>
+                <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;all_tries&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 
             <span class="n">save_results</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">result_file</span><span class="p">)</span>
 

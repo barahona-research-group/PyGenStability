@@ -231,7 +231,12 @@
     <span class="p">)</span>
     <span class="n">shape_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">output_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">)</span>
     <span class="c1"># pylint: disable=unsubscriptable-object</span>
-    <span class="n">strides_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">stride</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stride</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">strides_w</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">stride</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">stride</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">A</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+    <span class="p">)</span>
     <span class="n">A_w</span> <span class="o">=</span> <span class="n">as_strided</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">shape_w</span><span class="p">,</span> <span class="n">strides_w</span><span class="p">)</span>
 
     <span class="c1"># Return the result of pooling</span>
@@ -255,7 +260,7 @@
 <span class="sd">        basin_radius (int): radius of basin around local minima of the pooled diagonal</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        result dictionary with two new keys: &#39;selected_partitions&#39; and &#39;block_detection_curve&#39;</span>
+<span class="sd">        result dictionary with two new keys: &#39;selected_partitions&#39; and &#39;block_nvi&#39;</span>
 
 <span class="sd">    References:</span>
 <span class="sd">        .. [1] D. J. Schindler, J. Clarke, and M. Barahona, &#39;Multiscale Mobility Patterns and</span>
@@ -272,23 +277,21 @@
     <span class="n">diagonal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">nvi_tt_pooled</span><span class="p">)[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">nvi_t</span><span class="p">)]</span>
 
     <span class="c1"># smooth diagonal with moving window</span>
-    <span class="n">block_detection_curve</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span>
+    <span class="n">block_nvi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">diagonal</span><span class="p">)</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window_size</span><span class="p">,</span> <span class="n">win_type</span><span class="o">=</span><span class="s2">&quot;triang&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
         <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">window_size</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;block_detection_curve&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">block_detection_curve</span>
+    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;block_nvi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">block_nvi</span>
 
     <span class="c1"># find local minima on diagonal of pooled NVI(s,s&#39;)</span>
-    <span class="n">basin_centers</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="o">-</span><span class="n">block_detection_curve</span><span class="p">,</span> <span class="n">height</span><span class="o">=-</span><span class="n">max_nvi</span><span class="p">)</span>
+    <span class="n">basin_centers</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="o">-</span><span class="n">block_nvi</span><span class="p">,</span> <span class="n">height</span><span class="o">=-</span><span class="n">max_nvi</span><span class="p">)</span>
 
     <span class="c1"># add robust scales located in large 0 margins</span>
-    <span class="n">not_nan_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">block_detection_curve</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">not_nan_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">block_nvi</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span>
-                <span class="n">block_detection_curve</span><span class="p">[</span><span class="n">not_nan_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="n">not_nan_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">basin_radius</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">5</span>
-            <span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">block_nvi</span><span class="p">[</span><span class="n">not_nan_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="n">not_nan_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">basin_radius</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">5</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="o">==</span> <span class="mi">0</span>
     <span class="p">):</span>
@@ -296,9 +299,7 @@
 
     <span class="k">if</span> <span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span>
-                <span class="n">block_detection_curve</span><span class="p">[</span><span class="n">not_nan_ind</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">basin_radius</span> <span class="p">:</span> <span class="n">not_nan_ind</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">5</span>
-            <span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">block_nvi</span><span class="p">[</span><span class="n">not_nan_ind</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">basin_radius</span> <span class="p">:</span> <span class="n">not_nan_ind</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">5</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="o">==</span> <span class="mi">0</span>
     <span class="p">):</span>

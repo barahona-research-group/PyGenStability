@@ -272,7 +272,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <li><p>Automated optimal scale selection.</p></li>
 </ul>
 <p>Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see <code class="docutils literal notranslate"><span class="pre">pygenstability/optimal_scales.py</span></code>. To reduce noise, e.g., one can increase the parameter values for <code class="docutils literal notranslate"><span class="pre">block_size</span></code> and <code class="docutils literal notranslate"><span class="pre">window_size</span></code>. The optimal network partitions can then be plotted given a NetworkX nx_graph.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">identify_optimal_scales</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">identify_optimal_scales</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">pgs</span><span class="o">.</span><span class="n">plot_optimal_partitions</span><span class="p">(</span><span class="n">nx_graph</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -301,7 +301,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <p>PyGenStability can also be used to perform multiscale graph-based data clustering on data that comes in the form of a sample-by-feature matrix. This approach was shown to achieve better performance than other popular clustering methods without the need of setting the number of clusters externally [9].</p>
 <p>We provide an easy-to-use interface in our <code class="docutils literal notranslate"><span class="pre">pygenstability.data_clustering.py</span></code> module. Given a sample-by-feature matrix <code class="docutils literal notranslate"><span class="pre">X</span></code>, one can apply graph-based data clustering as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">clustering</span> <span class="o">=</span> <span class="n">pgs</span><span class="o">.</span><span class="n">DataClustering</span><span class="p">(</span>
-    <span class="n">graph_method</span><span class="o">=</span><span class="s2">&quot;cknn&quot;</span><span class="p">,</span>
+    <span class="n">graph_method</span><span class="o">=</span><span class="s2">&quot;cknn-mst&quot;</span><span class="p">,</span>
     <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">constructor</span><span class="o">=</span><span class="s2">&quot;continuous_normalized&quot;</span><span class="p">)</span>
 
@@ -313,7 +313,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <span class="n">clustering</span><span class="o">.</span><span class="n">plot_scan</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by <code class="docutils literal notranslate"><span class="pre">graph_method</span></code>) and <code class="docutils literal notranslate"><span class="pre">k</span></code> refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:</p>
+<p>We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by <code class="docutils literal notranslate"><span class="pre">graph_method</span></code>) augmented with the minimum spanning tree to guarentee connectivity, where <code class="docutils literal notranslate"><span class="pre">k</span></code> refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot robust partitions</span>
 <span class="n">clustering</span><span class="o">.</span><span class="n">plot_robust_partitions</span><span class="p">(</span><span class="n">x_coord</span><span class="o">=</span><span class="n">x_coord</span><span class="p">,</span><span class="n">y_coord</span><span class="o">=</span><span class="n">y_coord</span><span class="p">)</span>
 </pre></div>
@@ -331,14 +331,16 @@ We further provide specific analysis tools to process and analyse the results fr
 <section id="cite">
 <h2>Cite<a class="headerlink" href="#cite" title="Permalink to this heading">#</a></h2>
 <p>Please cite our paper if you use this code in your own work:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">pygenstability</span><span class="p">,</span>
-  <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Arnaudon</span><span class="p">,</span> <span class="n">Alexis</span> <span class="ow">and</span> <span class="n">Schindler</span><span class="p">,</span> <span class="n">Dominik</span> <span class="n">J</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Peach</span><span class="p">,</span> <span class="n">Robert</span> <span class="n">L</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Gosztolai</span><span class="p">,</span> <span class="n">Adam</span> <span class="ow">and</span> <span class="n">Hodges</span><span class="p">,</span> <span class="n">Maxwell</span> <span class="ow">and</span> <span class="n">Schaub</span><span class="p">,</span> <span class="n">Michael</span> <span class="n">T</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Barahona</span><span class="p">,</span> <span class="n">Mauricio</span><span class="p">},</span>
-  <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">PyGenStability</span><span class="p">:</span> <span class="n">Multiscale</span> <span class="n">community</span> <span class="n">detection</span> <span class="k">with</span> <span class="n">generalized</span> <span class="n">Markov</span> <span class="n">Stability</span><span class="p">},</span>
-  <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">arXiv</span><span class="p">},</span>
-  <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2023</span><span class="p">},</span>
-  <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.48550</span><span class="o">/</span><span class="n">ARXIV</span><span class="mf">.2303.05385</span><span class="p">},</span>
-  <span class="n">url</span> <span class="o">=</span> <span class="p">{</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">arxiv</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="nb">abs</span><span class="o">/</span><span class="mf">2303.05385</span><span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>@article{pygenstability,
+  author = {Arnaudon, Alexis and Schindler, Dominik J. and Peach, Robert L. and Gosztolai, Adam and Hodges, Maxwell and Schaub, Michael T. and Barahona, Mauricio},
+  title = {Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability},
+  journal = {ACM Trans. Math. Softw.},
+  volume = {50},
+  number = {2},
+  pages = {15:1–15:8}
+  year = {2024},
+  doi = {10.1145/3651225}
+}
 </pre></div>
 </div>
 <p>The original paper for Markov Stability can also be cited as:</p>
@@ -401,7 +403,7 @@ We further provide specific analysis tools to process and analyse the results fr
 <p>[4] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, ‘Fast unfolding of communities in large networks’, <em>J. Stat. Mech.</em>, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.</p>
 <p>[5] V. A. Traag, L. Waltman, and N. J. van Eck, ‘From Louvain to Leiden: guaranteeing well-connected communities’, <em>Sci Rep</em>, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.</p>
 <p>[6] D. J. Schindler, J. Clarke, and M. Barahona, ‘Multiscale Mobility Patterns and the Restriction of Human Movement’, <em>Royal Society Open Science</em>, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.</p>
-<p>[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, ‘PyGenStability: Multiscale community detection with generalized Markov Stability’, <em>arXiv pre-print</em>, Mar. 2023, doi: 10.48550/arXiv.2303.05385.</p>
+<p>[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, ‘Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability’, <em>ACM Trans. Math. Softw.</em>, vol. 50, no. 2, p. 15:1–15:8, Jun. 2024, doi: 10.1145/3651225.</p>
 <p>[8] S. Gomez, P. Jensen, and A. Arenas, ‘Analysis of community structure in networks of correlated data’. <em>Physical Review E</em>, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.</p>
 <p>[9] Z. Liu and M. Barahona, ‘Graph-based data clustering via multiscale community detection’, <em>Applied Network Science</em>, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.</p>
 <p>[10] T. Berry and T. Sauer, ‘Consistent manifold representation for topological data analysis’, <em>Foundations of Data Science</em>, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.</p>

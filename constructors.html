@@ -282,13 +282,24 @@ to return quality matrix, null model, and possible global shift.</p>
 <dt class="sig sig-object py" id="pygenstability.constructors.constructor_continuous_combinatorial">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_continuous_combinatorial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_combinatorial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_combinatorial" title="Permalink to this definition">#</a></dt>
 <dd><p>Constructor for continuous combinatorial Markov Stability.</p>
-<p>The quality matrix is:</p>
+<p>This implementation follows equation (16) in <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>. The quality matrix is:</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[F(t) = \Pi\exp(-Lt)\]</div>
+\[F(t) = \Pi\exp(-tL/&lt;d&gt;)\]</div>
 </div>
-<p>where <span class="math notranslate nohighlight">\(L=D-A\)</span> is the combinatorial Laplacian and <span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span>,
+<p>where <span class="math notranslate nohighlight">\(&lt;d&gt;=(\boldsymbol{1}^T D \boldsymbol{1})/N\)</span> is the average degree,
+<span class="math notranslate nohighlight">\(L=D-A\)</span> is the combinatorial Laplacian and <span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span>,
 with null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi=\frac{\boldsymbol{1}}{N}\)</span>.</p>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="note">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id3">2</a>,<a role="doc-backlink" href="#id8">3</a>)</span>
+<p>Lambiotte, R., Delvenne, J.-C., &amp; Barahona, M. (2019). Random Walks, Markov
+Processes and the Multiscale Modular Organization of Complex Networks.
+IEEE Trans. Netw. Sci. Eng., 1(2), p. 76-90.</p>
+</aside>
+</aside>
 <p>The constructor calls the prepare method upon initialisation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -312,10 +323,10 @@ with null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi=\frac{\
 <dt class="sig sig-object py" id="pygenstability.constructors.constructor_continuous_normalized">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_continuous_normalized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_continuous_normalized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_continuous_normalized" title="Permalink to this definition">#</a></dt>
 <dd><p>Constructor for continuous normalized Markov Stability.</p>
-<p>The quality matrix is:</p>
+<p>This implementation follows equation (10) in <a class="footnote-reference brackets" href="#id2" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>. The quality matrix is:</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[F(t) = \Pi\exp(-Lt)\]</div>
+\[F(t) = \Pi\exp(-tL)\]</div>
 </div>
 <p>where <span class="math notranslate nohighlight">\(L=D^{-1}(D-A)\)</span> is the random-walk normalized Laplacian and
 <span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span> with null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi=\frac{d}{2M}\)</span>.</p>
@@ -342,13 +353,13 @@ with null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi=\frac{\
 <dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_modularity">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_signed_modularity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_modularity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_modularity" title="Permalink to this definition">#</a></dt>
 <dd><p>Constructor of signed modularity.</p>
-<p>This implementation is equation (18) of <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>, where quality is the adjacency matrix and
+<p>This implementation is equation (18) of <a class="footnote-reference brackets" href="#id5" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>, where quality is the adjacency matrix and
 the null model is the difference between the standard modularity null models based on
 positive and negative degree vectors.</p>
 <p class="rubric">References</p>
 <aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id2" role="note">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<aside class="footnote brackets" id="id5" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">2</a><span class="fn-bracket">]</span></span>
 <p>Gomez, S., Jensen, P., &amp; Arenas, A. (2009). Analysis of community structure in
 networks of correlated data. Physical Review E, 80(1), 016114.</p>
 </aside>
@@ -376,15 +387,23 @@ networks of correlated data. Physical Review E, 80(1), 016114.</p>
 <dt class="sig sig-object py" id="pygenstability.constructors.constructor_signed_combinatorial">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenstability.constructors.</span></span><span class="sig-name descname"><span class="pre">constructor_signed_combinatorial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spectral_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_comp_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygenstability/constructors.html#constructor_signed_combinatorial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygenstability.constructors.constructor_signed_combinatorial" title="Permalink to this definition">#</a></dt>
 <dd><p>Constructor for continuous signed combinatorial Markov Stability.</p>
-<p>The quality matrix is:</p>
+<p>This implementation follows equation (19) in <a class="footnote-reference brackets" href="#id7" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a>. The quality matrix is:</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[F(t) = \exp(-Lt)^T\exp(-Lt)\]</div>
+\[F(t) = \exp(-tL)^T\exp(-tL)\]</div>
 </div>
 <p>where <span class="math notranslate nohighlight">\(L=D_{\mathrm{abs}}-A\)</span> is the signed combinatorial Laplacian,
 <span class="math notranslate nohighlight">\(D_{\mathrm{abs}}=\mathrm{diag}(d_\mathrm{abs})\)</span> the diagonal matrix of absolute node
 strengths <span class="math notranslate nohighlight">\(d_\mathrm{abs}\)</span>, and the associated null model  is given by
 <span class="math notranslate nohighlight">\(v_1=v_2=\boldsymbol{0}\)</span>, where <span class="math notranslate nohighlight">\(\boldsymbol{0}\)</span> is the vector of zeros.</p>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id7" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id6">3</a><span class="fn-bracket">]</span></span>
+<p>Schaub, M., Delvenne, J.-C., Lambiotte, R., &amp; Barahona, M. (2019). Multiscale
+dynamical embeddings of complex networks. Physical Review E, 99(6), 062308.</p>
+</aside>
+</aside>
 <p>The constructor calls the prepare method upon initialisation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -422,7 +441,8 @@ strengths <span class="math notranslate nohighlight">\(d_\mathrm{abs}\)</span>, 
 <p>where <span class="math notranslate nohighlight">\(I\)</span> denotes the identity matrix, <span class="math notranslate nohighlight">\(M(\alpha)\)</span> is the transition matrix of a
 random walk with teleportation and damping factor <span class="math notranslate nohighlight">\(0\le \alpha &lt; 1\)</span>, and
 <span class="math notranslate nohighlight">\(\Pi=\mathrm{diag}(\pi)\)</span> for the associated null model <span class="math notranslate nohighlight">\(v_1=v_2=\pi\)</span> given by the
-eigenvector solving <span class="math notranslate nohighlight">\(\pi M(\alpha) = \pi\)</span>, which is related to PageRank.</p>
+eigenvector solving <span class="math notranslate nohighlight">\(\pi M(\alpha) = \pi\)</span>, which is related to PageRank. See <a class="footnote-reference brackets" href="#id2" id="id8" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> for
+details.</p>
 <p>The transition matrix <span class="math notranslate nohighlight">\(M(\alpha)\)</span> is given by</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">

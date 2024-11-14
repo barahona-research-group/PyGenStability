@@ -229,6 +229,7 @@
 
 <div class="viewcode-block" id="plot_scan"><a class="viewcode-back" href="../../plotting.html#pygenstability.plotting.plot_scan">[docs]</a><span class="k">def</span> <span class="nf">plot_scan</span><span class="p">(</span>
     <span class="n">all_results</span><span class="p">,</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
     <span class="n">scale_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">figure_name</span><span class="o">=</span><span class="s2">&quot;scan_results.pdf&quot;</span><span class="p">,</span>
     <span class="n">use_plotly</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -239,6 +240,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        all_results (dict): results of pygenstability scan</span>
+<span class="sd">        figsize (tuple): matplotlib figure size</span>
 <span class="sd">        scale_axis (bool): display scale of scale index on scale axis</span>
 <span class="sd">        figure_name (str): name of matplotlib figure</span>
 <span class="sd">        use_plotly (bool): use matplotlib or plotly backend</span>
@@ -252,7 +254,9 @@
 
     <span class="k">if</span> <span class="n">use_plotly</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">plot_scan_plotly</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">live</span><span class="o">=</span><span class="n">live</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">plotly_filename</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">plot_scan_plt</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">scale_axis</span><span class="o">=</span><span class="n">scale_axis</span><span class="p">,</span> <span class="n">figure_name</span><span class="o">=</span><span class="n">figure_name</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">plot_scan_plt</span><span class="p">(</span>
+        <span class="n">all_results</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">scale_axis</span><span class="o">=</span><span class="n">scale_axis</span><span class="p">,</span> <span class="n">figure_name</span><span class="o">=</span><span class="n">figure_name</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="plot_scan_plotly"><a class="viewcode-back" href="../../plotting.html#pygenstability.plotting.plot_scan_plotly">[docs]</a><span class="k">def</span> <span class="nf">plot_scan_plotly</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-branches,too-many-statements,too-many-locals</span>
@@ -461,7 +465,11 @@
 
     <span class="k">for</span> <span class="n">optimal_scale_id</span> <span class="ow">in</span> <span class="n">selected_scales</span><span class="p">:</span>
         <span class="n">plot_single_partition</span><span class="p">(</span>
-            <span class="n">graph</span><span class="p">,</span> <span class="n">all_results</span><span class="p">,</span> <span class="n">optimal_scale_id</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="n">edge_color</span><span class="p">,</span> <span class="n">edge_width</span><span class="o">=</span><span class="n">edge_width</span>
+            <span class="n">graph</span><span class="p">,</span>
+            <span class="n">all_results</span><span class="p">,</span>
+            <span class="n">optimal_scale_id</span><span class="p">,</span>
+            <span class="n">edge_color</span><span class="o">=</span><span class="n">edge_color</span><span class="p">,</span>
+            <span class="n">edge_width</span><span class="o">=</span><span class="n">edge_width</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">folder</span><span class="si">}</span><span class="s2">/scale_</span><span class="si">{</span><span class="n">optimal_scale_id</span><span class="si">}{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">show</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -469,7 +477,12 @@
 
 
 <div class="viewcode-block" id="plot_communities"><a class="viewcode-back" href="../../plotting.html#pygenstability.plotting.plot_communities">[docs]</a><span class="k">def</span> <span class="nf">plot_communities</span><span class="p">(</span>
-    <span class="n">graph</span><span class="p">,</span> <span class="n">all_results</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="s2">&quot;communities&quot;</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="s2">&quot;0.5&quot;</span><span class="p">,</span> <span class="n">edge_width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="s2">&quot;.pdf&quot;</span>
+    <span class="n">graph</span><span class="p">,</span>
+    <span class="n">all_results</span><span class="p">,</span>
+    <span class="n">folder</span><span class="o">=</span><span class="s2">&quot;communities&quot;</span><span class="p">,</span>
+    <span class="n">edge_color</span><span class="o">=</span><span class="s2">&quot;0.5&quot;</span><span class="p">,</span>
+    <span class="n">edge_width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">ext</span><span class="o">=</span><span class="s2">&quot;.pdf&quot;</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot the community structures at each scale in a folder.</span>
 
@@ -592,7 +605,7 @@
     <span class="sd">&quot;&quot;&quot;Plot stability.&quot;&quot;&quot;</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
         <span class="n">scales</span><span class="p">,</span>
-        <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;block_detection_curve&quot;</span><span class="p">],</span>
+        <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;block_nvi&quot;</span><span class="p">],</span>
         <span class="s2">&quot;-&quot;</span><span class="p">,</span>
         <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
         <span class="n">c</span><span class="o">=</span><span class="s2">&quot;C4&quot;</span><span class="p">,</span>
@@ -600,7 +613,7 @@
     <span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
         <span class="n">scales</span><span class="p">[</span><span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;selected_partitions&quot;</span><span class="p">]],</span>
-        <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;block_detection_curve&quot;</span><span class="p">][</span><span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;selected_partitions&quot;</span><span class="p">]],</span>
+        <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;block_nvi&quot;</span><span class="p">][</span><span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;selected_partitions&quot;</span><span class="p">]],</span>
         <span class="s2">&quot;o&quot;</span><span class="p">,</span>
         <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
         <span class="n">c</span><span class="o">=</span><span class="s2">&quot;C4&quot;</span><span class="p">,</span>
@@ -618,9 +631,10 @@
         <span class="n">ax2</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;C4&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="plot_scan_plt"><a class="viewcode-back" href="../../plotting.html#pygenstability.plotting.plot_scan_plt">[docs]</a><span class="k">def</span> <span class="nf">plot_scan_plt</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">scale_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">figure_name</span><span class="o">=</span><span class="s2">&quot;scan_results.svg&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="plot_scan_plt"><a class="viewcode-back" href="../../plotting.html#pygenstability.plotting.plot_scan_plt">[docs]</a><span class="k">def</span> <span class="nf">plot_scan_plt</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">scale_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">figure_name</span><span class="o">=</span><span class="s2">&quot;scan_results.svg&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot results of pygenstability with matplotlib.&quot;&quot;&quot;</span>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">_get_scales</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">scale_axis</span><span class="o">=</span><span class="n">scale_axis</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
     <span class="n">gs</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
     <span class="n">gs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">axes</span> <span class="o">=</span> <span class="p">[]</span>
@@ -654,7 +668,7 @@
         <span class="n">_plot_number_comm</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax3</span><span class="p">,</span> <span class="n">scales</span><span class="o">=</span><span class="n">scales</span><span class="p">)</span>
         <span class="n">axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax3</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="s2">&quot;block_detection_curve&quot;</span> <span class="ow">in</span> <span class="n">all_results</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">&quot;block_nvi&quot;</span> <span class="ow">in</span> <span class="n">all_results</span><span class="p">:</span>
         <span class="n">ax4</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
         <span class="n">_plot_optimal_scales</span><span class="p">(</span><span class="n">all_results</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span><span class="p">,</span> <span class="n">scales</span><span class="o">=</span><span class="n">scales</span><span class="p">,</span> <span class="n">ax1</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="o">=</span><span class="n">ax2</span><span class="p">)</span>
         <span class="n">axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax4</span><span class="p">)</span>
