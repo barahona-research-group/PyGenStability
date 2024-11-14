@@ -33,7 +33,12 @@ def _pool2d_nvi(A, kernel_size, stride, padding=0):
     )
     shape_w = (output_shape[0], output_shape[1], kernel_size, kernel_size)
     # pylint: disable=unsubscriptable-object
-    strides_w = (stride * A.strides[0], stride * A.strides[1], A.strides[0], A.strides[1])
+    strides_w = (
+        stride * A.strides[0],
+        stride * A.strides[1],
+        A.strides[0],
+        A.strides[1],
+    )
     A_w = as_strided(A, shape_w, strides_w)
 
     # Return the result of pooling
@@ -57,7 +62,7 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
         basin_radius (int): radius of basin around local minima of the pooled diagonal
 
     Returns:
-        result dictionary with two new keys: 'selected_partitions' and 'block_detection_curve'
+        result dictionary with two new keys: 'selected_partitions' and 'block_nvi'
 
     References:
         .. [1] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
@@ -74,23 +79,21 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
     diagonal = np.diag(nvi_tt_pooled)[: len(nvi_t)]
 
     # smooth diagonal with moving window
-    block_detection_curve = np.roll(
+    block_nvi = np.roll(
         np.asarray(pd.Series(diagonal).rolling(window=window_size, win_type="triang").mean()),
         -int(window_size / 2),
     )
-    results["block_detection_curve"] = block_detection_curve
+    results["block_nvi"] = block_nvi
 
     # find local minima on diagonal of pooled NVI(s,s')
-    basin_centers, _ = find_peaks(-block_detection_curve, height=-max_nvi)
+    basin_centers, _ = find_peaks(-block_nvi, height=-max_nvi)
 
     # add robust scales located in large 0 margins
-    not_nan_ind = np.argwhere(~np.isnan(block_detection_curve)).flatten()
+    not_nan_ind = np.argwhere(~np.isnan(block_nvi)).flatten()
 
     if (
         np.count_nonzero(
-            np.around(
-                block_detection_curve[not_nan_ind[0] : not_nan_ind[0] + 2 * basin_radius + 1], 5
-            )
+            np.around(block_nvi[not_nan_ind[0] : not_nan_ind[0] + 2 * basin_radius + 1], 5)
         )
         == 0
     ):
@@ -98,9 +101,7 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
 
     if (
         np.count_nonzero(
-            np.around(
-                block_detection_curve[not_nan_ind[-1] - 2 * basin_radius : not_nan_ind[-1] + 1], 5
-            )
+            np.around(block_nvi[not_nan_ind[-1] - 2 * basin_radius : not_nan_ind[-1] + 1], 5)
         )
         == 0
     ):

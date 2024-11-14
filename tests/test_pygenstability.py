@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 from numpy.testing import assert_almost_equal
 
-import numpy as np
 import yaml
 from dictdiffer import diff
 
@@ -26,6 +25,10 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         results = pgs.run(graph, exp_comp_mode="UNKNOWN")
 
     results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5)
+
+    # test with_all_tries
+    results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5, with_all_tries=True)
+    assert "all_tries" in results
 
     # test we don't use spectral for directed
     results = pgs.run(graph_directed, min_scale=-1, max_scale=0, n_scale=5, constructor="directed")

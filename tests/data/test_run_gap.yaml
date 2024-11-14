@@ -110,6 +110,7 @@ run_params:
   scales: null
   tqdm_disable: false
   with_NVI: true
+  with_all_tries: false
   with_optimal_scales: false
   with_postprocessing: true
   with_spectral_gap: true

@@ -31,6 +31,7 @@ L = logging.getLogger(__name__)
 
 def plot_scan(
     all_results,
+    figsize=(6, 5),
     scale_axis=True,
     figure_name="scan_results.pdf",
     use_plotly=False,
@@ -41,6 +42,7 @@ def plot_scan(
 
     Args:
         all_results (dict): results of pygenstability scan
+        figsize (tuple): matplotlib figure size
         scale_axis (bool): display scale of scale index on scale axis
         figure_name (str): name of matplotlib figure
         use_plotly (bool): use matplotlib or plotly backend
@@ -54,7 +56,9 @@ def plot_scan(
 
     if use_plotly:
         return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
-    return plot_scan_plt(all_results, scale_axis=scale_axis, figure_name=figure_name)
+    return plot_scan_plt(
+        all_results, figsize=figsize, scale_axis=scale_axis, figure_name=figure_name
+    )
 
 
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
@@ -263,7 +267,11 @@ def plot_optimal_partitions(
 
     for optimal_scale_id in selected_scales:
         plot_single_partition(
-            graph, all_results, optimal_scale_id, edge_color=edge_color, edge_width=edge_width
+            graph,
+            all_results,
+            optimal_scale_id,
+            edge_color=edge_color,
+            edge_width=edge_width,
         )
         plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
         if show:  # pragma: no cover
@@ -271,7 +279,12 @@ def plot_optimal_partitions(
 
 
 def plot_communities(
-    graph, all_results, folder="communities", edge_color="0.5", edge_width=0.5, ext=".pdf"
+    graph,
+    all_results,
+    folder="communities",
+    edge_color="0.5",
+    edge_width=0.5,
+    ext=".pdf",
 ):
     """Plot the community structures at each scale in a folder.
 
@@ -394,7 +407,7 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
     """Plot stability."""
     ax.plot(
         scales,
-        all_results["block_detection_curve"],
+        all_results["block_nvi"],
         "-",
         lw=2.0,
         c="C4",
@@ -402,7 +415,7 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
     )
     ax.plot(
         scales[all_results["selected_partitions"]],
-        all_results["block_detection_curve"][all_results["selected_partitions"]],
+        all_results["block_nvi"][all_results["selected_partitions"]],
         "o",
         lw=2.0,
         c="C4",
@@ -420,9 +433,10 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
         ax2.axvline(scale, ls="--", color="C4")
 
 
-def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
+def plot_scan_plt(all_results, figsize=(6, 5), scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     scales = _get_scales(all_results, scale_axis=scale_axis)
+    plt.figure(figsize=figsize)
     gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
     axes = []
@@ -456,7 +470,7 @@ def plot_scan_plt(all_results, scale_axis=True, figure_name="scan_results.svg"):
         _plot_number_comm(all_results, ax=ax3, scales=scales)
         axes.append(ax3)
 
-    if "block_detection_curve" in all_results:
+    if "block_nvi" in all_results:
         ax4 = plt.subplot(gs[2, 0])
         _plot_optimal_scales(all_results, ax=ax4, scales=scales, ax1=ax1, ax2=ax2)
         axes.append(ax4)

@@ -143,6 +143,7 @@ def run(
     log_scale=True,
     scales=None,
     n_tries=100,
+    with_all_tries=False,
     with_NVI=True,
     n_NVI=20,
     with_postprocessing=True,
@@ -177,6 +178,8 @@ def run(
         log_scale (bool): use linear or log scales for scales
         scales (array): custom scale vector, if provided, it will override the other scale arguments
         n_tries (int): number of generalized Markov Stability optimisation evaluations
+        with_all_tries (bools): store all partitions with stability values found in different
+            optimisation evaluations
         with_NVI (bool): compute NVI(t) between generalized Markov Stability optimisations
             at each scale t
         n_NVI (int): number of randomly chosen generalized Markov Stability optimisations
@@ -201,10 +204,13 @@ def run(
             - 'number_of_communities': number of communities at each scale
             - 'stability': value of stability cost function at each scale
             - 'community_id': community node labels at each scale
+            - 'all_tries': all community node labels with stability values found in different
+                optimisation evaluations at each scale (included if with_all_tries==True)
             - 'NVI': NVI(t) at each scale
             - 'ttprime': NVI(t,tprime) matrix
-            - 'block_detection_curve': block detection curve (included if with_optimal_scales==True)
+            - 'block_nvi': block NVI curve (included if with_optimal_scales==True)
             - 'selected_partitions': selected partitions (included if with_optimal_scales==True)
+
     """
     method = _check_method(method)
     run_params = _get_params(locals())
@@ -248,6 +254,9 @@ def run(
 
             if with_NVI:
                 _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
+
+            if with_all_tries:
+                all_results["all_tries"].append(results)
 
             save_results(all_results, filename=result_file)
 

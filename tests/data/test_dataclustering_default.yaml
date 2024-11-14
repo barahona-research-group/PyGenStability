@@ -2400,7 +2400,7 @@ labels:
   - 31.0
   - 31.0
 results:
-  block_detection_curve:
+  block_nvi:
   - .nan
   - 0.0680975542371894
   - 0.05125455197832432
@@ -14460,6 +14460,7 @@ results:
     scales: null
     tqdm_disable: false
     with_NVI: true
+    with_all_tries: false
     with_optimal_scales: true
     with_postprocessing: true
     with_spectral_gap: false
