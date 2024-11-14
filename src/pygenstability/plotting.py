@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 try:
     import networkx as nx
 except ImportError:  # pragma: no cover
-    print(
-        'Please install networkx via pip install "pygenstability[networkx]" for full plotting.'
-    )
+    print('Please install networkx via pip install "pygenstability[networkx]" for full plotting.')
 
 import numpy as np
 from matplotlib import gridspec
@@ -52,9 +50,7 @@ def plot_scan(
         plotly_filename (str): filename of .html figure from plotly
     """
     if len(all_results["scales"]) == 1:  # pragma: no cover
-        L.info(
-            "Cannot plot the results if only one scale point, we display the result instead:"
-        )
+        L.info("Cannot plot the results if only one scale point, we display the result instead:")
         L.info(all_results)
         return None
 
@@ -310,16 +306,12 @@ def plot_communities(
         plot_single_partition(
             graph, all_results, scale_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(
-            os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight"
-        )
+        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
         plt.close()
     matplotlib.use(mpl_backend)
 
 
-def plot_communities_matrix(
-    graph, all_results, folder="communities_matrix", ext=".pdf"
-):
+def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext=".pdf"):
     """Plot communities at all scales in matrix form.
 
     Args:
@@ -348,9 +340,7 @@ def plot_communities_matrix(
             plt.plot((lines[i + 1], lines[i + 1]), (lines[i + 1], lines[i]), c="k")
             plt.plot((lines[i + 1], lines[i]), (lines[i + 1], lines[i + 1]), c="k")
 
-        plt.savefig(
-            os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight"
-        )
+        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
 
 
 def _get_scales(all_results, scale_axis=True):
@@ -364,9 +354,7 @@ def _get_scales(all_results, scale_axis=True):
 
 def _plot_number_comm(all_results, ax, scales):
     """Plot number of communities."""
-    ax.plot(
-        scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0
-    )
+    ax.plot(scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
     ax.set_ylim(0, 1.1 * max(all_results["number_of_communities"]))
     ax.set_ylabel("# clusters", color="C3")
     ax.tick_params("y", colors="C3")
@@ -374,9 +362,7 @@ def _plot_number_comm(all_results, ax, scales):
 
 def _plot_ttprime(all_results, ax, scales):
     """Plot ttprime."""
-    contourf_ = ax.contourf(
-        scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min"
-    )
+    contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
@@ -447,9 +433,7 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
         ax2.axvline(scale, ls="--", color="C4")
 
 
-def plot_scan_plt(
-    all_results, figsize=(6, 5), scale_axis=True, figure_name="scan_results.svg"
-):
+def plot_scan_plt(all_results, figsize=(6, 5), scale_axis=True, figure_name="scan_results.svg"):
     """Plot results of pygenstability with matplotlib."""
     scales = _get_scales(all_results, scale_axis=scale_axis)
     plt.figure(figsize=figsize)
