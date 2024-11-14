@@ -222,11 +222,6 @@ class constructor_continuous_normalized(Constructor):
 
     where :math:`L=D^{-1}(D-A)` is the random-walk normalized Laplacian and
     :math:`\Pi=\mathrm{diag}(\pi)` with null model :math:`v_1=v_2=\pi=\frac{d}{2M}`.
-
-    References:
-        .. [1]  Lambiotte, R., Delvenne, J.-C., & Barahona, M. (2019). Random Walks, Markov
-                  Processes and the Multiscale Modular Organization of Complex Networks.
-                  IEEE Trans. Netw. Sci. Eng., 1(2), p. 76-90.
     """
 
     @_limit_numpy
@@ -365,11 +360,6 @@ class constructor_directed(Constructor):
     where :math:`D` denotes the diagonal matrix of out-degrees with :math:`D_{ii}=1` if the
     out-degree :math:`d_i=0` and :math:`a` denotes the vector of dangling nodes, i.e. :math:`a_i=1`
     if the out-degree :math:`d_i=0` and :math:`a_i=0` otherwise.
-
-    References:
-        .. [1]  Lambiotte, R., Delvenne, J.-C., & Barahona, M. (2019). Random Walks, Markov
-                  Processes and the Multiscale Modular Organization of Complex Networks.
-                  IEEE Trans. Netw. Sci. Eng., 1(2), p. 76-90.
     """
 
     @_limit_numpy
