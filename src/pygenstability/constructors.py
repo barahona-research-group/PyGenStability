@@ -312,7 +312,7 @@ class constructor_signed_combinatorial(Constructor):
 
     .. math::
 
-        F(t) = \exp(-Lt)^T\exp(-tL)
+        F(t) = \exp(-tL)^T\exp(-tL)
 
     where :math:`L=D_{\mathrm{abs}}-A` is the signed combinatorial Laplacian,
     :math:`D_{\mathrm{abs}}=\mathrm{diag}(d_\mathrm{abs})` the diagonal matrix of absolute node
