@@ -182,9 +182,10 @@ class constructor_continuous_combinatorial(Constructor):
 
     .. math::
 
-        F(t) = \Pi\exp(-Lt)
+        F(t) = \Pi\exp(-tL/<d>)
 
-    where :math:`L=D-A` is the combinatorial Laplacian and :math:`\Pi=\mathrm{diag}(\pi)`,
+    where :math:`<d>=(\boldsymbol{1}^T D \boldsymbol{1})/N` is the average degree,
+    :math:`L=D-A` is the combinatorial Laplacian and :math:`\Pi=\mathrm{diag}(\pi)`,
     with null model :math:`v_1=v_2=\pi=\frac{\boldsymbol{1}}{N}`.
     """
 
@@ -224,7 +225,7 @@ class constructor_continuous_normalized(Constructor):
 
     .. math::
 
-        F(t) = \Pi\exp(-Lt)
+        F(t) = \Pi\exp(-tL)
 
     where :math:`L=D^{-1}(D-A)` is the random-walk normalized Laplacian and
     :math:`\Pi=\mathrm{diag}(\pi)` with null model :math:`v_1=v_2=\pi=\frac{d}{2M}`.
@@ -311,7 +312,7 @@ class constructor_signed_combinatorial(Constructor):
 
     .. math::
 
-        F(t) = \exp(-Lt)^T\exp(-Lt)
+        F(t) = \exp(-Lt)^T\exp(-tL)
 
     where :math:`L=D_{\mathrm{abs}}-A` is the signed combinatorial Laplacian,
     :math:`D_{\mathrm{abs}}=\mathrm{diag}(d_\mathrm{abs})` the diagonal matrix of absolute node
