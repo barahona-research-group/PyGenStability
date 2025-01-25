@@ -238,25 +238,29 @@ If you are interested in trying our other packages, see the below list:
 
 ## References
 
-[1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, 'Stability of graph communities across time scales', *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010, doi: 10.1073/pnas.0903215107.
+[1] J.-C. Delvenne, S. N. Yaliraki, and M. Barahona, 'Stability of graph communities across time scales', *Proceedings of the National Academy of Sciences*, vol. 107, no. 29, pp. 12755–12760, Jul. 2010, doi: 10.1073/pnas.0903215107. Originally arXiv:0812.1811 (2008)
 
-[2] R. Lambiotte, J.-C. Delvenne, and M. Barahona, 'Random Walks, Markov Processes and the Multiscale Modular Organization of Complex Networks', *IEEE Trans. Netw. Sci. Eng.*, vol. 1, no. 2, pp. 76–90, Jul. 2014, doi: 10.1109/TNSE.2015.2391998.
+[2] R. Lambiotte, J.-C. Delvenne, and M. Barahona, 'Laplacian dynamics and multiscale modular structure in networks', arXiv preprint arXiv:0812.1770 (9 Dec 2008)
 
-[3] M. T. Schaub, J.-C. Delvenne, R. Lambiotte, and M. Barahona, 'Multiscale dynamical embeddings of complex networks', *Phys. Rev. E*, vol. 99, no. 6, Jun. 2019, doi: 10.1103/PhysRevE.99.062308.
+[3] R. Lambiotte, J.-C. Delvenne, and M. Barahona, 'Random Walks, Markov Processes and the Multiscale Modular Organization of Complex Networks', *IEEE Trans. Netw. Sci. Eng.*, vol. 1, no. 2, pp. 76–90, Jul. 2014, doi: 10.1109/TNSE.2015.2391998.
 
-[4] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, 'Fast unfolding of communities in large networks', *J. Stat. Mech.*, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.
+[4] J.-C. Delvenne, M. T. Schaub, S. N. Yaliraki, and M. Barahona, 'The stability of a graph partition: A dynamics-based framework for community detection', *Dynamics On and Of Complex Networks*, vol. 2, pp. 221-242, Springer New York, Apr 2013 - arxiv.org/abs/1308.1605
 
-[5] V. A. Traag, L. Waltman, and N. J. van Eck, 'From Louvain to Leiden: guaranteeing well-connected communities', *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
+[5] M. T. Schaub, J.-C. Delvenne, R. Lambiotte, and M. Barahona, 'Multiscale dynamical embeddings of complex networks', *Phys. Rev. E*, vol. 99, no. 6, Jun. 2019, doi: 10.1103/PhysRevE.99.062308.
 
-[6] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and the Restriction of Human Movement', *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
+[6] V. D. Blondel, J.-L. Guillaume, R. Lambiotte, and E. Lefebvre, 'Fast unfolding of communities in large networks', *J. Stat. Mech.*, vol. 2008, no. 10, Oct. 2008, doi: 10.1088/1742-5468/2008/10/p10008.
 
-[7] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability', *ACM Trans. Math. Softw.*, vol. 50, no. 2, p. 15:1–15:8, Jun. 2024, doi: 10.1145/3651225.
+[7] V. A. Traag, L. Waltman, and N. J. van Eck, 'From Louvain to Leiden: guaranteeing well-connected communities', *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
 
-[8] S. Gomez, P. Jensen, and A. Arenas, 'Analysis of community structure in networks of correlated data'. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
+[8] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and the Restriction of Human Movement', *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
 
-[9] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale community detection', *Applied Network Science*, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.
+[9] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability', *ACM Trans. Math. Softw.*, vol. 50, no. 2, p. 15:1–15:8, Jun. 2024, doi: 10.1145/3651225.
 
-[10] T. Berry and T. Sauer, 'Consistent manifold representation for topological data analysis', *Foundations of Data Science*, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.
+[10] S. Gomez, P. Jensen, and A. Arenas, 'Analysis of community structure in networks of correlated data'. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
+
+[11] Z. Liu and M. Barahona, 'Graph-based data clustering via multiscale community detection', *Applied Network Science*, vol. 5, no. 1, p. 3, Dec. 2020, doi: 10.1007/s41109-019-0248-7.
+
+[12] T. Berry and T. Sauer, 'Consistent manifold representation for topological data analysis', *Foundations of Data Science*, vol. 1, no. 1, p. 1-38, Feb. 2019, doi: 10.3934/fods.2019001.
 
 ## Licence
 
