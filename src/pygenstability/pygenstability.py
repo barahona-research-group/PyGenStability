@@ -517,7 +517,9 @@ def _apply_postprocessing(
         all_results["community_id"][i] = all_results_raw["community_id"][
             best_quality_id
         ]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        # assign new quality score
+        all_results["stability"][i] = quality_scores[best_quality_id]
+        # update number of communities
         all_results["number_of_communities"][i] = all_results_raw[
             "number_of_communities"
         ][best_quality_id]
