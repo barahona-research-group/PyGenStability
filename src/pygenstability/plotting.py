@@ -151,13 +151,13 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
     layout = go.Layout(
         yaxis={
             "title": "Stability",
-            "titlefont": {"color": "blue"},
+            "title_font": {"color": "blue"},
             "tickfont": {"color": "blue"},
             "domain": [0.0, 0.28],
         },
         yaxis2={
             "title": tprime_title,
-            "titlefont": {"color": "black"},
+            "title_font": {"color": "black"},
             "tickfont": {"color": "black"},
             "domain": [0.32, 1],
             "side": "right",
@@ -165,7 +165,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         },
         yaxis3={
             "title": nvi_title,
-            "titlefont": {"color": "green"},
+            "title_font": {"color": "green"},
             "tickfont": {"color": "green"},
             "showticklabels": nvi_ticks,
             "overlaying": "y",
@@ -173,7 +173,7 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
         },
         yaxis4={
             "title": "Number of communities",
-            "titlefont": {"color": "red"},
+            "title_font": {"color": "red"},
             "tickfont": {"color": "red"},
             "overlaying": "y2",
         },
