@@ -381,7 +381,9 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
             )
         optimiser = leidenalg.Optimiser()
         optimiser.set_rng_seed(np.random.randint(1e8))
+        # we initialise stability
         stability = sum(partition.quality() for partition in partitions) / n_null
+        # we use Leiden to find optimal partition and update stability according to improvement
         stability += optimiser.optimise_partition_multiplex(
             partitions, layer_weights=n_null * [1.0 / n_null]
         )
@@ -390,33 +392,44 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
     return stability + global_shift, community_id
 
 
-def _evaluate_quality(partition_id, qualities_index, null_model, global_shift, method="louvain"):
-    """Worker for generalized Markov Stability optimisation runs."""
+def _evaluate_quality(
+    partition_id,
+    quality_indices,
+    quality_values,
+    null_model,
+    global_shift,
+    method="louvain",
+):
+    """Worker for generalized Markov Stability evaluations."""
+    # evaluate using Louvain method
     if method == "louvain":
         quality = generalized_louvain.evaluate_quality(
-            qualities_index[0][0],
-            qualities_index[0][1],
-            qualities_index[1],
-            len(qualities_index[1]),
+            quality_indices[0],
+            quality_indices[1],
+            quality_values,
+            len(quality_values),
             null_model,
             np.shape(null_model)[0],
             1.0,
             partition_id,
         )
 
+    # evaluate using Leiden method
     if method == "leiden":
-        quality = np.mean(
+        n_null = int(len(null_model) / 2)
+        quality = np.sum(
             [
                 leidenalg.CPMVertexPartition(
-                    ig.Graph(edges=zip(*qualities_index[0]), directed=True),
+                    ig.Graph(edges=zip(*quality_indices), directed=True),
                     initial_membership=partition_id,
-                    weights=qualities_index[1],
+                    weights=quality_values,
                     node_sizes=null.tolist(),
                     correct_self_loops=True,
                 ).quality()
                 for null in null_model[::2]
             ]
         )
+        quality /= n_null
 
     return quality + global_shift
 
@@ -441,7 +454,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
 
 @_timing
 def _compute_ttprime(all_results, pool):
-    """Compute ttprime from the stability results."""
+    """Compute NVI(t,tprime) from the Markov stability results."""
     index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
     worker = partial(evaluate_NVI, partitions=all_results["community_id"])
     chunksize = _get_chunksize(len(index_pairs), pool)
@@ -458,26 +471,37 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
+    # iterate through all scales
     for i, constructor in tqdm(
         enumerate(constructors), total=len(constructors), disable=tqdm_disable
     ):
+        quality_indices, quality_values = _to_indices(
+            constructor["quality"], directed=method == "leiden"
+        )
+
+        # prepare _evaluate_quality() function for parallel processing
         worker = partial(
             _evaluate_quality,
-            qualities_index=_to_indices(constructor["quality"]),
+            quality_indices=quality_indices,
+            quality_values=quality_values,
             null_model=constructor["null_model"],
             global_shift=constructor.get("shift", 0.0),
             method=method,
         )
-        best_quality_id = np.argmax(
-            pool.map(
-                worker,
-                all_results_raw["community_id"],
-                chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
-            )
-        )
 
+        # find index in sequence of partitions that leads to highest quality score
+        quality_scores = pool.map(
+            worker,
+            all_results_raw["community_id"],
+            chunksize=_get_chunksize(len(all_results_raw["community_id"]), pool),
+        )
+        best_quality_id = np.argmax(quality_scores)
+
+        # replace old partition with new partition
         all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
-        all_results["stability"][i] = all_results_raw["stability"][best_quality_id]
+        # assign new quality score
+        all_results["stability"][i] = quality_scores[best_quality_id]
+        # update number of communities
         all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
             best_quality_id
         ]
