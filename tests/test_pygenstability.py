@@ -159,10 +159,10 @@ def test__evaluate_quality(graph):
     data = constructor.get_data(1)
     community_id = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     qualities_index = pgs._to_indices(data["quality"])
-    quality = pgs._evaluate_quality(community_id, qualities_index, data["null_model"], 0)
+    quality = pgs._evaluate_quality(community_id, qualities_index[0], qualities_index[1], data["null_model"], 0)
     assert_almost_equal(quality, 0.5590341906608186)
 
     quality = pgs._evaluate_quality(
-        community_id, qualities_index, data["null_model"], 0, method="leiden"
+        community_id, qualities_index[0], qualities_index[1], data["null_model"], 0, method="leiden"
     )
     assert_almost_equal(quality, 0.2741359784037568)

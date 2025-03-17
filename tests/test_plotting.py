@@ -1,4 +1,4 @@
-"#" "Test plotting module." ""
+"""Test plotting module."""
 import numpy as np
 from pathlib import Path
 from diff_pdf_visually import pdf_similar
