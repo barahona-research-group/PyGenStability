@@ -11,8 +11,8 @@
 
 # *PyGenStability*
 
-This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalized Markov Stability function [3]. To maximize the generalized Markov Stability cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [4] and Leiden [5] algorithms.
-We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the automatic selection of robust partitions [6]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [7].
+This ``python`` package is designed for multiscale community detection with Markov Stability (MS) analysis [1, 2, 3, 4] and allows researchers to identify robust network partitions at different resolutions. It implements several variants of the MS cost functions that are based on graph diffusion processes to explore the network (see illustration below). Whilst primarily built for MS, the internal architecture of *PyGenStability* has been designed to solve for a wide range of clustering cost functions since it is based on optimising the so-called generalized Markov Stability function [5]. To maximize the generalized Markov Stability cost function, *PyGenStability* provides a convenient ``python`` interface for ``C++`` implementations of Louvain [6] and Leiden [7] algorithms.
+We further provide specific analysis tools to process and analyse the results from multiscale community detection, and to facilitate the automatic selection of robust partitions [8]. *PyGenStability* is accompanied by a software paper that further details the implementation, result analysis, benchmarks and applications [9].
 
 ![illustration](docs/artwork/diffusion_schematic.png)
 
@@ -30,7 +30,7 @@ pip install pygenstability
 
 Using a fresh python3 virtual environment, e.g. conda, may be recommended to avoid conflicts with other python packages. 
 
-By default, the package uses the Louvain algorithm [4] for optimizing generalized Markov Stability. To use the Leiden algorithm [5], install this package with:
+By default, the package uses the Louvain algorithm [6] for optimizing generalized Markov Stability. To use the Leiden algorithm [7], install this package with:
 ```bash
 pip install pygenstability[leiden]
 ```
@@ -90,7 +90,7 @@ There are a variety of further choices that users can make that will impact the 
 - Constructor: Generalized Markov Stability requires the user to input a quality matrix and associated null models. We provide an object-oriented module to write user-defined constructors for these objects, with several already implemented (see `pygenstability/constructors.py` for some classic examples).
 - Generalized Markov Stability maximizers: To maximize the NP-hard optimal generalized Markov Stability we interface with two algorithms: (i) Louvain and (ii) Leiden.
 
-While Louvain is defined as the default due to its familiarity within the research community, Leiden is known to produce better partitions and can be used by specifying the run function.
+While Louvain is defined as the default due to its familiarity within the research community, Leiden is known to produce better partitions and can be used by specifying the run function. Note that Leiden may perform significantly faster for **large** graphs.
 
 ```python
 results = pgs.run(graph, method="leiden")
@@ -100,7 +100,7 @@ There are also additional post-processing and analysis functions, including:
 - Plotting via matplotlib and plotly (interactive).
 - Automated optimal scale selection.
 
-Optimal scale selection [6] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimal network partitions can then be plotted given a NetworkX nx_graph.
+Optimal scale selection [8] is performed by default with the run function but can be repeated with different parameters if needed, see `pygenstability/optimal_scales.py`. To reduce noise, e.g., one can increase the parameter values for `block_size` and `window_size`. The optimal network partitions can then be plotted given a NetworkX nx_graph.
 
 ```python
 results = pgs.identify_optimal_scales(results, kernel_size=10, window_size=5)
@@ -111,12 +111,12 @@ pgs.plot_optimal_partitions(nx_graph, results)
  
 We provide an object-oriented module for constructing quality matrices and null models in `pygenstability/constructors.py`. Various constructors are implemented for different types of graphs:
 
-- `linearized` based on linearized MS for large undirected weighted graphs [2]
-- `continuous_combinatorial` based on combinatorial Laplacian for undirected weighted graphs [2]
-- `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs [2]
-- `signed_modularity` based on signed modularity for large signed graphs [8]
-- `signed_combinatorial` based on signed combinatorial Laplacian for signed graphs [3]
-- `directed` based on random-walk Laplacian with teleportation for directed weighted graphs [2]
+- `linearized` based on linearized MS for large undirected weighted graphs [3]
+- `continuous_combinatorial` based on combinatorial Laplacian for undirected weighted graphs [3]
+- `continuous_normalized` based on random-walk normalized Laplacians for undirected weighted graphs [3]
+- `signed_modularity` based on signed modularity for large signed graphs [10]
+- `signed_combinatorial` based on signed combinatorial Laplacian for signed graphs [5]
+- `directed` based on random-walk Laplacian with teleportation for directed weighted graphs [3]
 - `linearized_directed` based on random-walk Laplacian with teleportation for large directed weighted graphs
 
 For the computationally efficient analysis of **large** graphs, we recommend using the `linearized`, `linearized_directed` or `signed_modularity` constructors instead of `continuous_combinatorial`, `continuous_normalized`, `directed` or `signed_combinatorial` that rely on the computation of matrix exponentials.
@@ -128,7 +128,7 @@ For those of you that wish to implement their own constructor, you will need to 
 
 ## Graph-based data clustering
 
-PyGenStability can also be used to perform multiscale graph-based data clustering on data that comes in the form of a sample-by-feature matrix. This approach was shown to achieve better performance than other popular clustering methods without the need of setting the number of clusters externally [9]. 
+PyGenStability can also be used to perform multiscale graph-based data clustering on data that comes in the form of a sample-by-feature matrix. This approach was shown to achieve better performance than other popular clustering methods without the need of setting the number of clusters externally [11]. 
 
 We provide an easy-to-use interface in our `pygenstability.data_clustering.py` module. Given a sample-by-feature matrix `X`, one can apply graph-based data clustering as follows:
 
@@ -146,7 +146,7 @@ clustering.scale_selection(kernel_size=0.2)
 clustering.plot_scan()
 ```
 
-We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [10] graph constructions (specified by `graph_method`) augmented with the minimum spanning tree to guarentee connectivity, where `k` refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:
+We currently support $k$-Nearest Neighbor (kNN) and Continuous $k$-Nearest Neighbor (CkNN) [12] graph constructions (specified by `graph_method`) augmented with the minimum spanning tree to guarentee connectivity, where `k` refers to the number of neighbours considered in the construction. See documentation for a list of all parameters. All functionalities of PyGenStability including plotting and scale selection are also available for data clustering. For example, given two-dimensional coordinates of the data points one can plot the optimal partitions directly:
 
 ```python
 # plot robust partitions
