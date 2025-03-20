@@ -248,7 +248,9 @@ def run(
         all_results = defaultdict(list)
         all_results["run_params"] = run_params
 
+        # iterate through all Markov scales
         for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
+            # run optimisation independently for n_tries
             results = _run_optimisations(constructor_data[i], n_tries, pool, method)
             communities = _process_runs(t, results, all_results)
 
@@ -284,17 +286,29 @@ def run(
 
 
 def _process_runs(scale, results, all_results):
-    """Convert the optimisation outputs to useful data and save it."""
+    """For each scale pick partition with highest stability among all iterations."""
+    # collect results from different optimisation runs
     stabilities = np.array([res[0] for res in results])
     communities = np.array([res[1] for res in results])
-
+    # find index for highest stability
     best_run_id = np.argmax(stabilities)
+    # save results for partition with highest stability
     all_results["scales"].append(scale)
-    all_results["number_of_communities"].append(np.max(communities[best_run_id]) + 1)
+    all_results["number_of_communities"].append(len(np.unique(communities[best_run_id])))
     all_results["stability"].append(stabilities[best_run_id])
-    all_results["community_id"].append(communities[best_run_id])
+    # we assign strictly increasing community IDs
+    all_results["community_id"].append(_assign_increasing_ids(communities[best_run_id]))
 
     return communities
+
+
+def _assign_increasing_ids(community_id):
+    """Assign strictly increasing community IDs starting from 0."""
+    # get unique ids and their indices in input array
+    unique_ids, ind = np.unique(community_id, return_index=True)
+    # translate old ids to new ids
+    new_id_dict = {unique_ids[np.argsort(ind)][i]: i for i in range(len(unique_ids))}
+    return np.vectorize(new_id_dict.get)(community_id)
 
 
 @_timing
