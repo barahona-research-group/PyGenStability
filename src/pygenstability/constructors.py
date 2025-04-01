@@ -59,8 +59,8 @@ def _limit_numpy(f):
 def _compute_spectral_decomp(matrix):
     """Solve eigenalue problem for symmetric matrix."""
     lambdas, v = la.eigh(matrix.toarray())
-    vinv = la.inv(v.real)
-    return lambdas.real, v.real, vinv
+    vinv = la.inv(v)  # TODO: we could take v.T if we know that v is already orthonormal
+    return lambdas, v, vinv
 
 
 def _check_total_degree(degrees):
