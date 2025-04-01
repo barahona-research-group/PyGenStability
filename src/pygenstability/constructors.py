@@ -31,9 +31,13 @@ def load_constructor(constructor, graph, **kwargs):
     """Load a constructor from its name, or as a custom Constructor class."""
     if isinstance(constructor, str):
         if graph is None:
-            raise Exception(f"No graph was provided with a generic constructor {constructor}")
+            raise Exception(
+                f"No graph was provided with a generic constructor {constructor}"
+            )
         try:
-            return getattr(sys.modules[__name__], f"constructor_{constructor}")(graph, **kwargs)
+            return getattr(sys.modules[__name__], f"constructor_{constructor}")(
+                graph, **kwargs
+            )
         except AttributeError as exc:
             raise Exception(f"Could not load constructor {constructor}") from exc
     if not isinstance(constructor, Constructor):
@@ -67,7 +71,9 @@ def _check_total_degree(degrees):
 
 def _get_spectral_gap(laplacian):
     """Compute spectral gap."""
-    spectral_gap = np.round(max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8)
+    spectral_gap = np.round(
+        max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8
+    )
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
     return spectral_gap
 
@@ -80,7 +86,9 @@ class Constructor:
     to return quality matrix, null model, and possible global shift.
     """
 
-    def __init__(self, graph, with_spectral_gap=False, exp_comp_mode="spectral", **kwargs):
+    def __init__(
+        self, graph, with_spectral_gap=False, exp_comp_mode="spectral", **kwargs
+    ):
         """The constructor calls the prepare method upon initialisation.
 
         Args:
@@ -94,10 +102,11 @@ class Constructor:
         self.spectral_gap = None
         self.exp_comp_mode = exp_comp_mode
 
-        # these three variable can be used in prepare method
+        # these variables can be used in prepare method
         self.partial_quality_matrix = None
         self.partial_null_model = None
         self.spectral_decomp = None, None, None
+        self.degrees = None
         self.threshold = THRESHOLD
 
         self.prepare(**kwargs)
@@ -105,11 +114,16 @@ class Constructor:
     def _get_exp(self, scale):
         """Compute matrix exponential at a given scale."""
         if self.exp_comp_mode == "expm":
-            exp = sp.linalg.expm(-scale * self.partial_quality_matrix.toarray().astype(_DTYPE))
+            # compute matrix exponential via Pade approximation
+            exp = sp.linalg.expm(
+                -scale * self.partial_quality_matrix.toarray().astype(_DTYPE)
+            )
         if self.exp_comp_mode == "spectral":
+            # compute matrix exponential via spectral decomposition
             lambdas, v, vinv = self.spectral_decomp
             exp = v @ np.diag(np.exp(-scale * lambdas)) @ vinv
 
+        # we cut values in exponential matrix that are smaller than 1e-8 the maximum value
         exp[np.abs(exp) < self.threshold * np.max(exp)] = 0.0
         return sp.csc_matrix(exp)
 
@@ -187,7 +201,9 @@ class constructor_continuous_combinatorial(Constructor):
     @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
-        laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
+        laplacian, degrees = sp.csgraph.laplacian(
+            self.graph, return_diag=True, normed=False
+        )
         _check_total_degree(degrees)
         laplacian /= degrees.mean()
         pi = np.ones(self.graph.shape[0]) / self.graph.shape[0]
@@ -227,28 +243,52 @@ class constructor_continuous_normalized(Constructor):
     @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
-        laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
+        # compute combinatorial Laplacian and degrees
+        laplacian, degrees = sp.csgraph.laplacian(
+            self.graph, return_diag=True, normed=False
+        )
         _check_total_degree(degrees)
-        normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
+        if self.exp_comp_mode == "spectral":
+            # store degrees
+            self.degrees = degrees
+            # compute symmetrically normalised Laplacian
+            sym_normed_laplacian = sp.csgraph.laplacian(self.graph, normed=True)
+
+        if self.exp_comp_mode == "expm" or self.with_spectral_gap:
+            # compute random-walk normalised Laplacian
+            D_inv = sp.diags(1.0 / degrees)
+            rw_normed_laplacian = D_inv @ laplacian
+
+        # define stationary distribution and set as null model
         pi = degrees / degrees.sum()
         self.partial_null_model = np.array([pi, pi], dtype=_DTYPE)
 
         if self.with_spectral_gap:
-            self.spectral_gap = _get_spectral_gap(normed_laplacian)
+            # compute spectral gap of random-walk normalised Laplacian
+            self.spectral_gap = _get_spectral_gap(rw_normed_laplacian)
 
         if self.exp_comp_mode == "spectral":
-            self.spectral_decomp = _compute_spectral_decomp(normed_laplacian)
+            # compute spectral decomposition of symmetric normalised Laplacian
+            self.spectral_decomp = _compute_spectral_decomp(sym_normed_laplacian)
         if self.exp_comp_mode == "expm":
-            self.partial_quality_matrix = normed_laplacian
+            self.partial_quality_matrix = rw_normed_laplacian
 
     @_limit_numpy
     def _get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-
+        # compute matrix exponential
         exp = self._get_exp(scale)
+
+        if self.exp_comp_mode == "spectral":
+            # we need to transfrom exp of symmetrically normalised Laplacian to
+            # obtain exp of random-walk normalised Laplacian
+            D_sqrt_inv = sp.diags(1.0 / np.sqrt(self.degrees))
+            D_sqrt = sp.diags(np.sqrt(self.degrees))
+            exp = D_sqrt_inv @ exp @ D_sqrt
+
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 
@@ -379,11 +419,17 @@ class constructor_directed(Constructor):
 
         self.partial_quality_matrix = sp.csr_matrix(
             alpha * np.diag(dinv).dot(self.graph.toarray())
-            + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(ones)
+            + (
+                (1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))
+            ).dot(ones)
             - np.eye(n_nodes)
         )
 
-        pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
+        pi = abs(
+            sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][
+                :, 0
+            ]
+        )
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
 
@@ -437,9 +483,10 @@ class constructor_linearized_directed(Constructor):
 
             self.partial_quality_matrix = sp.csr_matrix(
                 alpha * np.diag(dinv).dot(self.graph.toarray())
-                + ((1 - alpha) * np.diag(np.ones(n_nodes)) + np.diag(alpha * (dinv == 0.0))).dot(
-                    ones
-                )
+                + (
+                    (1 - alpha) * np.diag(np.ones(n_nodes))
+                    + np.diag(alpha * (dinv == 0.0))
+                ).dot(ones)
                 - np.eye(n_nodes)
             )
 
@@ -448,7 +495,11 @@ class constructor_linearized_directed(Constructor):
                 sp.diags(dinv).dot(self.graph) - sp.diags(np.ones(n_nodes))
             )
 
-        pi = abs(sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0])
+        pi = abs(
+            sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][
+                :, 0
+            ]
+        )
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
 
