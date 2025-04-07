@@ -120,9 +120,7 @@ def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
 
 def _check_method(method):  # pragma: no cover
     if _NO_LEIDEN and _NO_LOUVAIN:
-        raise Exception(
-            "Without Louvain or Leiden solver, we cannot run PyGenStability"
-        )
+        raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
 
     if method == "louvain" and _NO_LOUVAIN:
         print("Louvain is not available, we fallback to leiden.")
@@ -257,9 +255,7 @@ def run(
             communities = _process_runs(t, results, all_results)
 
             if with_NVI:
-                _compute_NVI(
-                    communities, all_results, pool, n_partitions=min(n_NVI, n_tries)
-                )
+                _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
 
             if with_all_tries:
                 all_results["all_tries"].append(results)
@@ -268,9 +264,7 @@ def run(
 
         if with_postprocessing:
             L.info("Apply postprocessing...")
-            _apply_postprocessing(
-                all_results, pool, constructor_data, tqdm_disable, method=method
-            )
+            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
 
         if with_ttprime or with_optimal_scales:
             L.info("Compute ttprimes...")
@@ -284,9 +278,7 @@ def run(
                         "window_size": max(2, int(0.1 * n_scale)),
                         "basin_radius": max(1, int(0.01 * n_scale)),
                     }
-                all_results = identify_optimal_scales(
-                    all_results, **optimal_scales_kwargs
-                )
+                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
 
     save_results(all_results, filename=result_file)
 
@@ -302,9 +294,7 @@ def _process_runs(scale, results, all_results):
     best_run_id = np.argmax(stabilities)
     # save results for partition with highest stability
     all_results["scales"].append(scale)
-    all_results["number_of_communities"].append(
-        len(np.unique(communities[best_run_id]))
-    )
+    all_results["number_of_communities"].append(len(np.unique(communities[best_run_id])))
     all_results["stability"].append(stabilities[best_run_id])
     # we assign strictly increasing community IDs
     all_results["community_id"].append(_assign_increasing_ids(communities[best_run_id]))
@@ -380,9 +370,7 @@ def _to_indices(matrix, directed=False):
 
 
 @_timing
-def _optimise(
-    _, quality_indices, quality_values, null_model, global_shift, method="louvain"
-):
+def _optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
     """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
@@ -495,18 +483,14 @@ def _compute_ttprime(all_results, pool):
     # compute NVI(t,t') for t < t'
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
     # store NVI(t,'t) as symmetric matrix with zero diagonal
-    all_results["ttprime"] = np.zeros(
-        [len(all_results["scales"]), len(all_results["scales"])]
-    )
+    all_results["ttprime"] = np.zeros([len(all_results["scales"]), len(all_results["scales"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp
     all_results["ttprime"] += all_results["ttprime"].T
 
 
 @_timing
-def _apply_postprocessing(
-    all_results, pool, constructors, tqdm_disable=False, method="louvain"
-):
+def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 
@@ -537,12 +521,10 @@ def _apply_postprocessing(
         best_quality_id = np.argmax(quality_scores)
 
         # replace old partition with new partition
-        all_results["community_id"][i] = all_results_raw["community_id"][
-            best_quality_id
-        ]
+        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
         # assign new quality score
         all_results["stability"][i] = quality_scores[best_quality_id]
         # update number of communities
-        all_results["number_of_communities"][i] = all_results_raw[
-            "number_of_communities"
-        ][best_quality_id]
+        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
+            best_quality_id
+        ]

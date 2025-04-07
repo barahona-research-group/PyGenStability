@@ -4,9 +4,11 @@ import numpy as np  # pragma: no cover
 
 try:
     import plotly.graph_objects as go
-    from plotly.offline import plot as _plot
+    from plotly.offline import plot
+
+    with_plotly = True
 except ImportError:  # pragma: no cover
-    pass
+    with_plotly = False
 
 
 def plot_sankey(
@@ -33,9 +35,7 @@ def plot_sankey(
     if not scale_index:
         all_results["community_id_reduced"] = all_results["community_id"]
     else:
-        all_results["community_id_reduced"] = [
-            all_results["community_id"][i] for i in scale_index
-        ]
+        all_results["community_id_reduced"] = [all_results["community_id"][i] for i in scale_index]
 
     community_ids = all_results["community_id_reduced"]
     if optimal_scales and ("selected_partitions" in all_results.keys()):
@@ -70,7 +70,10 @@ def plot_sankey(
         layout=layout,
     )
 
-    plot(fig, filename=filename)
+    if with_plotly:
+        plot(fig, filename=filename)
+    else:
+        print("Plotly not installed, we cannot plot the figure")
 
     if live:
         fig.show()
