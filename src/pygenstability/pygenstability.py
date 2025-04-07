@@ -315,11 +315,17 @@ def _assign_increasing_ids(community_id):
 def _compute_NVI(communities, all_results, pool, n_partitions=10):
     """Compute NVI measure between the first n_partitions."""
     selected_partitions = communities[:n_partitions]
-
+    # prepare worker to compute NVI between selected partitions
     worker = partial(evaluate_NVI, partitions=selected_partitions)
-    index_pairs = [[i, j] for i in range(n_partitions) for j in range(n_partitions)]
+    # we compute pairwise NVI only for i != j because NVI is a metric
+    index_pairs = list(itertools.combinations(range(n_partitions), 2))
     chunksize = _get_chunksize(len(index_pairs), pool)
-    all_results["NVI"].append(np.mean(list(pool.imap(worker, index_pairs, chunksize=chunksize))))
+    # compute using pool of workers
+    nvi_off_diagonal = list(pool.imap(worker, index_pairs, chunksize=chunksize))
+    # we compute the mean NVI, using the fact that NVI is a metric
+    nvi_mean = 2 * np.sum(nvi_off_diagonal) / n_partitions**2
+    # append mean NVI to results
+    all_results["NVI"].append(nvi_mean)
 
 
 def evaluate_NVI(index_pair, partitions):
@@ -468,12 +474,15 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
 
 @_timing
 def _compute_ttprime(all_results, pool):
-    """Compute NVI(t,tprime) from the Markov stability results."""
-    index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
+    """Compute NVI(t,t') from the Markov stability results."""
+    # prepare worker to compute NVI between selected partitions
     worker = partial(evaluate_NVI, partitions=all_results["community_id"])
+    # we compute NVI only for t < t' because NVI is a metric
+    index_pairs = list(itertools.combinations(range(len(all_results["scales"])), 2))
     chunksize = _get_chunksize(len(index_pairs), pool)
+    # compute NVI(t,t') for t < t'
     ttprime_list = pool.map(worker, index_pairs, chunksize=chunksize)
-
+    # store NVI(t,'t) as symmetric matrix with zero diagonal
     all_results["ttprime"] = np.zeros([len(all_results["scales"]), len(all_results["scales"])])
     for i, ttp in enumerate(ttprime_list):
         all_results["ttprime"][index_pairs[i][0], index_pairs[i][1]] = ttp

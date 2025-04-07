@@ -55,8 +55,8 @@ def _limit_numpy(f):
 def _compute_spectral_decomp(matrix):
     """Solve eigenalue problem for symmetric matrix."""
     lambdas, v = la.eigh(matrix.toarray())
-    vinv = la.inv(v.real)
-    return lambdas.real, v.real, vinv
+    vinv = la.inv(v)  # TODO: we could take v.T if we know that v is already orthonormal
+    return lambdas, v, vinv
 
 
 def _check_total_degree(degrees):
@@ -94,10 +94,11 @@ class Constructor:
         self.spectral_gap = None
         self.exp_comp_mode = exp_comp_mode
 
-        # these three variable can be used in prepare method
+        # these variables can be used in prepare method
         self.partial_quality_matrix = None
         self.partial_null_model = None
         self.spectral_decomp = None, None, None
+        self.degrees = None
         self.threshold = THRESHOLD
 
         self.prepare(**kwargs)
@@ -105,11 +106,14 @@ class Constructor:
     def _get_exp(self, scale):
         """Compute matrix exponential at a given scale."""
         if self.exp_comp_mode == "expm":
+            # compute matrix exponential via Pade approximation
             exp = sp.linalg.expm(-scale * self.partial_quality_matrix.toarray().astype(_DTYPE))
         if self.exp_comp_mode == "spectral":
+            # compute matrix exponential via spectral decomposition
             lambdas, v, vinv = self.spectral_decomp
             exp = v @ np.diag(np.exp(-scale * lambdas)) @ vinv
 
+        # we cut values in exponential matrix that are smaller than 1e-8 the maximum value
         exp[np.abs(exp) < self.threshold * np.max(exp)] = 0.0
         return sp.csc_matrix(exp)
 
@@ -227,28 +231,50 @@ class constructor_continuous_normalized(Constructor):
     @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
+        # compute combinatorial Laplacian and degrees
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
         _check_total_degree(degrees)
-        normed_laplacian = sp.diags(1.0 / degrees).dot(laplacian)
 
+        if self.exp_comp_mode == "spectral":
+            # store degrees
+            self.degrees = degrees
+            # compute symmetrically normalised Laplacian
+            sym_normed_laplacian = sp.csgraph.laplacian(self.graph, normed=True)
+
+        if self.exp_comp_mode == "expm" or self.with_spectral_gap:
+            # compute random-walk normalised Laplacian
+            D_inv = sp.diags(1.0 / degrees)
+            rw_normed_laplacian = D_inv @ laplacian
+
+        # define stationary distribution and set as null model
         pi = degrees / degrees.sum()
         self.partial_null_model = np.array([pi, pi], dtype=_DTYPE)
 
         if self.with_spectral_gap:
-            self.spectral_gap = _get_spectral_gap(normed_laplacian)
+            # compute spectral gap of random-walk normalised Laplacian
+            self.spectral_gap = _get_spectral_gap(rw_normed_laplacian)
 
         if self.exp_comp_mode == "spectral":
-            self.spectral_decomp = _compute_spectral_decomp(normed_laplacian)
+            # compute spectral decomposition of symmetric normalised Laplacian
+            self.spectral_decomp = _compute_spectral_decomp(sym_normed_laplacian)
         if self.exp_comp_mode == "expm":
-            self.partial_quality_matrix = normed_laplacian
+            self.partial_quality_matrix = rw_normed_laplacian
 
     @_limit_numpy
     def _get_data(self, scale):
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
-
+        # compute matrix exponential
         exp = self._get_exp(scale)
+
+        if self.exp_comp_mode == "spectral":
+            # we need to transfrom exp of symmetrically normalised Laplacian to
+            # obtain exp of random-walk normalised Laplacian
+            D_sqrt_inv = sp.diags(1.0 / np.sqrt(self.degrees))
+            D_sqrt = sp.diags(np.sqrt(self.degrees))
+            exp = D_sqrt_inv @ exp @ D_sqrt
+
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
         return {"quality": quality_matrix, "null_model": self.partial_null_model}
 

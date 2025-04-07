@@ -1,8 +1,14 @@
 """Sankey diagram plots."""
 
 import numpy as np  # pragma: no cover
-import plotly.graph_objects as go  # pragma: no cover
-from plotly.offline import plot  # pragma: no cover
+
+try:
+    import plotly.graph_objects as go
+    from plotly.offline import plot
+
+    with_plotly = True
+except ImportError:  # pragma: no cover
+    with_plotly = False
 
 
 def plot_sankey(
@@ -64,7 +70,10 @@ def plot_sankey(
         layout=layout,
     )
 
-    plot(fig, filename=filename)
+    if with_plotly:
+        plot(fig, filename=filename)
+    else:
+        print("Plotly not installed, we cannot plot the figure")
 
     if live:
         fig.show()
