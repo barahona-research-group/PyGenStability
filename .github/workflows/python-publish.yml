@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-python@master
         name: Install Python
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install cibuildwheel
         run: |
