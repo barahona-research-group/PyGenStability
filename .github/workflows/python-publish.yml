@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: dist_wheel
-          path: dist_wheel
+          path: dist
 
   build_sdist:
     name: Build sdist
@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: dist_sdist
-          path: dist_sdist
+          path: dist
 
   upload_wheels:
     runs-on: ubuntu-latest
