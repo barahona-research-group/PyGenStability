@@ -54,7 +54,7 @@ jobs:
       - name: Store wheel as artifact
         uses: actions/upload-artifact@master
         with:
-          name: dist_${{ runner.os }}
+          name: dist
           path: dist
 
   build_sdist:
@@ -75,7 +75,7 @@ jobs:
       - name: Store sdist as artifact
         uses: actions/upload-artifact@master
         with:
-          name: dist_sdist
+          name: dist
           path: dist
 
   upload_wheels:
