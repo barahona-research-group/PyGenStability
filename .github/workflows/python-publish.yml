@@ -52,7 +52,7 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir dist
       - name: Store wheel as artifact
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
