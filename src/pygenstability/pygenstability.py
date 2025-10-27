@@ -48,6 +48,10 @@ from pygenstability.optimal_scales import identify_optimal_scales
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
 
+# ignore sklearn UserWarning
+from warnings import simplefilter
+simplefilter(action='ignore', category=UserWarning)
+
 
 def _timing(f):  # pragma: no cover
     """Use as decorator to time a function excecution if logging is in DEBUG mode."""
@@ -520,11 +524,14 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
         )
         best_quality_id = np.argmax(quality_scores)
 
-        # replace old partition with new partition
-        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
-        # assign new quality score
-        all_results["stability"][i] = quality_scores[best_quality_id]
-        # update number of communities
-        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
-            best_quality_id
-        ]
+        # only if the new found score is strictly better replace
+        if np.round(quality_scores[best_quality_id],5) > np.round(all_results["stability"][i],5):
+            print(i, all_results["stability"][i],"is worse than", best_quality_id, quality_scores[best_quality_id])
+            # replace old partition with new partition
+            all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
+            # assign new quality score
+            all_results["stability"][i] = quality_scores[best_quality_id]
+            # update number of communities
+            all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
+                best_quality_id
+            ]
