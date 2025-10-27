@@ -239,7 +239,7 @@ class DataClustering(_GraphConstruction):
 
         References
         ----------
-        .. [3] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
+        .. [3] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
         # transform relative values to absolute values
