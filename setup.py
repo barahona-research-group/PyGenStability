@@ -43,8 +43,8 @@ networkx_install = ["networkx>=3.0"]
 setup(
     name="PyGenStability",
     version=__version__,
-    author="Alexis Arnaudon, Dominik Schindler",
-    author_email="alexis.arnaudon@epfl.ch, dominik.schindler19@imperial.ac.uk",
+    author="Alexis Arnaudon, Juni Schindler",
+    author_email="alexis.arnaudon@epfl.ch, juni.schindler19@imperial.ac.uk",
     url="https://github.com/ImperialCollegeLondon/PyGenStability",
     description="Python binding of generalised Louvain with Markov Stability",
     long_description=open("README.md", "r").read(),

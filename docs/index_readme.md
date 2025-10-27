@@ -142,7 +142,7 @@ clustering.plot_robust_partitions(x_coord=x_coord,y_coord=y_coord)
 
 - Alexis Arnaudon, GitHub: `arnaudon <https://github.com/arnaudon>`
 - Robert Peach, GitHub: `peach-lucien <https://github.com/peach-lucien>`
-- Dominik Schindler, GitHub: `d-schindler <https://github.com/d-schindler>`
+- Juni Schindler, GitHub: `juni-schindler <https://github.com/juni-schindler>`
 
 We always look out for individuals that are interested in contributing to this open-source project. Even if you are just using *PyGenStability* and made some minor updates, we would be interested in your input. 
 
@@ -152,7 +152,7 @@ Please cite our paper if you use this code in your own work:
 
 ```
 @article{pygenstability,
-  author = {Arnaudon, Alexis and Schindler, Dominik J. and Peach, Robert L. and Gosztolai, Adam and Hodges, Maxwell and Schaub, Michael T. and Barahona, Mauricio},  
+  author = {Arnaudon, Alexis and Schindler, Juni and Peach, Robert L. and Gosztolai, Adam and Hodges, Maxwell and Schaub, Michael T. and Barahona, Mauricio},  
   title = {Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability},
   journal = {ACM Trans. Math. Softw.},
   volume = {50},
@@ -237,9 +237,9 @@ If you are interested in trying our other packages, see the below list:
 
 [7] V. A. Traag, L. Waltman, and N. J. van Eck, 'From Louvain to Leiden: guaranteeing well-connected communities', *Sci Rep*, vol. 9, no. 1, p. 5233, Mar. 2019, doi: 10.1038/s41598-019-41695-z.
 
-[8] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and the Restriction of Human Movement', *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
+[8] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and the Restriction of Human Movement', *Royal Society Open Science*, vol. 10, no. 10, p. 230405, Oct. 2023, doi: 10.1098/rsos.230405.
 
-[9] A. Arnaudon, D. J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability', *ACM Trans. Math. Softw.*, vol. 50, no. 2, p. 15:1–15:8, Jun. 2024, doi: 10.1145/3651225.
+[9] A. Arnaudon, J. Schindler, R. L. Peach, A. Gosztolai, M. Hodges, M. T. Schaub, and M. Barahona, 'Algorithm 1044: PyGenStability, a Multiscale Community Detection Framework with Generalized Markov Stability', *ACM Trans. Math. Softw.*, vol. 50, no. 2, p. 15:1–15:8, Jun. 2024, doi: 10.1145/3651225.
 
 [10] S. Gomez, P. Jensen, and A. Arenas, 'Analysis of community structure in networks of correlated data'. *Physical Review E*, vol. 80, no. 1, p. 016114, Jul. 2009, doi: 10.1103/PhysRevE.80.016114.
 
