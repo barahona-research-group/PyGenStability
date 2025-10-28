@@ -528,19 +528,7 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
         best_quality_id = np.argmax(quality_scores)
 
         # only if the new found score is strictly better replace
-<<<<<<< HEAD
-        if np.round(quality_scores[best_quality_id],5) > np.round(all_results["stability"][i],5):
-            print(i, all_results["stability"][i],"is worse than", best_quality_id, quality_scores[best_quality_id])
-=======
         if np.round(quality_scores[best_quality_id], 5) > np.round(all_results["stability"][i], 5):
-            print(
-                i,
-                all_results["stability"][i],
-                "is worse than",
-                best_quality_id,
-                quality_scores[best_quality_id],
-            )
->>>>>>> f9659b19e64681b81d1840dee8794a44d01401f9
             # replace old partition with new partition
             all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
             # assign new quality score
