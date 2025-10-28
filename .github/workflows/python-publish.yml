@@ -5,12 +5,12 @@ on:
     types: [created]
     
 env:
-  CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-  MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+  MACOSX_DEPLOYMENT_TARGET: '11.0'
   CIBW_BUILD_VERBOSITY: 2
   # Only build on Python 3.x
   CIBW_BUILD: 'cp3?-*'
-  CIBW_SKIP: 'cp35-* cp310-* *-manylinux_i686'
+  CIBW_SKIP: 'cp39-* *-manylinux_i686'
 
 jobs:
   build_wheels:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-12]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@master
@@ -28,11 +28,11 @@ jobs:
       - uses: actions/setup-python@master
         name: Install Python
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install cibuildwheel
         run: |
-          python -m pip install cibuildwheel==1.6.4
+          python -m pip install cibuildwheel
       - name: Build wheels on Linux
         if: runner.os == 'Linux'
         env:
@@ -46,15 +46,15 @@ jobs:
         env:
           CIBW_BEFORE_BUILD: |
             brew update
-            brew unlink gcc@8 gcc@9
-            brew install cmake
+            brew unlink gcc@9
+            brew reinstall cmake
             python -m pip install pybind11
         run: |
           python -m cibuildwheel --output-dir dist
       - name: Store wheel as artifact
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-${{ matrix.os }}-${{ matrix.python-version }}
           path: dist
 
   build_sdist:
@@ -64,16 +64,16 @@ jobs:
       - uses: actions/checkout@master
         with:
           submodules: true
-      - name: Set up Python 3.9
+      - name: Set up Python 3.11
         uses: actions/setup-python@master
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Build a source tarball
         run: |
           python -m pip install pybind11
           python setup.py sdist
       - name: Store sdist as artifact
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
@@ -84,9 +84,10 @@ jobs:
     name: Upload wheels to PyPI
     steps:
       - name: Download artifacts produced during the build_wheels and build_sdist jobs
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
-          name: dist
+          pattern: dist-*
+          merge-multiple: true
           path: dist
 
       - name: Display structure of downloaded files

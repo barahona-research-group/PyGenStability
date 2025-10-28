@@ -16,8 +16,7 @@ import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
-from functools import partial
-from functools import wraps
+from functools import partial, wraps
 from time import time
 
 try:
@@ -27,6 +26,8 @@ try:
     _NO_LEIDEN = False
 except ImportError:  # pragma: no cover
     _NO_LEIDEN = True
+
+from warnings import simplefilter
 
 import numpy as np
 import scipy.sparse as sp
@@ -47,6 +48,8 @@ from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
+# ignore sklearn UserWarning
+simplefilter(action="ignore", category=UserWarning)
 
 # ignore sklearn UserWarning
 from warnings import simplefilter
@@ -525,8 +528,19 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
         best_quality_id = np.argmax(quality_scores)
 
         # only if the new found score is strictly better replace
+<<<<<<< HEAD
         if np.round(quality_scores[best_quality_id],5) > np.round(all_results["stability"][i],5):
             print(i, all_results["stability"][i],"is worse than", best_quality_id, quality_scores[best_quality_id])
+=======
+        if np.round(quality_scores[best_quality_id], 5) > np.round(all_results["stability"][i], 5):
+            print(
+                i,
+                all_results["stability"][i],
+                "is worse than",
+                best_quality_id,
+                quality_scores[best_quality_id],
+            )
+>>>>>>> f9659b19e64681b81d1840dee8794a44d01401f9
             # replace old partition with new partition
             all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
             # assign new quality score
