@@ -47,7 +47,9 @@ def _pool2d_nvi(A, kernel_size, stride, padding=0):
     return np.nanmean(A_w, axis=(2, 3))
 
 
-def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, basin_radius=1, store_basins=False):
+def identify_optimal_scales(
+    results, kernel_size=3, window_size=3, max_nvi=1, basin_radius=1, store_basins=False
+):
     """Identifies optimal scales in Markov Stability [1]_.
 
     Robust scales are found in a sequential way. We first search for large diagonal blocks
@@ -76,7 +78,8 @@ def identify_optimal_scales(results, kernel_size=3, window_size=3, max_nvi=1, ba
     results["run_params"]["optimal_scals_kwargs"] = {
         "kernel_size": kernel_size,
         "window_size": window_size,
-        "basin_radius": basin_radius,}
+        "basin_radius": basin_radius,
+    }
 
     # get NVI(t) and NVI(t,t')
     nvi_t = np.asarray(results["NVI"])

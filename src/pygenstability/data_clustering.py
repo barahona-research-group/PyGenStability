@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-from scipy.spatial.distance import pdist
-from scipy.spatial.distance import squareform
+from scipy.spatial.distance import pdist, squareform
 from sklearn.neighbors import kneighbors_graph
 
 from pygenstability.contrib.sankey import plot_sankey as pgs_plot_sankey
@@ -322,7 +321,7 @@ class DataClustering(_GraphConstruction):
             ax.set(
                 xlabel="x",
                 ylabel="y",
-                title=f"Robust Partion {m+1} (with {len(np.unique(partition))} clusters)",
+                title=f"Robust Partion {m + 1} (with {len(np.unique(partition))} clusters)",
             )
         if show:
             plt.show()
