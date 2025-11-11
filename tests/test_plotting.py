@@ -1,4 +1,5 @@
 """Test plotting module."""
+import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from diff_pdf_visually import pdf_similar
@@ -19,6 +20,7 @@ def test_plot_scan(results, tmp_path):
         )
         is not None
     )
+    plt.close('all')
 
 
 def test_plot_clustered_adjacency(graph, results, tmp_path):
@@ -28,22 +30,25 @@ def test_plot_clustered_adjacency(graph, results, tmp_path):
     assert pdf_similar(
         DATA / "clustered_adjacency.pdf", tmp_path / "clustered_adjacency.pdf", threshold=15
     )
+    plt.close('all')
 
 
 def test_plot_communities(graph_nx, results, tmp_path):
     np.random.seed(42)
     plotting.plot_communities(graph_nx, results, tmp_path / "communities")
     assert pdf_similar(DATA / "scale_0.pdf", tmp_path / "communities/scale_0.pdf")
+    plt.close('all')
 
 
 def test_plot_communities_matrix(graph, results, tmp_path):
     np.random.seed(42)
     plotting.plot_communities_matrix(graph.toarray(), results, tmp_path / "communities_matrix")
     assert pdf_similar(DATA / "matrix_scale_0.pdf", tmp_path / "communities_matrix/scale_0.pdf")
-
+    plt.close('all')
 
 def test_plot_optimal_partitions(graph_nx, results, tmp_path):
     np.random.seed(42)
     results["selected_partitions"] = [1]
     plotting.plot_optimal_partitions(graph_nx, results, folder=tmp_path / "partitions")
     assert pdf_similar(DATA / "scale_1.pdf", tmp_path / "partitions/scale_1.pdf", threshold=10)
+    plt.close('all')

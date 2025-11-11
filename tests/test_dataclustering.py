@@ -18,7 +18,7 @@ def test_DataClustering(X):
     clustering = DataClustering()
     res = clustering.fit(X)
     results = _to_list({"labels": res.labels_, "results": res.results_})
-    yaml.dump(results, open(DATA / "test_dataclustering_default.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_dataclustering_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_dataclustering_default.yaml", "r"))
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
@@ -26,7 +26,7 @@ def test_DataClustering(X):
     clustering = DataClustering(graph_method="knn-mst")
     res = clustering.fit(X)
     results = _to_list({"labels": res.labels_, "results": res.results_})
-    yaml.dump(results, open(DATA / "test_dataclustering_knn.yaml", "w"))
+    # yaml.dump(results, open(DATA / "test_dataclustering_knn.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_dataclustering_knn.yaml", "r"))
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
