@@ -530,3 +530,4 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
             all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
                 best_quality_id
             ]
+            
