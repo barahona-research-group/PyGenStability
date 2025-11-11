@@ -27,8 +27,6 @@ try:
 except ImportError:  # pragma: no cover
     _NO_LEIDEN = True
 
-from warnings import simplefilter
-
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
@@ -48,12 +46,7 @@ from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
-# ignore sklearn UserWarning
-simplefilter(action="ignore", category=UserWarning)
-
-# ignore sklearn UserWarning
-from warnings import simplefilter
-simplefilter(action='ignore', category=UserWarning)
+THRESHOLD = 1e-8
 
 
 def _timing(f):  # pragma: no cover
@@ -527,8 +520,8 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
         )
         best_quality_id = np.argmax(quality_scores)
 
-        # only if the new found score is strictly better replace
-        if np.round(quality_scores[best_quality_id], 5) > np.round(all_results["stability"][i], 5):
+        # only if the new found score is better update partition
+        if np.abs(quality_scores[best_quality_id] - all_results["stability"][i]) > THRESHOLD:
             # replace old partition with new partition
             all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
             # assign new quality score
