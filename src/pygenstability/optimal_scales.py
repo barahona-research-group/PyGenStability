@@ -96,6 +96,10 @@ def identify_optimal_scales(
         np.asarray(pd.Series(diagonal).rolling(window=window_size, win_type="triang").mean()),
         -int(window_size / 2),
     )
+
+    # round to remove numerical noise
+    block_nvi = np.around(block_nvi, decimals=8)
+
     results["block_nvi"] = block_nvi
 
     # find local minima on diagonal of pooled NVI(s,s')
