@@ -234,6 +234,9 @@ class DataClustering(_GraphConstruction):
             Radius of basin around local minima of the pooled diagonal. If float smaller
             than one it's the relative number of scales.
 
+        store_basins: bool, default=False
+            Whether to store basin centers in results dictionary
+
         Returns
         -------
         labels_ : list of ndarray
@@ -267,7 +270,7 @@ class DataClustering(_GraphConstruction):
     def plot_scan(self, *args, **kwargs):
         """Plot summary figure for PyGenStability scan."""
         if not self.results_:
-            return
+            return None
 
         return pgs_plot_scan(self.results_, *args, **kwargs)
 

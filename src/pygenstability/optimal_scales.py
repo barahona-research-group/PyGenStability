@@ -73,7 +73,6 @@ def identify_optimal_scales(
         .. [1] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
     """
-
     # update optimal scales parameters in results dict
     results["run_params"]["optimal_scals_kwargs"] = {
         "kernel_size": kernel_size,
