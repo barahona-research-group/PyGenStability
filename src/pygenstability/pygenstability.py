@@ -16,7 +16,8 @@ import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
-from functools import partial, wraps
+from functools import partial
+from functools import wraps
 from time import time
 
 try:
@@ -381,6 +382,7 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
             null_model,
             np.shape(null_model)[0],
             1.0,
+            np.random.randint(1e8),
         )
 
     if method == "leiden":
@@ -530,4 +532,3 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
             all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
                 best_quality_id
             ]
-            

@@ -9,7 +9,7 @@ pygenstability run \
     --max-scale 0\
     --n-scale 50 \
     --n-tries 100 \
-    --n-workers 40 \
+    --n-workers 4 \
     edges.csv
 
 pygenstability plot_scan --help
