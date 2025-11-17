@@ -1,6 +1,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <random>
 
 #include <lemon/smart_graph.h>
 
@@ -128,8 +129,10 @@ std::pair<double, std::vector<int>>
 run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
             py::array_t<double> w_arr, int n_edges,
             py::array_t<double> null_model_input_arr, int num_null_vectors,
-            double time) {
+            double time,
+            unsigned int seed) {
 
+  std::srand(seed);
   // convert input arrays to pointers
   py::buffer_info info_from = from_arr.request();
   auto from = static_cast<int *>(info_from.ptr);

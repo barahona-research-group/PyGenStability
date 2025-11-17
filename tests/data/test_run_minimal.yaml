@@ -125,8 +125,8 @@ run_params:
   min_scale: -1
   n_NVI: 20
   n_scale: 5
-  n_tries: 100
-  n_workers: 4
+  n_tries: 10
+  n_workers: 1
   optimal_scales_kwargs: null
   result_file: results.pkl
   scales: null

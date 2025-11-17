@@ -212,7 +212,9 @@ class DataClustering(_GraphConstruction):
 
         return self
 
-    def scale_selection(self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01):
+    def scale_selection(
+        self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01, store_basins=False
+    ):
         """Identify optimal scales [3].
 
         Parameters
@@ -232,6 +234,9 @@ class DataClustering(_GraphConstruction):
             Radius of basin around local minima of the pooled diagonal. If float smaller
             than one it's the relative number of scales.
 
+        store_basins: bool, default=False
+            Whether to store basin centers in results dictionary
+
         Returns
         -------
         labels_ : list of ndarray
@@ -239,7 +244,7 @@ class DataClustering(_GraphConstruction):
 
         References
         ----------
-        .. [3] D. J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
+        .. [3] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
         # transform relative values to absolute values
@@ -257,16 +262,17 @@ class DataClustering(_GraphConstruction):
             window_size=window_size,
             max_nvi=max_nvi,
             basin_radius=basin_radius,
+            store_basins=store_basins,
         )
 
         return self.labels_
 
     def plot_scan(self, *args, **kwargs):
         """Plot summary figure for PyGenStability scan."""
-        if self.results_ is None:
-            return
+        if not self.results_:
+            return None
 
-        pgs_plot_scan(self.results_, *args, **kwargs)
+        return pgs_plot_scan(self.results_, *args, **kwargs)
 
     def plot_robust_partitions(
         self, x_coord, y_coord, edge_width=1.0, node_size=20.0, cmap="tab20", show=True
@@ -322,7 +328,7 @@ class DataClustering(_GraphConstruction):
             ax.set(
                 xlabel="x",
                 ylabel="y",
-                title=f"Robust Partion {m+1} (with {len(np.unique(partition))} clusters)",
+                title=f"Robust Partion {m + 1} (with {len(np.unique(partition))} clusters)",
             )
         if show:
             plt.show()

@@ -3,8 +3,8 @@ import networkx as nx
 import numpy as np
 import pytest
 
-from pygenstability.constructors import load_constructor
 from pygenstability import pygenstability as pgs
+from pygenstability.constructors import load_constructor
 
 
 @pytest.fixture()
@@ -44,7 +44,8 @@ def graph_signed():
 @pytest.fixture()
 def results(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
-    return pgs.run(graph, constructor=constructor)
+    np.random.seed(42)
+    return pgs.run(graph, constructor=constructor, n_tries=10, n_workers=1)
 
 
 def generate_circles(
@@ -116,5 +117,4 @@ def generate_circles(
 
 @pytest.fixture()
 def X():
-    X, y = generate_circles()
-    return X
+    return generate_circles()[0]

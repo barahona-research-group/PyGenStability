@@ -47,6 +47,7 @@ from pygenstability.optimal_scales import identify_optimal_scales
 
 L = logging.getLogger(__name__)
 _DTYPE = np.float64
+THRESHOLD = 1e-8
 
 
 def _timing(f):  # pragma: no cover
@@ -381,6 +382,7 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
             null_model,
             np.shape(null_model)[0],
             1.0,
+            np.random.randint(1e8),
         )
 
     if method == "leiden":
@@ -520,11 +522,13 @@ def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, m
         )
         best_quality_id = np.argmax(quality_scores)
 
-        # replace old partition with new partition
-        all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
-        # assign new quality score
-        all_results["stability"][i] = quality_scores[best_quality_id]
-        # update number of communities
-        all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
-            best_quality_id
-        ]
+        # only if the new found score is better update partition
+        if np.abs(quality_scores[best_quality_id] - all_results["stability"][i]) > THRESHOLD:
+            # replace old partition with new partition
+            all_results["community_id"][i] = all_results_raw["community_id"][best_quality_id]
+            # assign new quality score
+            all_results["stability"][i] = quality_scores[best_quality_id]
+            # update number of communities
+            all_results["number_of_communities"][i] = all_results_raw["number_of_communities"][
+                best_quality_id
+            ]
