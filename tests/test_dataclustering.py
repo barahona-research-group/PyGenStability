@@ -20,7 +20,8 @@ def test_DataClustering_default(X):
     np.random.seed(42)
     clustering = DataClustering(n_tries=10, n_workers=1)
     res = clustering.fit(X)
-    results = _to_list({"labels": res.labels_, "results": res.results_})
+    #results = _to_list({"labels": res.labels_, "results": res.results_})
+    results = _to_list(res.results_)
     #yaml.dump(results, open(DATA / "test_dataclustering_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_dataclustering_default.yaml", "r"))
     assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
