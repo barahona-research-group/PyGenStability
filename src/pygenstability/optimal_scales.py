@@ -92,7 +92,9 @@ def identify_optimal_scales(
 
     # smooth diagonal with moving window
     block_nvi = np.roll(
-        np.asarray(pd.Series(diagonal).rolling(window=window_size, win_type="triang").mean()),
+        np.asarray(
+            pd.Series(diagonal).rolling(window=window_size, win_type="triang").mean()
+        ),
         -int(window_size / 2),
     )
 
@@ -109,18 +111,22 @@ def identify_optimal_scales(
 
     if (
         np.count_nonzero(
-            np.around(block_nvi[not_nan_ind[0] : not_nan_ind[0] + 2 * basin_radius + 1], 5)
+            np.around(
+                block_nvi[not_nan_ind[0] : not_nan_ind[0] + 2 * basin_radius + 1], 5
+            )
         )
         == 0
-    ): # pragma: no cover
+    ):  # pragma: no cover
         basin_centers = np.insert(basin_centers, 0, not_nan_ind[0] + basin_radius)
 
     if (
         np.count_nonzero(
-            np.around(block_nvi[not_nan_ind[-1] - 2 * basin_radius : not_nan_ind[-1] + 1], 5)
+            np.around(
+                block_nvi[not_nan_ind[-1] - 2 * basin_radius : not_nan_ind[-1] + 1], 5
+            )
         )
         == 0
-    ): # pragma: no cover
+    ):  # pragma: no cover
         basin_centers = np.append(basin_centers, not_nan_ind[-1] - basin_radius)
 
     # include largest scale if block NVI is lower than other basin centers

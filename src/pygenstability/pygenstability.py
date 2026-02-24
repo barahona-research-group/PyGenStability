@@ -16,8 +16,7 @@ import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
-from functools import partial
-from functools import wraps
+from functools import partial, wraps
 from time import time
 
 try:
@@ -30,8 +29,8 @@ except ImportError:  # pragma: no cover
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.metrics import mutual_info_score
 from scipy.stats import entropy
+from sklearn.metrics import mutual_info_score
 from tqdm import tqdm
 
 try:
@@ -332,11 +331,11 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
 def evaluate_NVI(index_pair, partitions):
     r"""Evaluations of Normalized Variation of Information (NVI).
 
-    NVI is defined for two partitions :math:`p1` and :math:`p2` as:
+    NVI is defined for two partitions :math:`p_0` and :math:`p_1` as:
 
     .. math::
 
-        NVI = \frac{E(p1) + E(p2) - 2MI(p1, p2)}{JE(p1,p2)}
+        NVI = \frac{E(p_0) + E(p_1) - 2MI(p_0, p_1)}{JE(p_0, p_1)}
 
     where :math:`E` is the entropy, :math:`JE` the joint entropy
     and :math:`MI` the mutual information.
