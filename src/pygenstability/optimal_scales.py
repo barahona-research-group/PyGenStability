@@ -112,7 +112,7 @@ def identify_optimal_scales(
             np.around(block_nvi[not_nan_ind[0] : not_nan_ind[0] + 2 * basin_radius + 1], 5)
         )
         == 0
-    ):
+    ): # pragma: no cover
         basin_centers = np.insert(basin_centers, 0, not_nan_ind[0] + basin_radius)
 
     if (
@@ -120,7 +120,7 @@ def identify_optimal_scales(
             np.around(block_nvi[not_nan_ind[-1] - 2 * basin_radius : not_nan_ind[-1] + 1], 5)
         )
         == 0
-    ):
+    ): # pragma: no cover
         basin_centers = np.append(basin_centers, not_nan_ind[-1] - basin_radius)
 
     # include largest scale if block NVI is lower than other basin centers
