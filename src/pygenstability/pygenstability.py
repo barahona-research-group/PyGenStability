@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
 import numpy as np
 import scipy.sparse as sp
 from sklearn.metrics import mutual_info_score
-from sklearn.metrics.cluster import entropy
+from scipy.stats import entropy
 from tqdm import tqdm
 
 try:
