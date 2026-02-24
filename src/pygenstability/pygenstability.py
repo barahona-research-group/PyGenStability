@@ -348,12 +348,12 @@ def evaluate_NVI(index_pair, partitions):
     Returns:
         float, Normalized Variation Information
     """
-    MI = mutual_info_score(partitions[index_pair[0]], partitions[index_pair[1]])
-    _, counts_0 = np.unique(partitions[index_pair[0]], return_counts=True)
-    _, counts_1 = np.unique(partitions[index_pair[1]], return_counts=True)
-    Ex = entropy(counts_0, base=2)
-    Ey = entropy(counts_1, base=2)
-    JE = Ex + Ey - MI
+    p_0 = partitions[index_pair[0]]
+    p_1 = partitions[index_pair[1]]
+    MI = mutual_info_score(p_0, p_1)
+    E_0 = entropy(np.unique(p_0, return_counts=True)[1], base=2)
+    E_1 = entropy(np.unique(p_1, return_counts=True)[1], base=2)
+    JE = E_0 + E_1 - MI
     if abs(JE) < 1e-8:
         return 0.0
     return (JE - MI) / JE
