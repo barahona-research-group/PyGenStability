@@ -16,7 +16,8 @@ import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
-from functools import partial, wraps
+from functools import partial
+from functools import wraps
 from time import time
 
 try:
