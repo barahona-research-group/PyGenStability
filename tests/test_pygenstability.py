@@ -170,3 +170,17 @@ def test__evaluate_quality(graph):
         community_id, qualities_index[0], qualities_index[1], data["null_model"], 0, method="leiden"
     )
     assert_almost_equal(quality, 0.2741359784037568)
+
+
+def test_run_is_deterministic(graph):
+    """Same numpy seed yields identical communities and stabilities across re-runs."""
+    common = dict(min_scale=-1, max_scale=0, n_scale=4, n_tries=5,
+                  with_optimal_scales=False, n_workers=1)
+
+    np.random.seed(42)
+    r1 = pgs.run(graph, **common)
+    np.random.seed(42)
+    r2 = pgs.run(graph, **common)
+
+    assert [list(c) for c in r1["community_id"]] == [list(c) for c in r2["community_id"]]
+    assert list(r1["stability"]) == list(r2["stability"])
