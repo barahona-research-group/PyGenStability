@@ -1,9 +1,8 @@
 """Plotting functions."""
 
 import logging
-import os
+from pathlib import Path
 
-import matplotlib
 import matplotlib.pyplot as plt
 
 try:
@@ -225,14 +224,10 @@ def plot_single_partition(
     )
     nx.draw_networkx_edges(graph, pos=pos, width=edge_width, edge_color=edge_color)
 
+    log10_scale = np.round(np.log10(all_results["scales"][scale_id]), 2)
+    n_comm = all_results["number_of_communities"][scale_id]
     plt.axis("off")
-    plt.title(
-        str(r"$log_{10}(scale) =$ ")
-        + str(np.round(np.log10(all_results["scales"][scale_id]), 2))
-        + ", with "
-        + str(all_results["number_of_communities"][scale_id])
-        + " communities"
-    )
+    plt.title(rf"$log_{{10}}(scale) =$ {log10_scale}, with {n_comm} communities")
 
 
 def plot_optimal_partitions(
@@ -255,8 +250,7 @@ def plot_optimal_partitions(
         ext (str): extension of figures files
         show (bool): show each plot with plt.show() or not
     """
-    if not os.path.isdir(folder):
-        os.mkdir(folder)
+    Path(folder).mkdir(parents=True, exist_ok=True)
 
     if "selected_partitions" not in all_results:  # pragma: no cover
         identify_optimal_scales(all_results)
@@ -298,19 +292,15 @@ def plot_communities(
         edge_width (float): width of edgs
         ext (str): extension of figures files
     """
-    if not os.path.isdir(folder):
-        os.mkdir(folder)
+    Path(folder).mkdir(parents=True, exist_ok=True)
 
-    mpl_backend = matplotlib.get_backend()
-    matplotlib.use("Agg")
     for scale_id in tqdm(range(len(all_results["scales"]))):
         plt.figure()
         plot_single_partition(
             graph, all_results, scale_id, edge_color=edge_color, edge_width=edge_width
         )
-        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
+        plt.savefig(Path(folder) / f"scale_{scale_id}{ext}", bbox_inches="tight")
         plt.close()
-    matplotlib.use(mpl_backend)
 
 
 def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext=".pdf"):
@@ -322,8 +312,7 @@ def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext
         folder (str): folder to save figures
         ext (str): figure file format
     """
-    if not os.path.isdir(folder):
-        os.mkdir(folder)
+    Path(folder).mkdir(parents=True, exist_ok=True)
 
     for scale_id in tqdm(range(len(all_results["scales"]))):
         plt.figure()
@@ -342,7 +331,8 @@ def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext
             plt.plot((lines[i + 1], lines[i + 1]), (lines[i + 1], lines[i]), c="k")
             plt.plot((lines[i + 1], lines[i]), (lines[i + 1], lines[i + 1]), c="k")
 
-        plt.savefig(os.path.join(folder, "scale_" + str(scale_id) + ext), bbox_inches="tight")
+        plt.savefig(Path(folder) / f"scale_{scale_id}{ext}", bbox_inches="tight")
+        plt.close()
 
 
 def _get_scales(all_results, scale_axis=True):
@@ -512,7 +502,7 @@ def plot_clustered_adjacency(
     for comm in comms:
         node_ids += list(np.where(all_results["community_id"][scale] == comm)[0])
 
-    adjacency = adjacency[np.ix_(node_ids, node_ids)]
+    adjacency = adjacency[np.ix_(node_ids, node_ids)].astype(float)
     adjacency[adjacency == 0] = np.nan
 
     plt.figure(figsize=figsize)
@@ -544,11 +534,8 @@ def plot_clustered_adjacency(
     plt.colorbar()
     plt.xticks(rotation=90)
     plt.axis([-0.5, len(adjacency) - 0.5, -0.5, len(adjacency) - 0.5])
-    plt.suptitle(
-        "log10(scale) = "
-        + str(np.round(np.log10(all_results["scales"][scale]), 2))
-        + ",  number_of_communities="
-        + str(all_results["number_of_communities"][scale])
-    )
+    log10_scale = np.round(np.log10(all_results["scales"][scale]), 2)
+    n_comm = all_results["number_of_communities"][scale]
+    plt.suptitle(f"log10(scale) = {log10_scale},  number_of_communities={n_comm}")
 
     plt.savefig(figure_name, bbox_inches="tight")

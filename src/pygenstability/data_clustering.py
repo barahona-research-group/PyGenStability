@@ -278,7 +278,7 @@ class DataClustering(_GraphConstruction):
         return pgs_plot_scan(self.results_, *args, **kwargs)
 
     def plot_robust_partitions(
-        self, x_coord, y_coord, edge_width=1.0, node_size=20.0, cmap="tab20", show=True
+        self, x_coord, y_coord, edge_width=1.0, node_size=20.0, cmap="tab20", show=False
     ):
         """Plot robust partitions with graph layout.
 
@@ -299,7 +299,7 @@ class DataClustering(_GraphConstruction):
         cmap : str, default='tab20'
             Color map for cluster colors.
 
-        show : bool, default=True
+        show : bool, default=False
             Show the figures.
 
         Returns
