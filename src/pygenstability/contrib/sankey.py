@@ -75,7 +75,7 @@ def plot_sankey(
     )
 
     if with_plotly:
-        plot(fig, filename=filename)
+        plot(fig, filename=filename, auto_open=live)
     else:
         L.warning("Plotly not installed, we cannot plot the figure")
 

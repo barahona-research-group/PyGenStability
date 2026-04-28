@@ -1,4 +1,8 @@
 """Utils for tests."""
+import matplotlib
+
+matplotlib.use("Agg")  # non-interactive backend so plt.show() is a no-op in tests
+
 import networkx as nx
 import numpy as np
 import pytest
