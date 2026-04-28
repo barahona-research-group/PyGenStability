@@ -445,7 +445,9 @@ def _to_indices(matrix, directed=False):
 
 
 @_timing
-def _optimise(try_idx, seed, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+def _optimise(
+    try_idx, seed, quality_indices, quality_values, null_model, global_shift, method="louvain"
+):
     """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
