@@ -7,7 +7,7 @@ name = "PyGenStability"
 version = "0.2.7"
 description = "Python binding of generalised Louvain with Markov Stability"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     {name = "Alexis Arnaudon", email = "alexis.arnaudon@epfl.ch"},
     {name = "Juni Schindler", email = "juni.schindler19@imperial.ac.uk"},
@@ -62,7 +62,7 @@ namespaces = true
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
