@@ -1,8 +1,11 @@
 """Test constructor module."""
-import pytest
+
 from pathlib import Path
 
+import networkx as nx
 import numpy as np
+import pytest
+import scipy.sparse as sp
 import yaml
 from numpy.testing import assert_almost_equal
 
@@ -99,6 +102,74 @@ def test_spectral_exp(graph):
         data = _list_data(
             constructors.load_constructor("directed", graph, exp_comp_mode="spectral").get_data(1)
         )
+
+
+def _dense_linearized_directed_reference(graph, alpha, scale):
+    """Dense reference for linearized_directed: returns (B_ref, pi_ref).
+
+    B_ref is the full N*N modularity-style matrix, computed via the original
+    O(N^2) formula. The sparse implementation must match B = quality - sum of
+    rank-1 null pairs at machine epsilon.
+    """
+    n = graph.shape[0]
+    out = np.array(graph.sum(1)).flatten()
+    dinv = np.where(out > 0, 1.0 / np.maximum(out, 1), 0.0)
+    A = graph.toarray()
+    M_minus_I = (
+        alpha * np.diag(dinv) @ A
+        + ((1 - alpha) * np.eye(n) + np.diag(alpha * (dinv == 0.0))) @ (np.ones((n, n)) / n)
+        - np.eye(n)
+    )
+    pi = np.abs(sp.linalg.eigs(M_minus_I.T, which="SM", k=1)[1][:, 0])
+    pi /= pi.sum()
+    F = np.diag(pi) @ M_minus_I
+    B = scale * F - np.outer(pi, pi)
+    return B, pi
+
+
+@pytest.mark.parametrize("alpha", [0.5, 0.8, 0.99])
+def test_linearized_directed_alpha_lt_one_matches_dense(graph_directed, alpha):
+    """Sparse alpha<1 path must match the dense O(N^2) reference at machine eps."""
+    B_ref, pi_ref = _dense_linearized_directed_reference(graph_directed, alpha, scale=1.0)
+    data = constructors.load_constructor(
+        "linearized_directed", graph_directed, alpha=alpha
+    ).get_data(1.0)
+    Q = data["quality"].toarray()
+    nm = data["null_model"]
+    rank1 = sum(np.outer(nm[k], nm[k + 1]) for k in range(0, len(nm), 2))
+    np.testing.assert_allclose(Q - rank1, B_ref, atol=1e-10)
+    np.testing.assert_allclose(np.abs(nm[0]), np.abs(pi_ref), atol=1e-8)
+    assert nm.shape == (4, graph_directed.shape[0])
+
+
+@pytest.mark.parametrize("alpha", [0.5, 0.85])
+def test_linearized_directed_alpha_lt_one_dangling(alpha):
+    """Sparse path must handle dangling sinks (out-degree zero) correctly."""
+    g = nx.DiGraph([(0, 1), (1, 2), (2, 3)])
+    g.add_node(3)
+    graph = nx.to_scipy_sparse_array(g, dtype=float, nodelist=range(4))
+    B_ref, pi_ref = _dense_linearized_directed_reference(graph, alpha, scale=1.0)
+    data = constructors.load_constructor("linearized_directed", graph, alpha=alpha).get_data(1.0)
+    Q = data["quality"].toarray()
+    nm = data["null_model"]
+    rank1 = sum(np.outer(nm[k], nm[k + 1]) for k in range(0, len(nm), 2))
+    np.testing.assert_allclose(Q - rank1, B_ref, atol=1e-10)
+    np.testing.assert_allclose(np.abs(nm[0]), np.abs(pi_ref), atol=1e-8)
+
+
+def test_linearized_directed_alpha_lt_one_sparse_memory():
+    """alpha<1 path must keep memory linear in N: no dense N*N allocation."""
+    rng = np.random.default_rng(0)
+    n = 10_000
+    rows = np.concatenate([np.arange(n), rng.integers(0, n, size=5 * n)])
+    cols = np.concatenate([(np.arange(n) + 1) % n, rng.integers(0, n, size=5 * n)])
+    G = sp.csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(n, n))
+    data = constructors.load_constructor("linearized_directed", G, alpha=0.85).get_data(1.0)
+    assert sp.issparse(data["quality"])
+    # quality.nnz <= nnz(A) + N (off-diagonal from A, diagonal from -I)
+    assert data["quality"].nnz <= G.nnz + n
+    # null model has 4 vectors (2 pairs) for alpha<1
+    assert data["null_model"].shape == (4, n)
 
 
 def test__total_degree():
