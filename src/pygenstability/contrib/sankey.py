@@ -1,6 +1,9 @@
 """Sankey diagram plots."""
 
+from __future__ import annotations
+
 import logging
+from typing import Any
 
 import numpy as np  # pragma: no cover
 
@@ -16,12 +19,12 @@ L = logging.getLogger(__name__)
 
 
 def plot_sankey(
-    all_results,
-    optimal_scales=True,
-    live=False,
-    filename="communities_sankey.html",
-    scale_index=None,
-):  # pragma: no cover
+    all_results: dict[str, Any],
+    optimal_scales: bool = True,
+    live: bool = False,
+    filename: str = "communities_sankey.html",
+    scale_index: list[int] | None = None,
+) -> Any:  # pragma: no cover
     """Plot Sankey diagram of communities accros scale (plotly only).
 
     Args:

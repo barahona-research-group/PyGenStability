@@ -12,7 +12,7 @@ from scipy.signal import find_peaks
 THRESHOLD = 1e-8
 
 
-def _pool2d_nvi(A, kernel_size, stride, padding=0):
+def _pool2d_nvi(A: np.ndarray, kernel_size: int, stride: int, padding: int = 0) -> np.ndarray:
     """Computes 2D average-pooling.
 
     Average-pooling ignores padded values and diagonal values.
@@ -145,7 +145,7 @@ def identify_optimal_scales(
         results["basin_centers"] = basin_centers.tolist()
 
     # robust scales are minima of NVI(s) in basins
-    robust_scales = set()
+    robust_scales: set[int] = set()
     for basin_center in basin_centers:
         # basins should not extend beyond domain of block detection curve
         basin = np.arange(
@@ -155,11 +155,7 @@ def identify_optimal_scales(
         )
         robust_scales.add(basin[np.argmin(nvi_t[basin])])
 
-    # sort robust scales
-    robust_scales = list(robust_scales)
-    robust_scales.sort()
-
     # return with results dict
-    results["selected_partitions"] = robust_scales
+    results["selected_partitions"] = sorted(robust_scales)
 
     return results

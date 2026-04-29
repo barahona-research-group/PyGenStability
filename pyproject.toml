@@ -94,3 +94,14 @@ force-single-line = true
 "tests/**" = ["D"]
 "docs/**" = ["D"]
 "examples/**" = ["D", "E", "F"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src/pygenstability"]
+ignore_missing_imports = true
+# Pragmatic settings for a scientific-Python codebase that mixes typed and
+# untyped numpy/scipy APIs. Tighten incrementally.
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true

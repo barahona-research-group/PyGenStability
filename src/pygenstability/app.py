@@ -1,7 +1,10 @@
 """Command line interface."""
 
+from __future__ import annotations
+
 import pickle
 from pathlib import Path
+from typing import Any
 
 import click
 import networkx as nx
@@ -15,7 +18,7 @@ from pygenstability.plotting import plot_communities as _plot_communities
 from pygenstability.plotting import plot_scan as _plot_scan
 
 
-def _load_graph(graph_file):
+def _load_graph(graph_file: str) -> Any:
     try:
         # load pickle file
         if Path(graph_file).suffix == ".pkl":
@@ -36,7 +39,7 @@ def _load_graph(graph_file):
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """App initialisation."""
 
 
@@ -135,25 +138,25 @@ def cli():
     help="Method to compute matrix exponential, can be 'spectral' or 'expm'",
 )
 def run(
-    graph_file,
-    constructor,
-    min_scale,
-    max_scale,
-    n_scale,
-    log_scale,
-    n_tries,
-    nvi,
-    n_nvi,
-    postprocessing,
-    ttprime,
-    spectral_gap,
-    result_file,
-    n_workers,
-    tqdm_disable,
-    method,
-    with_optimal_scales,
-    exp_comp_mode,
-):
+    graph_file: str,
+    constructor: str,
+    min_scale: float,
+    max_scale: float,
+    n_scale: int,
+    log_scale: bool,
+    n_tries: int,
+    nvi: bool,
+    n_nvi: int,
+    postprocessing: bool,
+    ttprime: bool,
+    spectral_gap: bool,
+    result_file: str,
+    n_workers: int,
+    tqdm_disable: bool,
+    method: str,
+    with_optimal_scales: bool,
+    exp_comp_mode: str,
+) -> None:
     """Run pygenstability.
 
     graph_file: path to either a .pkl with adjacency matrix in sparse format,
@@ -188,7 +191,7 @@ def run(
 
 @cli.command("plot_scan")
 @click.argument("results_file", type=click.Path(exists=True))
-def plot_scan(results_file):
+def plot_scan(results_file: str) -> None:
     """Plot results in scan plot."""
     _plot_scan(load_results(results_file))
 
@@ -196,7 +199,7 @@ def plot_scan(results_file):
 @cli.command("plot_communities")
 @click.argument("graph_file", type=click.Path(exists=True))
 @click.argument("results_file", type=click.Path(exists=True))
-def plot_communities(graph_file, results_file):
+def plot_communities(graph_file: str, results_file: str) -> None:
     """Plot communities on networkx graph."""
     graph = _load_graph(graph_file)
     if not isinstance(graph, nx.Graph):

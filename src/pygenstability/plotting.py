@@ -1,7 +1,10 @@
 """Plotting functions."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 
@@ -31,14 +34,14 @@ L = logging.getLogger(__name__)
 
 
 def plot_scan(
-    all_results,
-    figsize=(6, 5),
-    scale_axis=True,
-    figure_name="scan_results.pdf",
-    use_plotly=False,
-    live=True,
-    plotly_filename="scan_results.html",
-):
+    all_results: dict[str, Any],
+    figsize: tuple[float, float] = (6, 5),
+    scale_axis: bool = True,
+    figure_name: str | None = "scan_results.pdf",
+    use_plotly: bool = False,
+    live: bool = True,
+    plotly_filename: str = "scan_results.html",
+) -> Any:
     """Plot results of pygenstability with matplotlib or plotly.
 
     Args:
@@ -63,10 +66,10 @@ def plot_scan(
 
 
 def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
-    all_results,
-    live=False,
-    filename="clusters.html",
-):
+    all_results: dict[str, Any],
+    live: bool = False,
+    filename: str | None = "clusters.html",
+) -> tuple[Any, Any]:
     """Plot results of pygenstability with plotly."""
     scales = _get_scales(all_results, scale_axis=True)
 
@@ -192,8 +195,13 @@ def plot_scan_plotly(  # pylint: disable=too-many-branches,too-many-statements,t
 
 
 def plot_single_partition(
-    graph, all_results, scale_id, edge_color="0.5", edge_width=0.5, node_size=100
-):
+    graph: Any,
+    all_results: dict[str, Any],
+    scale_id: int,
+    edge_color: str = "0.5",
+    edge_width: float = 0.5,
+    node_size: float = 100,
+) -> None:
     """Plot the community structures for a given scale.
 
     Args:
@@ -231,14 +239,14 @@ def plot_single_partition(
 
 
 def plot_optimal_partitions(
-    graph,
-    all_results,
-    edge_color="0.5",
-    edge_width=0.5,
-    folder="optimal_partitions",
-    ext=".pdf",
-    show=False,
-):
+    graph: Any,
+    all_results: dict[str, Any],
+    edge_color: str = "0.5",
+    edge_width: float = 0.5,
+    folder: str = "optimal_partitions",
+    ext: str = ".pdf",
+    show: bool = False,
+) -> None:
     """Plot the community structures at each optimal scale.
 
     Args:
@@ -275,13 +283,13 @@ def plot_optimal_partitions(
 
 
 def plot_communities(
-    graph,
-    all_results,
-    folder="communities",
-    edge_color="0.5",
-    edge_width=0.5,
-    ext=".pdf",
-):
+    graph: Any,
+    all_results: dict[str, Any],
+    folder: str = "communities",
+    edge_color: str = "0.5",
+    edge_width: float = 0.5,
+    ext: str = ".pdf",
+) -> None:
     """Plot the community structures at each scale in a folder.
 
     Args:
@@ -303,7 +311,12 @@ def plot_communities(
         plt.close()
 
 
-def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext=".pdf"):
+def plot_communities_matrix(
+    graph: Any,
+    all_results: dict[str, Any],
+    folder: str = "communities_matrix",
+    ext: str = ".pdf",
+) -> None:
     """Plot communities at all scales in matrix form.
 
     Args:
@@ -317,14 +330,14 @@ def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext
     for scale_id in tqdm(range(len(all_results["scales"]))):
         plt.figure()
         com_ids = all_results["community_id"][scale_id]
-        ids = []
-        lines = [0]
+        ids: list[int] = []
+        line_lengths: list[int] = [0]
         for i in range(len(set(com_ids))):
-            _ids = list(np.argwhere(com_ids == i).flatten())
-            lines.append(len(_ids))
+            _ids = [int(x) for x in np.argwhere(com_ids == i).flatten()]
+            line_lengths.append(len(_ids))
             ids += _ids
         plt.imshow(graph[ids][:, ids], origin="lower")
-        lines = np.cumsum(lines)
+        lines = np.cumsum(line_lengths)
         for i in range(len(lines) - 1):
             plt.plot((lines[i], lines[i + 1]), (lines[i], lines[i]), c="k")
             plt.plot((lines[i], lines[i]), (lines[i], lines[i + 1]), c="k")
@@ -335,7 +348,7 @@ def plot_communities_matrix(graph, all_results, folder="communities_matrix", ext
         plt.close()
 
 
-def _get_scales(all_results, scale_axis=True):
+def _get_scales(all_results: dict[str, Any], scale_axis: bool = True) -> np.ndarray:
     """Get the scale vector."""
     if not scale_axis:  # pragma: no cover
         return np.arange(len(all_results["scales"]))
@@ -344,7 +357,7 @@ def _get_scales(all_results, scale_axis=True):
     return all_results["scales"]  # pragma: no cover
 
 
-def _plot_number_comm(all_results, ax, scales):
+def _plot_number_comm(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot number of communities."""
     ax.plot(scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
     ax.set_ylim(0, 1.1 * max(all_results["number_of_communities"]))
@@ -352,7 +365,7 @@ def _plot_number_comm(all_results, ax, scales):
     ax.tick_params("y", colors="C3")
 
 
-def _plot_ttprime(all_results, ax, scales):
+def _plot_ttprime(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot ttprime."""
     contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
@@ -374,7 +387,7 @@ def _plot_ttprime(all_results, ax, scales):
     plt.colorbar(contourf_, cax=axins, label="NVI(t,t')")
 
 
-def _plot_NVI(all_results, ax, scales):
+def _plot_NVI(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot variation information."""
     ax.plot(scales, all_results["NVI"], "-", lw=2.0, c="C2", label="VI")
 
@@ -386,7 +399,7 @@ def _plot_NVI(all_results, ax, scales):
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
-def _plot_stability(all_results, ax, scales):
+def _plot_stability(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot stability."""
     ax.plot(scales, all_results["stability"], "-", label=r"Stability", c="C0")
     ax.tick_params("y", colors="C0")
@@ -395,7 +408,13 @@ def _plot_stability(all_results, ax, scales):
     ax.yaxis.set_label_position("left")
 
 
-def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
+def _plot_optimal_scales(
+    all_results: dict[str, Any],
+    ax: Any,
+    scales: np.ndarray,
+    ax1: Any,
+    ax2: Any,
+) -> None:
     """Plot stability."""
     ax.plot(
         scales,
@@ -425,7 +444,12 @@ def _plot_optimal_scales(all_results, ax, scales, ax1, ax2):
         ax2.axvline(scale, ls="--", color="C4")
 
 
-def plot_scan_plt(all_results, figsize=(6, 5), scale_axis=True, figure_name="scan_results.svg"):
+def plot_scan_plt(
+    all_results: dict[str, Any],
+    figsize: tuple[float, float] = (6, 5),
+    scale_axis: bool = True,
+    figure_name: str | None = "scan_results.svg",
+) -> list[Any]:
     """Plot results of pygenstability with matplotlib."""
     scales = _get_scales(all_results, scale_axis=scale_axis)
     plt.figure(figsize=figsize)
@@ -477,14 +501,14 @@ def plot_scan_plt(all_results, figsize=(6, 5), scale_axis=True, figure_name="sca
 
 
 def plot_clustered_adjacency(
-    adjacency,
-    all_results,
-    scale,
-    labels=None,
-    figsize=(12, 10),
-    cmap="Blues",
-    figure_name="clustered_adjacency.pdf",
-):
+    adjacency: np.ndarray,
+    all_results: dict[str, Any],
+    scale: int,
+    labels: list[str] | None = None,
+    figsize: tuple[float, float] = (12, 10),
+    cmap: str = "Blues",
+    figure_name: str = "clustered_adjacency.pdf",
+) -> None:
     """Plot the clustered adjacency matrix of the graph at a given scale.
 
     Args:
@@ -533,7 +557,7 @@ def plot_clustered_adjacency(
 
     plt.colorbar()
     plt.xticks(rotation=90)
-    plt.axis([-0.5, len(adjacency) - 0.5, -0.5, len(adjacency) - 0.5])
+    plt.axis((-0.5, len(adjacency) - 0.5, -0.5, len(adjacency) - 0.5))
     log10_scale = np.round(np.log10(all_results["scales"][scale]), 2)
     n_comm = all_results["number_of_communities"][scale]
     plt.suptitle(f"log10(scale) = {log10_scale},  number_of_communities={n_comm}")

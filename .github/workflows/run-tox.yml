@@ -18,6 +18,22 @@ jobs:
     - run: ruff check src/pygenstability
     - run: ruff format --check src/pygenstability
 
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install pybind11 mypy
+        pip install -e ".[all]"
+    - run: mypy src/pygenstability
+
   build:
 
     runs-on: ubuntu-latest

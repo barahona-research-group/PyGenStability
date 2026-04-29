@@ -14,8 +14,12 @@ In the following we denote by :math:`A` the adjacency matrix of a graph with :ma
 :math:`D=\mathrm{diag}(d)`.
 """
 
+from __future__ import annotations
+
 import logging
 import sys
+from typing import Any
+from typing import Callable
 
 import numpy as np
 import numpy.linalg as la
@@ -27,7 +31,7 @@ THRESHOLD = 1e-8
 _DTYPE = np.float64
 
 
-def load_constructor(constructor, graph, **kwargs):
+def load_constructor(constructor: str | Constructor, graph: Any, **kwargs: Any) -> Constructor:
     """Load a constructor from its name, or as a custom Constructor class."""
     if isinstance(constructor, str):
         if graph is None:
@@ -41,30 +45,32 @@ def load_constructor(constructor, graph, **kwargs):
     return constructor
 
 
-def _limit_numpy(f):
+def _limit_numpy(f: Callable[..., Any]) -> Callable[..., Any]:
     """Wrapper to limit threads used by numpy."""
 
     @threadpool_limits.wrap(limits=1, user_api="blas")
     @threadpool_limits.wrap(limits=1, user_api="openmp")
-    def limit(*args, **kwargs):
+    def limit(*args: Any, **kwargs: Any) -> Any:
         return f(*args, **kwargs)
 
     return limit
 
 
-def _compute_spectral_decomp(matrix):
+def _compute_spectral_decomp(
+    matrix: Any,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Solve eigenvalue problem for symmetric matrix."""
     lambdas, v = la.eigh(matrix.toarray())
     return lambdas, v, v.T
 
 
-def _check_total_degree(degrees):
+def _check_total_degree(degrees: np.ndarray) -> None:
     """Ensures the sum(degree) > 0."""
     if degrees.sum() < 1e-10:
         raise Exception("The total degree = 0, we cannot proceed further")
 
 
-def _get_spectral_gap(laplacian):
+def _get_spectral_gap(laplacian: Any) -> float:
     """Compute spectral gap."""
     spectral_gap = np.round(max(np.real(sp.linalg.eigs(laplacian, which="SM", k=2)[0])), 8)
     L.info("Spectral gap = 10^%s", np.around(np.log10(spectral_gap), 2))
@@ -79,7 +85,13 @@ class Constructor:
     to return quality matrix, null model, and possible global shift.
     """
 
-    def __init__(self, graph, with_spectral_gap=False, exp_comp_mode="spectral", **kwargs):
+    def __init__(
+        self,
+        graph: Any,
+        with_spectral_gap: bool = False,
+        exp_comp_mode: str = "spectral",
+        **kwargs: Any,
+    ) -> None:
         """The constructor calls the prepare method upon initialisation.
 
         Args:
@@ -90,19 +102,21 @@ class Constructor:
         """
         self.graph = sp.csr_matrix(graph)
         self.with_spectral_gap = with_spectral_gap
-        self.spectral_gap = None
+        # populated by prepare() in subclasses; typed as Any so we don't have to
+        # litter Optional unwrapping where prepare() guarantees non-None.
+        self.spectral_gap: Any = None
         self.exp_comp_mode = exp_comp_mode
 
         # these variables can be used in prepare method
-        self.partial_quality_matrix = None
-        self.partial_null_model = None
-        self.spectral_decomp = None, None, None
-        self.degrees = None
+        self.partial_quality_matrix: Any = None
+        self.partial_null_model: Any = None
+        self.spectral_decomp: tuple[Any, Any, Any] = (None, None, None)
+        self.degrees: Any = None
         self.threshold = THRESHOLD
 
         self.prepare(**kwargs)
 
-    def _get_exp(self, scale):
+    def _get_exp(self, scale: float) -> Any:
         """Compute matrix exponential at a given scale."""
         if self.exp_comp_mode == "expm":
             # compute matrix exponential via Pade approximation
@@ -116,17 +130,17 @@ class Constructor:
         exp[np.abs(exp) < self.threshold * np.max(exp)] = 0.0
         return sp.csc_matrix(exp)
 
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
 
-    def get_data(self, scale):
+    def get_data(self, scale: float) -> dict[str, Any] | None:
         """Return quality and null model at given scale as well as global shift (or None).
 
         User has to define the _get_data so we can ensure numpy does not use multiple threads
         """
         return self._get_data(scale)
 
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any] | None:
         """Method to be defined in child classes for get_data."""
 
 
@@ -143,7 +157,7 @@ class constructor_linearized(Constructor):
     """
 
     @_limit_numpy
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         degrees = np.array(self.graph.sum(1)).flatten()
         _check_total_degree(degrees)
@@ -157,7 +171,7 @@ class constructor_linearized(Constructor):
         self.partial_quality_matrix = (self.graph / degrees.sum()).astype(_DTYPE)
 
     @_limit_numpy
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
@@ -188,7 +202,7 @@ class constructor_continuous_combinatorial(Constructor):
     """
 
     @_limit_numpy
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
         _check_total_degree(degrees)
@@ -204,7 +218,7 @@ class constructor_continuous_combinatorial(Constructor):
             self.partial_quality_matrix = laplacian
 
     @_limit_numpy
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
@@ -228,7 +242,7 @@ class constructor_continuous_normalized(Constructor):
     """
 
     @_limit_numpy
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         # compute combinatorial Laplacian and degrees
         laplacian, degrees = sp.csgraph.laplacian(self.graph, return_diag=True, normed=False)
@@ -260,7 +274,7 @@ class constructor_continuous_normalized(Constructor):
             self.partial_quality_matrix = rw_normed_laplacian
 
     @_limit_numpy
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         if self.with_spectral_gap:
             scale /= self.spectral_gap
@@ -291,7 +305,7 @@ class constructor_signed_modularity(Constructor):
     """
 
     @_limit_numpy
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         adj_pos = self.graph.copy()
         adj_pos[self.graph < 0] = 0.0
@@ -315,7 +329,7 @@ class constructor_signed_modularity(Constructor):
         self.partial_quality_matrix = self.graph / deg_norm
 
     @_limit_numpy
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         return {
             "quality": scale * self.partial_quality_matrix,
@@ -342,7 +356,7 @@ class constructor_signed_combinatorial(Constructor):
                   dynamical embeddings of complex networks. Physical Review E, 99(6), 062308.
     """
 
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         degrees_abs = np.array(abs(self.graph).sum(1)).flatten()
         laplacian = sp.diags(degrees_abs) - self.graph
@@ -355,7 +369,7 @@ class constructor_signed_combinatorial(Constructor):
         zeros = np.zeros(self.graph.shape[0])
         self.partial_null_model = np.array([zeros, zeros])
 
-    def get_data(self, scale):
+    def get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         exp = self._get_exp(scale)
         quality_matrix = exp.T.dot(exp)
@@ -390,7 +404,7 @@ class constructor_directed(Constructor):
     """
 
     @_limit_numpy
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         assert self.exp_comp_mode == "expm", (
             'exp_comp_mode="expm" is required for "constructor_directed"'
@@ -416,7 +430,7 @@ class constructor_directed(Constructor):
         self.partial_null_model = np.array([pi, pi])
 
     @_limit_numpy
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         exp = self._get_exp(-scale)
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(exp)
@@ -451,7 +465,7 @@ class constructor_linearized_directed(Constructor):
     """
 
     @_limit_numpy
-    def prepare(self, **kwargs):
+    def prepare(self, **kwargs: Any) -> None:
         """Prepare the constructor with non-scale dependent computations."""
         alpha = kwargs.get("alpha", 0.8)
         n_nodes = self.graph.shape[0]
@@ -482,7 +496,7 @@ class constructor_linearized_directed(Constructor):
         self.partial_null_model = np.array([pi, pi])
 
     @_limit_numpy
-    def _get_data(self, scale):
+    def _get_data(self, scale: float) -> dict[str, Any]:
         """Return quality and null model at given scale."""
         quality_matrix = sp.diags(self.partial_null_model[0]).dot(
             scale * self.partial_quality_matrix
