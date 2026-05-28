@@ -86,6 +86,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
 
     results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False, n_tries=10,n_workers=1)
     results = _to_list(results)
+    # regenerate fixture (run manually after deliberate numerics changes):
     #yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
@@ -172,10 +173,15 @@ def test__evaluate_quality(graph):
     assert_almost_equal(quality, 0.2741359784037568)
 
 
-def test_run_is_deterministic(graph):
-    """Same numpy seed yields identical communities and stabilities across re-runs."""
+@pytest.mark.parametrize("n_workers", [1, 2])
+def test_run_is_deterministic(graph, n_workers):
+    """Same numpy seed yields identical communities and stabilities across re-runs.
+
+    Parameterised on n_workers to cover the multiprocessing.Pool ordering path
+    that motivated the seed pre-generation fix.
+    """
     common = dict(min_scale=-1, max_scale=0, n_scale=4, n_tries=5,
-                  with_optimal_scales=False, n_workers=1)
+                  with_optimal_scales=False, n_workers=n_workers)
 
     np.random.seed(42)
     r1 = pgs.run(graph, **common)

@@ -282,7 +282,7 @@ def _resolve_exp_comp_mode(exp_comp_mode: str, constructor) -> str:
     """Validate exp_comp_mode and force expm for directed/signed constructors."""
     assert exp_comp_mode in ["spectral", "expm"]
     if constructor in ("directed", "linearized_directed", "signed"):
-        L.info("We cannot use spectral exponential computation for directed contructor")
+        L.info("We cannot use spectral exponential computation for directed constructor")
         return "expm"
     return exp_comp_mode
 
