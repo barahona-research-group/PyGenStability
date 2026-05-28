@@ -48,8 +48,7 @@ def graph_signed():
 @pytest.fixture()
 def results(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
-    np.random.seed(42)
-    return pgs.run(graph, constructor=constructor, n_tries=10, n_workers=1)
+    return pgs.run(graph, constructor=constructor, n_tries=10, n_workers=1, seed=42)
 
 
 def generate_circles(

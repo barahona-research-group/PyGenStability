@@ -17,9 +17,8 @@ optimal_scales.THRESHOLD = -0.3
 entries = ['block_nvi', 'community_id', 'number_of_communities', 'run_params', 'scales', 'selected_partitions', 'stability',]
 def test_DataClustering_default(X):
     """Test the DataClustering class"""
-    # fixing seed and n_workers=1 makes it reproducible
-    np.random.seed(42)
-    clustering = DataClustering(n_tries=10, n_workers=1)
+    # seed + n_workers=1 makes it reproducible
+    clustering = DataClustering(n_tries=10, n_workers=1, seed=42)
     res = clustering.fit(X)
     for entry in entries:
         assert entry in res.results_
@@ -45,9 +44,8 @@ def test_DataClustering_default(X):
 
 def test_DataClustering_with_knn(X):
     """with knn"""
-    # fixing seed and n_workers=1 makes it reproducible
-    np.random.seed(42)
-    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="knn-mst")
+    # seed + n_workers=1 makes it reproducible
+    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="knn-mst", seed=42)
     res = clustering.fit(X)
     for entry in entries:
         assert entry in res.results_
@@ -65,9 +63,8 @@ def test_DataClustering_precomputed(X):
 
 def test_DataClustering_precomputed_default(X):
     """precompute it as default"""
-    # fixing seed and n_workers=1 makes it reproducible
-    np.random.seed(42)
-    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="precomputed")
+    # seed + n_workers=1 makes it reproducible
+    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="precomputed", seed=42)
     clustering.method = "cknn-mst"
     X = clustering.get_graph(X)
     clustering.method = "precomputed"
