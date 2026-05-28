@@ -119,3 +119,6 @@ pygenstability_doc.pdf
 
 # vscode
 .vscode/
+
+# Claude Code
+CLAUDE.md

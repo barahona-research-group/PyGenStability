@@ -53,11 +53,7 @@ def _limit_numpy(f):
 
 
 def _compute_spectral_decomp(matrix):
-    """Solve eigenalue problem for symmetric matrix.
-
-    la.eigh returns orthonormal eigenvectors for a Hermitian matrix, so the
-    inverse is exactly the transpose — avoid computing la.inv(v).
-    """
+    """Solve eigenvalue problem for symmetric matrix."""
     lambdas, v = la.eigh(matrix.toarray())
     return lambdas, v, v.T
 
@@ -306,9 +302,7 @@ class constructor_signed_modularity(Constructor):
         deg_neg = adj_neg.sum(1).flatten()
 
         deg_norm = deg_plus.sum() + deg_neg.sum()
-        # For a purely-positive (or purely-negative) graph one of the per-sign
-        # sums is zero. The resulting NaN column is tolerated downstream; silence
-        # the warning so it doesn't swamp the user.
+        # silence divide-by-zero when the graph has only positive or only negative edges
         with np.errstate(invalid="ignore"):
             self.partial_null_model = np.array(
                 [

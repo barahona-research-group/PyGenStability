@@ -21,7 +21,6 @@ from collections import defaultdict
 from functools import partial
 from functools import wraps
 from time import time
-from typing import Any
 from typing import Callable
 from typing import Sequence
 
@@ -141,7 +140,7 @@ def _check_method(method):  # pragma: no cover
 
 @_timing
 def run(
-    graph: Any = None,
+    graph: sp.spmatrix | None = None,
     constructor: str | Callable = "linearized",
     min_scale: float = -2.0,
     max_scale: float = 0.5,
@@ -262,7 +261,7 @@ def run(
             run_params=run_params,
         )
 
-        all_results = _finalize_results(
+        all_results = _run_post_scan_analysis(
             all_results,
             pool,
             constructor_data,
@@ -321,7 +320,7 @@ def _scan_scales(
     return all_results
 
 
-def _finalize_results(
+def _run_post_scan_analysis(
     all_results,
     pool,
     constructor_data,
@@ -376,9 +375,6 @@ def _assign_increasing_ids(community_id):
     """Assign strictly increasing community IDs starting from 0."""
     community_id = np.asarray(community_id)
     unique_ids, first_ind, inverse = np.unique(community_id, return_index=True, return_inverse=True)
-    # Build a mapping sorted-unique-index -> label-by-first-appearance. The
-    # inverse permutation of argsort(first_ind) does this in one write without
-    # any Python-level loop.
     relabel = np.empty(len(unique_ids), dtype=np.intp)
     relabel[np.argsort(first_ind)] = np.arange(len(unique_ids))
     return relabel[inverse]
@@ -546,8 +542,7 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
         method=method,
     )
 
-    # Pre-generate per-try seeds in the parent process so workers cannot
-    # observe non-deterministic ordering through the global RNG state.
+    # seed each worker deterministically from the parent RNG
     seeds = np.random.randint(0, int(1e8), size=n_runs).tolist()
     chunksize = _get_chunksize(n_runs, pool)
     return pool.starmap(worker, zip(range(n_runs), seeds), chunksize=chunksize)

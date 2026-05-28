@@ -47,8 +47,7 @@ def _pool2d_nvi(A, kernel_size, stride, padding=0):
     )
     A_w = as_strided(A, shape_w, strides_w)
 
-    # Return the result of pooling. Windows that fall entirely on the NaN padding
-    # legitimately have no values to average; silence the expected warning.
+    # silence "Mean of empty slice" warning for all-NaN windows
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
         return np.nanmean(A_w, axis=(2, 3))
