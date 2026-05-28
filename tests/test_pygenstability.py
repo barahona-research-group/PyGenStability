@@ -175,18 +175,28 @@ def test__evaluate_quality(graph):
 
 @pytest.mark.parametrize("n_workers", [1, 2])
 def test_run_is_deterministic(graph, n_workers):
-    """Same numpy seed yields identical communities and stabilities across re-runs.
+    """Same seed yields identical communities and stabilities across re-runs.
 
     Parameterised on n_workers to cover the multiprocessing.Pool ordering path
     that motivated the seed pre-generation fix.
     """
     common = dict(min_scale=-1, max_scale=0, n_scale=4, n_tries=5,
-                  with_optimal_scales=False, n_workers=n_workers)
+                  with_optimal_scales=False, n_workers=n_workers, seed=42)
 
-    np.random.seed(42)
     r1 = pgs.run(graph, **common)
-    np.random.seed(42)
     r2 = pgs.run(graph, **common)
 
     assert [list(c) for c in r1["community_id"]] == [list(c) for c in r2["community_id"]]
     assert list(r1["stability"]) == list(r2["stability"])
+
+
+def test_run_seed_independence(graph):
+    """Different seeds drive the optimisation along different trajectories."""
+    common = dict(min_scale=-1, max_scale=0, n_scale=4, n_tries=5,
+                  with_optimal_scales=False, n_workers=1)
+
+    r_a = pgs.run(graph, seed=1, **common)
+    r_b = pgs.run(graph, seed=2, **common)
+
+    # at least one stability value should differ across the scan
+    assert list(r_a["stability"]) != list(r_b["stability"])

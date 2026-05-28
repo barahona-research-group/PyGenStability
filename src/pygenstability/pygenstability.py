@@ -55,7 +55,7 @@ THRESHOLD = 1e-8
 
 
 def _timing(f):  # pragma: no cover
-    """Use as decorator to time a function excecution if logging is in DEBUG mode."""
+    """Use as decorator to time a function execution if logging is in DEBUG mode."""
 
     @wraps(f)
     def wrap(*args, **kw):
@@ -162,6 +162,7 @@ def run(
     optimal_scales_kwargs: dict | None = None,
     method: str = "louvain",
     constructor_kwargs: dict | None = None,
+    seed: int | None = None,
 ) -> dict:
     """This is the main function to compute graph clustering across scales with Markov Stability.
 
@@ -199,8 +200,10 @@ def run(
         with_optimal_scales (bool): apply optimal scale selection algorithm
         optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection, see
             optimal_scale module.
-        method (str): optimiation method, louvain or leiden
+        method (str): optimisation method, louvain or leiden
         constructor_kwargs (dict): additional kwargs to pass to constructor prepare method
+        seed (int): seed for the random number generator; pass an int for reproducible runs,
+            or leave as None for a fresh non-deterministic seed.
 
     Returns:
         Results dict with the following entries
@@ -219,6 +222,7 @@ def run(
     """
     method = _check_method(method)
     run_params = _get_params(locals())
+    rng = np.random.default_rng(seed)
     graph = _graph_checks(graph)
     scales = _get_scales(
         min_scale=min_scale,
@@ -250,6 +254,7 @@ def run(
             constructor_data,
             scales,
             pool,
+            rng,
             n_tries=n_tries,
             method=method,
             with_NVI=with_NVI,
@@ -291,6 +296,7 @@ def _scan_scales(
     constructor_data,
     scales,
     pool,
+    rng: np.random.Generator,
     *,
     n_tries: int,
     method: str,
@@ -307,7 +313,7 @@ def _scan_scales(
     all_results["run_params"] = run_params
 
     for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-        results = _run_optimisations(constructor_data[i], n_tries, pool, method)
+        results = _run_optimisations(constructor_data[i], n_tries, pool, rng, method)
         communities = _process_runs(t, results, all_results)
 
         if with_NVI:
@@ -528,7 +534,7 @@ def _evaluate_quality(
     return quality + global_shift
 
 
-def _run_optimisations(constructor, n_runs, pool, method="louvain"):
+def _run_optimisations(constructor, n_runs, pool, rng, method="louvain"):
     """Run several generalized Markov Stability optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
@@ -542,8 +548,8 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
         method=method,
     )
 
-    # seed each worker deterministically from the parent RNG
-    seeds = np.random.randint(0, int(1e8), size=n_runs).tolist()
+    # seed each worker deterministically from the run-level rng
+    seeds = rng.integers(0, int(1e8), size=n_runs).tolist()
     chunksize = _get_chunksize(n_runs, pool)
     return pool.starmap(worker, zip(range(n_runs), seeds), chunksize=chunksize)
 
