@@ -137,6 +137,13 @@ def cli() -> None:
     show_default=True,
     help="Method to compute matrix exponential, can be 'spectral' or 'expm'",
 )
+@click.option(
+    "--seed",
+    type=int,
+    default=None,
+    show_default=True,
+    help="Seed for the random number generator; omit for non-deterministic runs.",
+)
 def run(
     graph_file: str,
     constructor: str,
@@ -156,6 +163,7 @@ def run(
     method: str,
     with_optimal_scales: bool,
     exp_comp_mode: str,
+    seed: int | None,
 ) -> None:
     """Run pygenstability.
 
@@ -186,6 +194,7 @@ def run(
         method=method,
         with_optimal_scales=with_optimal_scales,
         exp_comp_mode=exp_comp_mode,
+        seed=seed,
     )
 
 

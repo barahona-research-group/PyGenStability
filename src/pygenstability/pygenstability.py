@@ -243,13 +243,19 @@ def run(
         log_scale=log_scale,
         scales=scales,
     )
+    # reflect the actual scan length so downstream consumers (run_params, default
+    # optimal_scales_kwargs sizing, DataClustering.scale_selection) see the
+    # length of the resolved `scales` array rather than the user kwarg.
+    n_scale = len(scales)
+    run_params["n_scale"] = n_scale
     exp_comp_mode = _resolve_exp_comp_mode(exp_comp_mode, constructor)
 
-    if constructor_kwargs is None:
-        constructor_kwargs = {}
-    constructor_kwargs.update(
-        {"with_spectral_gap": with_spectral_gap, "exp_comp_mode": exp_comp_mode}
-    )
+    # avoid mutating a caller-supplied constructor_kwargs dict.
+    constructor_kwargs = {
+        **(constructor_kwargs or {}),
+        "with_spectral_gap": with_spectral_gap,
+        "exp_comp_mode": exp_comp_mode,
+    }
 
     constructor_obj = load_constructor(constructor, graph, **constructor_kwargs)
     with multiprocessing.Pool(n_workers) as pool:
@@ -410,6 +416,10 @@ def _compute_NVI(
     n_partitions: int = 10,
 ) -> None:
     """Compute NVI measure between the first n_partitions."""
+    # NVI is pairwise; with < 2 partitions there is nothing to compare.
+    if n_partitions < 2:
+        all_results["NVI"].append(0.0)
+        return
     selected_partitions = communities[:n_partitions]
     # prepare worker to compute NVI between selected partitions
     worker = partial(evaluate_NVI, partitions=selected_partitions)
@@ -493,7 +503,7 @@ def _optimise(
             seed,
         )
 
-    if method == "leiden":
+    elif method == "leiden":
         # this implementation uses the trick suggested by V. Traag here:
         # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
@@ -518,6 +528,8 @@ def _optimise(
             partitions, layer_weights=n_null * [1.0 / n_null]
         )
         community_id = partitions[0].membership
+    else:
+        raise ValueError(f"Unknown method {method!r}, expected 'louvain' or 'leiden'")
 
     return stability + global_shift, community_id
 

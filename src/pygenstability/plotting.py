@@ -277,7 +277,7 @@ def plot_optimal_partitions(
             edge_color=edge_color,
             edge_width=edge_width,
         )
-        plt.savefig(f"{folder}/scale_{optimal_scale_id}{ext}", bbox_inches="tight")
+        plt.savefig(Path(folder) / f"scale_{optimal_scale_id}{ext}", bbox_inches="tight")
         if show:  # pragma: no cover
             plt.show()
 
@@ -501,7 +501,7 @@ def plot_scan_plt(
 
 
 def plot_clustered_adjacency(
-    adjacency: np.ndarray,
+    adjacency: Any,
     all_results: dict[str, Any],
     scale: int,
     labels: list[str] | None = None,
@@ -512,7 +512,7 @@ def plot_clustered_adjacency(
     """Plot the clustered adjacency matrix of the graph at a given scale.
 
     Args:
-        adjacency (ndarray): adjacency matrix to plot
+        adjacency (ndarray or sparse matrix): adjacency matrix to plot
         all_results (dict): results of PyGenStability
         scale (int): scale index for clustering
         labels (list): node labels, or None
@@ -526,7 +526,10 @@ def plot_clustered_adjacency(
     for comm in comms:
         node_ids += list(np.where(all_results["community_id"][scale] == comm)[0])
 
-    adjacency = adjacency[np.ix_(node_ids, node_ids)].astype(float)
+    # densify sparse inputs so np.ix_ fancy indexing works
+    if hasattr(adjacency, "toarray"):
+        adjacency = adjacency.toarray()
+    adjacency = np.asarray(adjacency)[np.ix_(node_ids, node_ids)].astype(float)
     adjacency[adjacency == 0] = np.nan
 
     plt.figure(figsize=figsize)

@@ -39,7 +39,7 @@ def plot_sankey(
     values = []
     shift = 0
 
-    if not scale_index:
+    if scale_index is None:
         all_results["community_id_reduced"] = all_results["community_id"]
     else:
         all_results["community_id_reduced"] = [all_results["community_id"][i] for i in scale_index]

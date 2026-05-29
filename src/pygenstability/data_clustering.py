@@ -259,15 +259,20 @@ class DataClustering(_GraphConstruction):
         .. [3] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
-        # transform relative values to absolute values; clamp to keep the pooling /
-        # rolling-mean windows non-degenerate when n_scale is small
-        n_scale = self.results_["run_params"]["n_scale"]
+        # transform relative values to absolute values; clamp window sizes to
+        # >= 2 so the pooling / rolling-mean is non-degenerate, and basin
+        # radius to >= 1, regardless of whether the input was relative or
+        # absolute.
+        n_scale = len(self.results_["scales"])
         if kernel_size < 1:
-            kernel_size = max(2, int(kernel_size * n_scale))
+            kernel_size = int(kernel_size * n_scale)
         if window_size < 1:
-            window_size = max(2, int(window_size * n_scale))
+            window_size = int(window_size * n_scale)
         if basin_radius < 1:
-            basin_radius = max(1, int(basin_radius * n_scale))
+            basin_radius = int(basin_radius * n_scale)
+        kernel_size = max(2, int(kernel_size))
+        window_size = max(2, int(window_size))
+        basin_radius = max(1, int(basin_radius))
 
         # apply scale selection algorithm
         self.results_ = identify_optimal_scales(
@@ -381,11 +386,15 @@ class DataClustering(_GraphConstruction):
         fig : plotly figure
             Sankey diagram figure.
         """
-        # plot non-trivial optimal scales only
+        # plot non-trivial optimal scales only — must match the same trivial-partition
+        # filter that labels_ applies, otherwise the slice can include trivial scales
+        # and drop non-trivial ones at the tail.
         if optimal_scales:
-            n_partitions = len(self.labels_)
-            # collect indices of non-trivial partitions
-            scale_index = self.results_["selected_partitions"][:n_partitions]
+            n_nodes = self.adjacency_.shape[0]
+            scale_index = [
+                i for i in self.results_["selected_partitions"]
+                if not np.allclose(self.results_["community_id"][i], np.zeros(n_nodes))
+            ]
 
         # plot Sankey diagram
         fig = pgs_plot_sankey(

@@ -78,7 +78,7 @@ run_params:
   method: louvain
   min_scale: -2.0
   n_NVI: 20
-  n_scale: 20
+  n_scale: 3
   n_tries: 10
   n_workers: 1
   optimal_scales_kwargs: null
