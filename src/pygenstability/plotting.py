@@ -37,7 +37,7 @@ def plot_scan(
     all_results: dict[str, Any],
     figsize: tuple[float, float] = (6, 5),
     scale_axis: bool = True,
-    figure_name: str | None = "scan_results.pdf",
+    figure_name: str | Path | None = "scan_results.pdf",
     use_plotly: bool = False,
     live: bool = True,
     plotly_filename: str = "scan_results.html",
@@ -243,7 +243,7 @@ def plot_optimal_partitions(
     all_results: dict[str, Any],
     edge_color: str = "0.5",
     edge_width: float = 0.5,
-    folder: str = "optimal_partitions",
+    folder: str | Path = "optimal_partitions",
     ext: str = ".pdf",
     show: bool = False,
 ) -> None:
@@ -285,7 +285,7 @@ def plot_optimal_partitions(
 def plot_communities(
     graph: Any,
     all_results: dict[str, Any],
-    folder: str = "communities",
+    folder: str | Path = "communities",
     edge_color: str = "0.5",
     edge_width: float = 0.5,
     ext: str = ".pdf",
@@ -314,7 +314,7 @@ def plot_communities(
 def plot_communities_matrix(
     graph: Any,
     all_results: dict[str, Any],
-    folder: str = "communities_matrix",
+    folder: str | Path = "communities_matrix",
     ext: str = ".pdf",
 ) -> None:
     """Plot communities at all scales in matrix form.
@@ -507,7 +507,7 @@ def plot_clustered_adjacency(
     labels: list[str] | None = None,
     figsize: tuple[float, float] = (12, 10),
     cmap: str = "Blues",
-    figure_name: str = "clustered_adjacency.pdf",
+    figure_name: str | Path = "clustered_adjacency.pdf",
 ) -> None:
     """Plot the clustered adjacency matrix of the graph at a given scale.
 

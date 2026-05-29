@@ -259,13 +259,15 @@ class DataClustering(_GraphConstruction):
         .. [3] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
-        # transform relative values to absolute values
+        # transform relative values to absolute values; clamp to keep the pooling /
+        # rolling-mean windows non-degenerate when n_scale is small
+        n_scale = self.results_["run_params"]["n_scale"]
         if kernel_size < 1:
-            kernel_size = int(kernel_size * self.results_["run_params"]["n_scale"])
+            kernel_size = max(2, int(kernel_size * n_scale))
         if window_size < 1:
-            window_size = int(window_size * self.results_["run_params"]["n_scale"])
+            window_size = max(2, int(window_size * n_scale))
         if basin_radius < 1:
-            basin_radius = max(1, int(basin_radius * self.results_["run_params"]["n_scale"]))
+            basin_radius = max(1, int(basin_radius * n_scale))
 
         # apply scale selection algorithm
         self.results_ = identify_optimal_scales(
