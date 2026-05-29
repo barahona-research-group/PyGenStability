@@ -41,6 +41,7 @@ def plot_scan(
     use_plotly: bool = False,
     live: bool = True,
     plotly_filename: str = "scan_results.html",
+    n_clusters_log_scale: bool = True,
 ) -> Any:
     """Plot results of pygenstability with matplotlib or plotly.
 
@@ -52,6 +53,7 @@ def plot_scan(
         use_plotly (bool): use matplotlib or plotly backend
         live (bool): for plotly backend, open browser with pot
         plotly_filename (str): filename of .html figure from plotly
+        n_clusters_log_scale (bool): draw the # clusters axis on a log scale
     """
     if len(all_results["scales"]) == 1:  # pragma: no cover
         L.info("Cannot plot the results if only one scale point, we display the result instead:")
@@ -61,7 +63,11 @@ def plot_scan(
     if use_plotly:
         return plot_scan_plotly(all_results, live=live, filename=plotly_filename)
     return plot_scan_plt(
-        all_results, figsize=figsize, scale_axis=scale_axis, figure_name=figure_name
+        all_results,
+        figsize=figsize,
+        scale_axis=scale_axis,
+        figure_name=figure_name,
+        n_clusters_log_scale=n_clusters_log_scale,
     )
 
 
@@ -357,20 +363,32 @@ def _get_scales(all_results: dict[str, Any], scale_axis: bool = True) -> np.ndar
     return all_results["scales"]  # pragma: no cover
 
 
-def _plot_number_comm(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
-    """Plot number of communities."""
-    ax.plot(scales, all_results["number_of_communities"], "-", c="C3", label="size", lw=2.0)
-    ax.set_ylim(0, 1.1 * max(all_results["number_of_communities"]))
-    ax.set_ylabel("# clusters", color="C3")
-    ax.tick_params("y", colors="C3")
+def _plot_number_comm(
+    all_results: dict[str, Any],
+    ax: Any,
+    scales: np.ndarray,
+    log_scale: bool = True,
+) -> None:
+    """Plot number of communities as a step plot, optionally on a log y-axis."""
+    n_clusters = np.asarray(all_results["number_of_communities"])
+    ax.step(scales, n_clusters, where="post", c="0.4", lw=1.5, label="# clusters")
+    ax.set_ylabel("# clusters", color="0.4")
+    ax.tick_params("y", colors="0.4")
+    if log_scale:
+        ax.set_yscale("log")
+        lo = max(1, int(n_clusters.min()))
+        hi = max(lo + 1, int(n_clusters.max()))
+        ax.set_ylim(lo, hi * 1.5)
+    else:
+        ax.set_ylim(0, 1.1 * max(1, n_clusters.max()))
 
 
 def _plot_ttprime(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot ttprime."""
     contourf_ = ax.contourf(scales, scales, all_results["ttprime"], cmap="YlOrBr_r", extend="min")
     ax.set_ylabel(r"$log_{10}(t^\prime)$")
-    ax.yaxis.tick_left()
-    ax.yaxis.set_label_position("left")
+    ax.yaxis.tick_right()
+    ax.yaxis.set_label_position("right")
     ax.axis([scales[0], scales[-1], scales[0], scales[-1]])
     ax.set_xlabel(r"$log_{10}(t)$")
 
@@ -391,11 +409,11 @@ def _plot_NVI(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot variation information."""
     ax.plot(scales, all_results["NVI"], "-", lw=2.0, c="C2", label="VI")
 
-    ax.yaxis.tick_right()
     ax.tick_params("y", colors="C2")
     ax.set_ylabel(r"NVI", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
-    ax.axis([scales[0], scales[-1], 0.0, np.max(all_results["NVI"]) * 1.1])
+    nvi_max = max(np.max(all_results["NVI"]) * 1.1, 1e-3)
+    ax.axis([scales[0], scales[-1], 0.0, nvi_max])
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
@@ -408,40 +426,43 @@ def _plot_stability(all_results: dict[str, Any], ax: Any, scales: np.ndarray) ->
     ax.yaxis.set_label_position("left")
 
 
-def _plot_optimal_scales(
-    all_results: dict[str, Any],
-    ax: Any,
-    scales: np.ndarray,
-    ax1: Any,
-    ax2: Any,
-) -> None:
-    """Plot stability."""
-    ax.plot(
-        scales,
-        all_results["block_nvi"],
-        "-",
-        lw=2.0,
-        c="C4",
-        label="Block NVI",
-    )
-    ax.plot(
-        scales[all_results["selected_partitions"]],
-        all_results["block_nvi"][all_results["selected_partitions"]],
-        "o",
-        lw=2.0,
-        c="C4",
-        label="optimal scales",
-    )
-
-    ax.tick_params("y", colors="C4")
-    ax.set_ylabel("Block NVI", color="C4")
+def _plot_block_nvi(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
+    """Plot the block-NVI curve with dots at the selected scales."""
+    block_nvi = np.asarray(all_results["block_nvi"])
+    ax.plot(scales, block_nvi, "-", lw=1.5, c="k", label="Block NVI")
+    if "selected_partitions" in all_results:
+        sel = list(all_results["selected_partitions"])
+        ax.plot(scales[sel], block_nvi[sel], "o", c="k", ms=5)
+    ax.set_ylabel("Block NVI", color="k")
+    ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
-    ax.set_xlabel(r"$log_{10}(t)$")
 
-    for scale in scales[all_results["selected_partitions"]]:
-        ax.axvline(scale, ls="--", color="C4")
-        ax1.axvline(scale, ls="--", color="C4")
-        ax2.axvline(scale, ls="--", color="C4")
+
+def _draw_selected_scale_markers(
+    all_results: dict[str, Any],
+    axes: list[Any],
+    label_ax: Any,
+    scales: np.ndarray,
+) -> None:
+    """Dashed red verticals across all panels + k=N text labels above the top panel."""
+    if "selected_partitions" not in all_results:
+        return
+    sel = list(all_results["selected_partitions"])
+    n_clusters = all_results.get("number_of_communities")
+    for i in sel:
+        for ax in axes:
+            ax.axvline(scales[i], ls="--", color="red", lw=1.0)
+        if n_clusters is not None:
+            label_ax.text(
+                scales[i],
+                1.02,
+                f"k={n_clusters[i]}",
+                transform=label_ax.get_xaxis_transform(),
+                ha="center",
+                va="bottom",
+                color="red",
+                fontsize=8,
+            )
 
 
 def plot_scan_plt(
@@ -449,47 +470,49 @@ def plot_scan_plt(
     figsize: tuple[float, float] = (6, 5),
     scale_axis: bool = True,
     figure_name: str | None = "scan_results.svg",
+    n_clusters_log_scale: bool = True,
 ) -> list[Any]:
-    """Plot results of pygenstability with matplotlib."""
+    """Plot results of pygenstability with matplotlib.
+
+    Layout (top → bottom): stability + #clusters; ttprime heatmap with block-NVI
+    overlay; NVI(t). Selected scales are marked by red dashed verticals across
+    all panels and `k=N` text labels above the top panel.
+    """
     scales = _get_scales(all_results, scale_axis=scale_axis)
     plt.figure(figsize=figsize)
     gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.0, 0.5])
     gs.update(hspace=0)
-    axes = []
+    axes: list[Any] = []
 
-    if "ttprime" in all_results:
-        ax0 = plt.subplot(gs[1, 0])
-        axes.append(ax0)
-        _plot_ttprime(all_results, ax=ax0, scales=scales)
-        ax1 = ax0.twinx()
-    else:  # pragma: no cover
-        ax1 = plt.subplot(gs[1, 0])
-
-    axes.append(ax1)
-    ax1.set_xticks([])
-
-    _plot_NVI(all_results, ax=ax1, scales=scales)
-
-    if "ttprime" in all_results:
-        ax1.yaxis.tick_right()
-        ax1.yaxis.set_label_position("right")
-
-    ax2 = plt.subplot(gs[0, 0])
-
+    # top: stability (left) + #clusters (right)
+    ax_top = plt.subplot(gs[0, 0])
     if "stability" in all_results:
-        _plot_stability(all_results, ax=ax2, scales=scales)
-        ax2.set_xticks([])
-        axes.append(ax2)
+        _plot_stability(all_results, ax=ax_top, scales=scales)
+    ax_top.set_xticks([])
+    axes.append(ax_top)
+    if "number_of_communities" in all_results:
+        ax_nk = ax_top.twinx()
+        _plot_number_comm(all_results, ax=ax_nk, scales=scales, log_scale=n_clusters_log_scale)
+        axes.append(ax_nk)
 
-    if "NVI" in all_results:
-        ax3 = ax2.twinx()
-        _plot_number_comm(all_results, ax=ax3, scales=scales)
-        axes.append(ax3)
-
+    # middle: ttprime heatmap + block-NVI overlay
+    ax_mid = plt.subplot(gs[1, 0])
+    axes.append(ax_mid)
+    ax_mid.set_xticks([])
+    if "ttprime" in all_results:
+        _plot_ttprime(all_results, ax=ax_mid, scales=scales)
     if "block_nvi" in all_results:
-        ax4 = plt.subplot(gs[2, 0])
-        _plot_optimal_scales(all_results, ax=ax4, scales=scales, ax1=ax1, ax2=ax2)
-        axes.append(ax4)
+        ax_block = ax_mid.twinx() if "ttprime" in all_results else ax_mid
+        _plot_block_nvi(all_results, ax=ax_block, scales=scales)
+        axes.append(ax_block)
+
+    # bottom: NVI(t)
+    ax_bot = plt.subplot(gs[2, 0])
+    if "NVI" in all_results:
+        _plot_NVI(all_results, ax=ax_bot, scales=scales)
+    axes.append(ax_bot)
+
+    _draw_selected_scale_markers(all_results, axes=axes, label_ax=ax_top, scales=scales)
 
     for ax in axes:
         ax.set_xlim(scales[0], scales[-1])
