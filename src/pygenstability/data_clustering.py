@@ -392,7 +392,8 @@ class DataClustering(_GraphConstruction):
         if optimal_scales:
             n_nodes = self.adjacency_.shape[0]
             scale_index = [
-                i for i in self.results_["selected_partitions"]
+                i
+                for i in self.results_["selected_partitions"]
                 if not np.allclose(self.results_["community_id"][i], np.zeros(n_nodes))
             ]
 
