@@ -98,9 +98,9 @@ class DataClustering(_GraphConstruction):
     graph_method : {'knn-mst', 'cknn-mst', 'precomputed'}, default='cknn-mst'
         Method to construct graph from sample-by-feature matrix:
 
-        - 'knn-mst' will use k-Nearest Neighbor graph combined with Miniumus Spanning Tree.
-        - 'cknn-mst' will use Continunous k-Nearest Neighbor graph [2]_ combined with
-            Miniumus Spanning Tree.
+        - 'knn-mst' will use k-Nearest Neighbor graph combined with Minimum Spanning Tree.
+        - 'cknn-mst' will use Continuous k-Nearest Neighbor graph [2]_ combined with
+            Minimum Spanning Tree.
         - 'precomputed' assumes that data is already provided as adjacency matrix of a
             sparse graph.
 
@@ -109,11 +109,14 @@ class DataClustering(_GraphConstruction):
         to be positive.
 
     delta : float, default=1.0
-        Density parameter for Continunous k-Nearest Neighbor graph. This parameter is expected
+        Density parameter for Continuous k-Nearest Neighbor graph. This parameter is expected
         to be positive.
 
     distance_threshold : float, optional
         Optional thresholding of distance matrix.
+
+    seed : int, optional
+        Seed forwarded to ``pygenstability.run`` for reproducible results.
 
     pgs_kwargs : dict, optional
         Parameters for PyGenStability, see documentation. Some possible arguments:
@@ -153,6 +156,7 @@ class DataClustering(_GraphConstruction):
         k=5,
         delta=1.0,
         distance_threshold=np.inf,
+        seed=None,
         **pgs_kwargs,
     ):
 
@@ -165,24 +169,23 @@ class DataClustering(_GraphConstruction):
             distance_threshold=distance_threshold,
         )
 
-        # store PyGenStability kwargs
-        self.pgs_kwargs = pgs_kwargs
+        # store PyGenStability kwargs (seed surfaced explicitly for discoverability)
+        self.pgs_kwargs = {**pgs_kwargs, "seed": seed}
 
         # attributes
         self.results_ = {}
 
     @property
     def labels_(self):
-        """Return labels for robust paritions."""
+        """Return labels for robust partitions."""
         labels = []
 
-        assert (
-            "selected_partitions" in self.results_.keys()
-        ), "Run PyGenStability with optimal scale selection first."
+        assert "selected_partitions" in self.results_.keys(), (
+            "Run PyGenStability with optimal scale selection first."
+        )
 
         # store labels of robust partitions
         for i in self.results_["selected_partitions"]:
-
             # only return non-trivial robust partitions
             robust_partition = self.results_["community_id"][i]
             if not np.allclose(robust_partition, np.zeros(self.adjacency_.shape[0])):
@@ -296,7 +299,7 @@ class DataClustering(_GraphConstruction):
         cmap : str, default='tab20'
             Color map for cluster colors.
 
-        show : book, default=True
+        show : bool, default=True
             Show the figures.
 
         Returns
@@ -328,7 +331,7 @@ class DataClustering(_GraphConstruction):
             ax.set(
                 xlabel="x",
                 ylabel="y",
-                title=f"Robust Partion {m + 1} (with {len(np.unique(partition))} clusters)",
+                title=f"Robust Partition {m + 1} (with {len(np.unique(partition))} clusters)",
             )
         if show:
             plt.show()

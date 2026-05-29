@@ -53,10 +53,9 @@ def _limit_numpy(f):
 
 
 def _compute_spectral_decomp(matrix):
-    """Solve eigenalue problem for symmetric matrix."""
+    """Solve eigenvalue problem for symmetric matrix."""
     lambdas, v = la.eigh(matrix.toarray())
-    vinv = la.inv(v)  # TODO: we could take v.T if we know that v is already orthonormal
-    return lambdas, v, vinv
+    return lambdas, v, v.T
 
 
 def _check_total_degree(degrees):
@@ -123,7 +122,7 @@ class Constructor:
     def get_data(self, scale):
         """Return quality and null model at given scale as well as global shift (or None).
 
-        User has to define the _get_data so we can enure numpy does not use multiple threads
+        User has to define the _get_data so we can ensure numpy does not use multiple threads
         """
         return self._get_data(scale)
 
@@ -303,14 +302,16 @@ class constructor_signed_modularity(Constructor):
         deg_neg = adj_neg.sum(1).flatten()
 
         deg_norm = deg_plus.sum() + deg_neg.sum()
-        self.partial_null_model = np.array(
-            [
-                deg_plus / deg_norm,
-                deg_plus / deg_plus.sum(),
-                -deg_neg / deg_neg.sum(),
-                deg_neg / deg_norm,
-            ]
-        )
+        # silence divide-by-zero when the graph has only positive or only negative edges
+        with np.errstate(invalid="ignore"):
+            self.partial_null_model = np.array(
+                [
+                    deg_plus / deg_norm,
+                    deg_plus / deg_plus.sum(),
+                    -deg_neg / deg_neg.sum(),
+                    deg_neg / deg_norm,
+                ]
+            )
         self.partial_quality_matrix = self.graph / deg_norm
 
     @_limit_numpy
@@ -391,9 +392,9 @@ class constructor_directed(Constructor):
     @_limit_numpy
     def prepare(self, **kwargs):
         """Prepare the constructor with non-scale dependent computations."""
-        assert (
-            self.exp_comp_mode == "expm"
-        ), 'exp_comp_mode="expm" is required for "constructor_directed"'
+        assert self.exp_comp_mode == "expm", (
+            'exp_comp_mode="expm" is required for "constructor_directed"'
+        )
 
         alpha = kwargs.get("alpha", 0.8)
         n_nodes = self.graph.shape[0]
@@ -401,7 +402,8 @@ class constructor_directed(Constructor):
 
         out_degrees = np.array(self.graph.sum(1)).flatten()
         _check_total_degree(out_degrees)
-        dinv = np.divide(1, out_degrees, where=out_degrees != 0)
+        dinv = np.zeros_like(out_degrees, dtype=float)
+        np.divide(1, out_degrees, out=dinv, where=out_degrees != 0)
 
         self.partial_quality_matrix = sp.csr_matrix(
             alpha * np.diag(dinv).dot(self.graph.toarray())
@@ -456,7 +458,8 @@ class constructor_linearized_directed(Constructor):
 
         out_degrees = np.array(self.graph.sum(1)).flatten()
         _check_total_degree(out_degrees)
-        dinv = np.divide(1, out_degrees, where=out_degrees != 0)
+        dinv = np.zeros_like(out_degrees, dtype=float)
+        np.divide(1, out_degrees, out=dinv, where=out_degrees != 0)
 
         if alpha < 1:
             ones = np.ones((n_nodes, n_nodes)) / n_nodes

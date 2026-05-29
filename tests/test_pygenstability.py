@@ -47,7 +47,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
     constructor = load_constructor("continuous_combinatorial", graph)
     results = pgs.run(graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, n_tries=10)
 
-    results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False, n_tries=10, n_workers=1)
+    results = pgs.run(graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False, n_tries=10, n_workers=1, seed=42)
     results = _to_list(results)
     #yaml.dump(results, open(DATA / "test_run_default.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_default.yaml", "r"))
@@ -61,6 +61,7 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         with_spectral_gap=True,
         with_optimal_scales=False,
         n_tries=10,
+        seed=42,
     )
     results = _to_list(results)
     #yaml.dump(results, open(DATA / "test_run_gap.yaml", "w"))
@@ -77,28 +78,30 @@ def test_run(graph, graph_non_connected, graph_directed, graph_signed):
         with_ttprime=False,
         with_optimal_scales=False,
         n_tries=10,
-        n_workers=1
+        n_workers=1,
+        seed=42,
     )
     results = _to_list(results)
     #yaml.dump(results, open(DATA / "test_run_minimal.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_minimal.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
-    results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False, n_tries=10,n_workers=1)
+    results = pgs.run(graph, scales=[0.1, 0.5, 1.0], log_scale=False, with_optimal_scales=False, n_tries=10, n_workers=1, seed=42)
     results = _to_list(results)
-    yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
+    # regenerate fixture (run manually after deliberate numerics changes):
+    #yaml.dump(results, open(DATA / "test_run_times.yaml", "w"))
     expected_results = yaml.safe_load(open(DATA / "test_run_times.yaml", "r"))
     assert len(list(diff(expected_results, results))) == 0
 
     # test leiden method
     constructor = load_constructor("continuous_combinatorial", graph)
     results = pgs.run(
-        graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, method="leiden", n_tries=10, n_workers=1,
+        graph_signed, min_scale=-1, max_scale=0, n_scale=5, constructor=constructor, method="leiden", n_tries=10, n_workers=1, seed=42,
     )
     assert results is not None
 
     results = pgs.run(
-        graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False, method="leiden", n_tries=10, n_workers=1,
+        graph, min_scale=-1, max_scale=0, n_scale=5, with_optimal_scales=False, method="leiden", n_tries=10, n_workers=1, seed=42,
     )
     results = _to_list(results)
     #yaml.dump(results, open(DATA / "test_run_default_leiden.yaml", "w"))
@@ -123,13 +126,13 @@ def test__optimise(graph):
     data = constructor.get_data(1)
     quality_indices, quality_values = pgs._to_indices(data["quality"])
     stability, community_id = pgs._optimise(
-        0, quality_indices, quality_values, data["null_model"], 0
+        0, 42, quality_indices, quality_values, data["null_model"], 0
     )
     assert_almost_equal(stability, 0.5590341906608186)
     assert community_id == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 
     stability, community_id = pgs._optimise(
-        0, quality_indices, quality_values, data["null_model"], 0, method="leiden"
+        0, 42, quality_indices, quality_values, data["null_model"], 0, method="leiden"
     )
     assert_almost_equal(stability, 0.36540825919902664)
     assert community_id == [
@@ -170,3 +173,20 @@ def test__evaluate_quality(graph):
         community_id, qualities_index[0], qualities_index[1], data["null_model"], 0, method="leiden"
     )
     assert_almost_equal(quality, 0.2741359784037568)
+
+
+@pytest.mark.parametrize("n_workers", [1, 2])
+def test_run_is_deterministic(graph, n_workers):
+    """Same seed yields identical communities and stabilities across re-runs.
+
+    Parameterised on n_workers to cover the multiprocessing.Pool ordering path
+    that motivated the seed pre-generation fix.
+    """
+    common = dict(min_scale=-1, max_scale=0, n_scale=4, n_tries=5,
+                  with_optimal_scales=False, n_workers=n_workers, seed=42)
+
+    r1 = pgs.run(graph, **common)
+    r2 = pgs.run(graph, **common)
+
+    assert [list(c) for c in r1["community_id"]] == [list(c) for c in r2["community_id"]]
+    assert list(r1["stability"]) == list(r2["stability"])

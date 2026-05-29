@@ -52,10 +52,10 @@ community_id:
   - 0.0
   - 0.0
   - 0.0
+  - 0.0
   - 1.0
   - 1.0
   - 1.0
-  - 2.0
   - 2.0
   - 2.0
   - 2.0
@@ -130,6 +130,7 @@ run_params:
   optimal_scales_kwargs: null
   result_file: results.pkl
   scales: null
+  seed: 42
   tqdm_disable: false
   with_NVI: true
   with_all_tries: false

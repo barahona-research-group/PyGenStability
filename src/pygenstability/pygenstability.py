@@ -12,6 +12,8 @@ Markov Stability setting, and can be parametrised via built-in constructors, or 
 the user via the constructor module.
 """
 
+from __future__ import annotations
+
 import itertools
 import logging
 import multiprocessing
@@ -19,6 +21,8 @@ from collections import defaultdict
 from functools import partial
 from functools import wraps
 from time import time
+from typing import Callable
+from typing import Sequence
 
 try:
     import igraph as ig
@@ -51,7 +55,7 @@ THRESHOLD = 1e-8
 
 
 def _timing(f):  # pragma: no cover
-    """Use as decorator to time a function excecution if logging is in DEBUG mode."""
+    """Use as decorator to time a function execution if logging is in DEBUG mode."""
 
     @wraps(f)
     def wrap(*args, **kw):
@@ -124,11 +128,11 @@ def _check_method(method):  # pragma: no cover
         raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
 
     if method == "louvain" and _NO_LOUVAIN:
-        print("Louvain is not available, we fallback to leiden.")
+        L.warning("Louvain is not available, we fallback to leiden.")
         return "leiden"
 
     if method == "leiden" and _NO_LEIDEN:
-        print("Leiden is not available, we fallback to louvain.")
+        L.warning("Leiden is not available, we fallback to louvain.")
         return "louvain"
 
     return method
@@ -136,29 +140,30 @@ def _check_method(method):  # pragma: no cover
 
 @_timing
 def run(
-    graph=None,
-    constructor="linearized",
-    min_scale=-2.0,
-    max_scale=0.5,
-    n_scale=20,
-    log_scale=True,
-    scales=None,
-    n_tries=100,
-    with_all_tries=False,
-    with_NVI=True,
-    n_NVI=20,
-    with_postprocessing=True,
-    with_ttprime=True,
-    with_spectral_gap=False,
-    exp_comp_mode="spectral",
-    result_file="results.pkl",
-    n_workers=4,
-    tqdm_disable=False,
-    with_optimal_scales=True,
-    optimal_scales_kwargs=None,
-    method="louvain",
-    constructor_kwargs=None,
-):
+    graph: sp.spmatrix | None = None,
+    constructor: str | Callable = "linearized",
+    min_scale: float = -2.0,
+    max_scale: float = 0.5,
+    n_scale: int = 20,
+    log_scale: bool = True,
+    scales: np.ndarray | None = None,
+    n_tries: int = 100,
+    with_all_tries: bool = False,
+    with_NVI: bool = True,
+    n_NVI: int = 20,
+    with_postprocessing: bool = True,
+    with_ttprime: bool = True,
+    with_spectral_gap: bool = False,
+    exp_comp_mode: str = "spectral",
+    result_file: str = "results.pkl",
+    n_workers: int = 4,
+    tqdm_disable: bool = False,
+    with_optimal_scales: bool = True,
+    optimal_scales_kwargs: dict | None = None,
+    method: str = "louvain",
+    constructor_kwargs: dict | None = None,
+    seed: int | None = None,
+) -> dict:
     """This is the main function to compute graph clustering across scales with Markov Stability.
 
     This function needs a graph object  as an adjacency matrix encoded with scipy.csgraph.
@@ -195,8 +200,10 @@ def run(
         with_optimal_scales (bool): apply optimal scale selection algorithm
         optimal_scales_kwargs (dict): kwargs to pass to optimal scale selection, see
             optimal_scale module.
-        method (str): optimiation method, louvain or leiden
+        method (str): optimisation method, louvain or leiden
         constructor_kwargs (dict): additional kwargs to pass to constructor prepare method
+        seed (int): seed for the random number generator; pass an int for reproducible runs,
+            or leave as None for a fresh non-deterministic seed.
 
     Returns:
         Results dict with the following entries
@@ -215,6 +222,7 @@ def run(
     """
     method = _check_method(method)
     run_params = _get_params(locals())
+    rng = np.random.default_rng(seed)
     graph = _graph_checks(graph)
     scales = _get_scales(
         min_scale=min_scale,
@@ -223,10 +231,7 @@ def run(
         log_scale=log_scale,
         scales=scales,
     )
-    assert exp_comp_mode in ["spectral", "expm"]
-    if constructor in ("directed", "linearized_directed", "signed"):
-        L.info("We cannot use spectral exponential computation for directed contructor")
-        exp_comp_mode = "expm"
+    exp_comp_mode = _resolve_exp_comp_mode(exp_comp_mode, constructor)
 
     if constructor_kwargs is None:
         constructor_kwargs = {}
@@ -240,50 +245,119 @@ def run(
         constructor_data = _get_constructor_data(
             constructor, scales, pool, tqdm_disable=tqdm_disable
         )
-        if method == "leiden":
-            # pragma: no cover
+        if method == "leiden":  # pragma: no cover
             for data in constructor_data:
                 assert all(data["null_model"][0] == data["null_model"][1])
 
         L.info("Optimise stability...")
-        all_results = defaultdict(list)
-        all_results["run_params"] = run_params
+        all_results = _scan_scales(
+            constructor_data,
+            scales,
+            pool,
+            rng,
+            n_tries=n_tries,
+            method=method,
+            with_NVI=with_NVI,
+            n_NVI=n_NVI,
+            with_all_tries=with_all_tries,
+            result_file=result_file,
+            tqdm_disable=tqdm_disable,
+            n_scale=n_scale,
+            run_params=run_params,
+        )
 
-        # iterate through all Markov scales
-        for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-            # run optimisation independently for n_tries
-            results = _run_optimisations(constructor_data[i], n_tries, pool, method)
-            communities = _process_runs(t, results, all_results)
-
-            if with_NVI:
-                _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
-
-            if with_all_tries:
-                all_results["all_tries"].append(results)
-
-            save_results(all_results, filename=result_file)
-
-        if with_postprocessing:
-            L.info("Apply postprocessing...")
-            _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
-
-        if with_ttprime or with_optimal_scales:
-            L.info("Compute ttprimes...")
-            _compute_ttprime(all_results, pool)
-
-            if with_optimal_scales:
-                L.info("Identify optimal scales...")
-                if optimal_scales_kwargs is None:
-                    optimal_scales_kwargs = {
-                        "kernel_size": max(2, int(0.1 * n_scale)),
-                        "window_size": max(2, int(0.1 * n_scale)),
-                        "basin_radius": max(1, int(0.01 * n_scale)),
-                    }
-                all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
+        all_results = _run_post_scan_analysis(
+            all_results,
+            pool,
+            constructor_data,
+            method=method,
+            tqdm_disable=tqdm_disable,
+            with_postprocessing=with_postprocessing,
+            with_ttprime=with_ttprime,
+            with_optimal_scales=with_optimal_scales,
+            optimal_scales_kwargs=optimal_scales_kwargs,
+            n_scale=n_scale,
+        )
 
     save_results(all_results, filename=result_file)
-
     return dict(all_results)
+
+
+def _resolve_exp_comp_mode(exp_comp_mode: str, constructor) -> str:
+    """Validate exp_comp_mode and force expm for directed/signed constructors."""
+    assert exp_comp_mode in ["spectral", "expm"]
+    if constructor in ("directed", "linearized_directed", "signed"):
+        L.info("We cannot use spectral exponential computation for directed constructor")
+        return "expm"
+    return exp_comp_mode
+
+
+def _scan_scales(
+    constructor_data,
+    scales,
+    pool,
+    rng: np.random.Generator,
+    *,
+    n_tries: int,
+    method: str,
+    with_NVI: bool,
+    n_NVI: int,
+    with_all_tries: bool,
+    result_file: str,
+    tqdm_disable: bool,
+    n_scale: int,
+    run_params: dict,
+) -> defaultdict:
+    """Run the per-scale optimisation loop and aggregate results."""
+    all_results: defaultdict = defaultdict(list)
+    all_results["run_params"] = run_params
+
+    for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
+        results = _run_optimisations(constructor_data[i], n_tries, pool, rng, method)
+        communities = _process_runs(t, results, all_results)
+
+        if with_NVI:
+            _compute_NVI(communities, all_results, pool, n_partitions=min(n_NVI, n_tries))
+
+        if with_all_tries:
+            all_results["all_tries"].append(results)
+
+        save_results(all_results, filename=result_file)
+    return all_results
+
+
+def _run_post_scan_analysis(
+    all_results,
+    pool,
+    constructor_data,
+    *,
+    method: str,
+    tqdm_disable: bool,
+    with_postprocessing: bool,
+    with_ttprime: bool,
+    with_optimal_scales: bool,
+    optimal_scales_kwargs: dict | None,
+    n_scale: int,
+):
+    """Apply postprocessing, ttprime, and optimal-scale selection."""
+    if with_postprocessing:
+        L.info("Apply postprocessing...")
+        _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
+
+    if with_ttprime or with_optimal_scales:
+        L.info("Compute ttprimes...")
+        _compute_ttprime(all_results, pool)
+
+        if with_optimal_scales:
+            L.info("Identify optimal scales...")
+            if optimal_scales_kwargs is None:
+                optimal_scales_kwargs = {
+                    "kernel_size": max(2, int(0.1 * n_scale)),
+                    "window_size": max(2, int(0.1 * n_scale)),
+                    "basin_radius": max(1, int(0.01 * n_scale)),
+                }
+            all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
+    return all_results
 
 
 def _process_runs(scale, results, all_results):
@@ -305,11 +379,11 @@ def _process_runs(scale, results, all_results):
 
 def _assign_increasing_ids(community_id):
     """Assign strictly increasing community IDs starting from 0."""
-    # get unique ids and their indices in input array
-    unique_ids, ind = np.unique(community_id, return_index=True)
-    # translate old ids to new ids
-    new_id_dict = {unique_ids[np.argsort(ind)][i]: i for i in range(len(unique_ids))}
-    return np.vectorize(new_id_dict.get)(community_id)
+    community_id = np.asarray(community_id)
+    unique_ids, first_ind, inverse = np.unique(community_id, return_index=True, return_inverse=True)
+    relabel = np.empty(len(unique_ids), dtype=np.intp)
+    relabel[np.argsort(first_ind)] = np.arange(len(unique_ids))
+    return relabel[inverse]
 
 
 @_timing
@@ -329,7 +403,7 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     all_results["NVI"].append(nvi_mean)
 
 
-def evaluate_NVI(index_pair, partitions):
+def evaluate_NVI(index_pair: Sequence[int], partitions: Sequence) -> float:
     r"""Evaluations of Normalized Variation of Information (NVI).
 
     NVI is defined for two partitions :math:`p_0` and :math:`p_1` as:
@@ -373,7 +447,9 @@ def _to_indices(matrix, directed=False):
 
 
 @_timing
-def _optimise(_, quality_indices, quality_values, null_model, global_shift, method="louvain"):
+def _optimise(
+    try_idx, seed, quality_indices, quality_values, null_model, global_shift, method="louvain"
+):
     """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
         stability, community_id = generalized_louvain.run_louvain(
@@ -384,7 +460,7 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
             null_model,
             np.shape(null_model)[0],
             1.0,
-            np.random.randint(1e8),
+            seed,
         )
 
     if method == "leiden":
@@ -404,7 +480,7 @@ def _optimise(_, quality_indices, quality_values, null_model, global_shift, meth
                 )
             )
         optimiser = leidenalg.Optimiser()
-        optimiser.set_rng_seed(np.random.randint(1e8))
+        optimiser.set_rng_seed(int(seed))
         # we initialise stability
         stability = sum(partition.quality() for partition in partitions) / n_null
         # we use Leiden to find optimal partition and update stability according to improvement
@@ -458,7 +534,7 @@ def _evaluate_quality(
     return quality + global_shift
 
 
-def _run_optimisations(constructor, n_runs, pool, method="louvain"):
+def _run_optimisations(constructor, n_runs, pool, rng, method="louvain"):
     """Run several generalized Markov Stability optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
@@ -472,8 +548,10 @@ def _run_optimisations(constructor, n_runs, pool, method="louvain"):
         method=method,
     )
 
+    # seed each worker deterministically from the run-level rng
+    seeds = rng.integers(0, int(1e8), size=n_runs).tolist()
     chunksize = _get_chunksize(n_runs, pool)
-    return pool.map(worker, range(n_runs), chunksize=chunksize)
+    return pool.starmap(worker, zip(range(n_runs), seeds), chunksize=chunksize)
 
 
 @_timing

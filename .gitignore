@@ -40,6 +40,7 @@ htmlcov/
 .tox/
 .coverage
 .coverage.*
+.coverage-*
 .cache
 nosetests.xml
 coverage.xml
@@ -109,7 +110,25 @@ test/model/
 
 test/data/
 
+# pygenstability run artifacts
+results.pkl
+scan_results.pdf
+*.gpickle
+examples/communities/
+examples/edges.csv
+examples/ground_truth.png
+examples/sbm_graph.pkl
+examples/scan_results.pdf
+communities/
+communities_sankey.html
+
+# Auto-generated Sphinx PDF (regenerated on release via `tox -e docs`)
+pygenstability_doc.pdf
+
 .DS_Store
 
 # vscode
 .vscode/
+
+# Claude Code
+CLAUDE.md

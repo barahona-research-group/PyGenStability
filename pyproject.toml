@@ -1,3 +1,96 @@
 [build-system]
 requires = ["setuptools", "numpy", "cython", "pybind11>=2.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyGenStability"
+version = "0.2.7"
+description = "Python binding of generalised Louvain with Markov Stability"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "Alexis Arnaudon", email = "alexis.arnaudon@epfl.ch"},
+    {name = "Juni Schindler", email = "juni.schindler19@imperial.ac.uk"},
+]
+dependencies = [
+    "numpy>=1.18.1,<3",
+    "scipy>=1.4.1,<2",
+    "matplotlib>=3.1.3",
+    "scikit-learn",
+    "cmake>=3.16.3",
+    "click>=7.0",
+    "tqdm>=4.45.0",
+    "pybind11>=2.10.0",
+    "pandas>=1.0.0",
+    "threadpoolctl",
+]
+
+[project.urls]
+Homepage = "https://github.com/barahona-research-group/PyGenStability"
+
+[project.optional-dependencies]
+plotly = ["plotly>=3.6.0"]
+leiden = ["igraph", "leidenalg"]
+networkx = ["networkx>=3.0"]
+all = [
+    "plotly>=3.6.0",
+    "igraph",
+    "leidenalg",
+    "networkx>=3.0",
+    "pyyaml",
+    "dictdiffer",
+    "pytest",
+    "pytest-cov",
+    "pytest-html",
+    "diff-pdf-visually",
+    "ipython!=8.7.0",
+]
+
+[project.scripts]
+pygenstability = "pygenstability.app:cli"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "D",    # pydocstyle
+    "PLE",  # pylint errors
+]
+ignore = [
+    "E731",  # do not assign a lambda expression
+    "E741",  # ambiguous variable name
+    "E203",  # whitespace before ':' (black-compatible)
+    "W605",  # invalid escape sequence
+    "D102",  # missing docstring in public method
+    "D105",  # missing docstring in magic method
+    "D107",  # missing docstring in __init__
+    "D416",  # section name should end with a colon (numpy-style headers used)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"docs/**" = ["D"]
+"examples/**" = ["D", "E", "F"]

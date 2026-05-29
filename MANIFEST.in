@@ -4,3 +4,4 @@ include extra/lemon/concepts/*
 include generalizedLouvain/*
 include generalizedLouvain/CPP/*
 include generalizedLouvain/CPP/cliques/*
+include src/pygenstability/py.typed

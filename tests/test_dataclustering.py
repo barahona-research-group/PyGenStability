@@ -17,18 +17,16 @@ optimal_scales.THRESHOLD = -0.3
 entries = ['block_nvi', 'community_id', 'number_of_communities', 'run_params', 'scales', 'selected_partitions', 'stability',]
 def test_DataClustering_default(X):
     """Test the DataClustering class"""
-    # fixing seed and n_workers=1 makes it reproducible
-    np.random.seed(42)
-    clustering = DataClustering(n_tries=10, n_workers=1)
+    # seed + n_workers=1 makes it reproducible
+    clustering = DataClustering(n_tries=10, n_workers=1, seed=42)
     res = clustering.fit(X)
     for entry in entries:
         assert entry in res.results_
 
-    # this is unstable due to not consistent rng  in C++
-    #results = _to_list({"labels": res.labels_, "results": res.results_})
+    results = _to_list({"labels": res.labels_, "results": res.results_})
     #yaml.dump(results, open(DATA / "test_dataclustering_default.yaml", "w"))
-    #expected_results = yaml.safe_load(open(DATA / "test_dataclustering_default.yaml", "r"))
-    #assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
+    expected_results = yaml.safe_load(open(DATA / "test_dataclustering_default.yaml", "r"))
+    assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
     # scales selection
     scales = clustering.scale_selection(store_basins=True)
@@ -46,17 +44,16 @@ def test_DataClustering_default(X):
 
 def test_DataClustering_with_knn(X):
     """with knn"""
-    # fixing seed and n_workers=1 makes it reproducible
-    np.random.seed(42)
-    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="knn-mst")
+    # seed + n_workers=1 makes it reproducible
+    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="knn-mst", seed=42)
     res = clustering.fit(X)
     for entry in entries:
         assert entry in res.results_
 
-    #results = _to_list({"labels": res.labels_, "results": res.results_})
+    results = _to_list({"labels": res.labels_, "results": res.results_})
     #yaml.dump(results, open(DATA / "test_dataclustering_knn.yaml", "w"))
-    #expected_results = yaml.safe_load(open(DATA / "test_dataclustering_knn.yaml", "r"))
-    #assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
+    expected_results = yaml.safe_load(open(DATA / "test_dataclustering_knn.yaml", "r"))
+    assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
 
 def test_DataClustering_precomputed(X):
     """precomputed"""
@@ -66,9 +63,8 @@ def test_DataClustering_precomputed(X):
 
 def test_DataClustering_precomputed_default(X):
     """precompute it as default"""
-    # fixing seed and n_workers=1 makes it reproducible
-    np.random.seed(42)
-    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="precomputed")
+    # seed + n_workers=1 makes it reproducible
+    clustering = DataClustering(n_tries=10, n_workers=1, graph_method="precomputed", seed=42)
     clustering.method = "cknn-mst"
     X = clustering.get_graph(X)
     clustering.method = "precomputed"
@@ -76,6 +72,6 @@ def test_DataClustering_precomputed_default(X):
     for entry in entries:
         assert entry in res.results_
 
-    #results = _to_list({"labels": res.labels_, "results": res.results_})
-    #expected_results = yaml.safe_load(open(DATA / "test_dataclustering_default.yaml", "r"))
-    #assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0
+    results = _to_list({"labels": res.labels_, "results": res.results_})
+    expected_results = yaml.safe_load(open(DATA / "test_dataclustering_default.yaml", "r"))
+    assert len(list(diff(expected_results, results, tolerance=1e-5))) == 0

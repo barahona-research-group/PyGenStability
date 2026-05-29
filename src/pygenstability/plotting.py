@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 try:
     import networkx as nx
 except ImportError:  # pragma: no cover
-    print('Please install networkx via pip install "pygenstability[networkx]" for full plotting.')
+    logging.getLogger(__name__).warning(
+        'Please install networkx via pip install "pygenstability[networkx]" for full plotting.'
+    )
 
 import numpy as np
 from matplotlib import gridspec

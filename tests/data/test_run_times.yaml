@@ -87,6 +87,7 @@ run_params:
   - 0.1
   - 0.5
   - 1.0
+  seed: 42
   tqdm_disable: false
   with_NVI: true
   with_all_tries: false

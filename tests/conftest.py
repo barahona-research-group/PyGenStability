@@ -1,4 +1,8 @@
 """Utils for tests."""
+import matplotlib
+
+matplotlib.use("Agg")  # non-interactive backend so plt.show() is a no-op in tests
+
 import networkx as nx
 import numpy as np
 import pytest
@@ -44,8 +48,7 @@ def graph_signed():
 @pytest.fixture()
 def results(graph):
     constructor = load_constructor("continuous_combinatorial", graph)
-    np.random.seed(42)
-    return pgs.run(graph, constructor=constructor, n_tries=10, n_workers=1)
+    return pgs.run(graph, constructor=constructor, n_tries=10, n_workers=1, seed=42)
 
 
 def generate_circles(

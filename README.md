@@ -18,7 +18,7 @@ We further provide specific analysis tools to process and analyse the results fr
 
 ## Documentation
 
-A documentation of all features of the *PyGenStability* package is available here: https://barahona-research-group.github.io/PyGenStability/, or in pdf [here](pygenstability_doc.pdf).
+A documentation of all features of the *PyGenStability* package is available here: https://barahona-research-group.github.io/PyGenStability/.
 
 ## Installation
 
@@ -54,7 +54,7 @@ pip install pygenstability[all]
 
 You can also install the source code of this package from GitHub directly by first cloning this repo with:
 ```bash
-git clone --recurse-submodules https://github.com/ImperialCollegeLondon/PyGenStability.git
+git clone --recurse-submodules https://github.com/barahona-research-group/PyGenStability.git
 ```
 
 (if the `--recurse-submodules` has not been used, just do `git submodule update --init --recursive` to fetch the submodule with M. Schaub's code).

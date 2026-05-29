@@ -132,7 +132,7 @@ run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
             double time,
             unsigned int seed) {
 
-  std::srand(seed);
+  std::mt19937 rng(seed);
   // convert input arrays to pointers
   py::buffer_info info_from = from_arr.request();
   auto from = static_cast<int *>(info_from.ptr);
@@ -208,7 +208,7 @@ run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
   // call Louvain
   double stability = clq::find_optimal_partition_louvain_gen<partition>(
       input_graph, input_graph_weights, null_model, quality, quality_gain,
-      start_partition, optimal_partitions, 1e-18);
+      start_partition, optimal_partitions, 1e-18, rng);
 
   partition best_partition = optimal_partitions.back();
 
