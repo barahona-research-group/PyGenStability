@@ -469,7 +469,7 @@ def plot_scan_plt(
     all_results: dict[str, Any],
     figsize: tuple[float, float] = (6, 5),
     scale_axis: bool = True,
-    figure_name: str | None = "scan_results.svg",
+    figure_name: str | Path | None = "scan_results.svg",
     n_clusters_log_scale: bool = True,
 ) -> list[Any]:
     """Plot results of pygenstability with matplotlib.

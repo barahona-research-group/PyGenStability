@@ -46,6 +46,7 @@ try:
 except ImportError:  # pragma: no cover
     _NO_LOUVAIN = True
 
+from pygenstability.constructors import Constructor
 from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
@@ -153,7 +154,7 @@ def _check_method(method: str) -> str:  # pragma: no cover
 @_timing
 def run(
     graph: sp.spmatrix | None = None,
-    constructor: str | Callable = "linearized",
+    constructor: str | Constructor = "linearized",
     min_scale: float = -2.0,
     max_scale: float = 0.5,
     n_scale: int = 20,
@@ -417,7 +418,7 @@ def _compute_NVI(
 ) -> None:
     """Compute NVI measure between the first n_partitions."""
     # NVI is pairwise; with < 2 partitions there is nothing to compare.
-    if n_partitions < 2:
+    if n_partitions < 2:  # pragma: no cover
         all_results["NVI"].append(0.0)
         return
     selected_partitions = communities[:n_partitions]
@@ -528,7 +529,7 @@ def _optimise(
             partitions, layer_weights=n_null * [1.0 / n_null]
         )
         community_id = partitions[0].membership
-    else:
+    else:  # pragma: no cover
         raise ValueError(f"Unknown method {method!r}, expected 'louvain' or 'leiden'")
 
     return stability + global_shift, community_id
