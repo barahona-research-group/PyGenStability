@@ -175,6 +175,34 @@ def test__evaluate_quality(graph):
     assert_almost_equal(quality, 0.2741359784037568)
 
 
+def test__evaluate_quality_leiden_multi_pair_normalisation(graph):
+    """Regression test for issue #111.
+
+    For a null model with ``n_null >= 2`` pairs, the Leiden backend must optimise the
+    same objective as the Louvain backend (``edges - sum_k pair_k``), not the
+    ``1/n_null``-averaged version. We isolate the null-model contribution from the
+    (backend-dependent) edge term by comparing ``Q(nm1) - Q(nm2)``, where ``nm2`` is two
+    identical (symmetric) copies of the single-pair null ``nm1``; this difference equals
+    the per-partition null term and must agree between backends.
+    """
+    data = load_constructor("continuous_combinatorial", graph).get_data(1)
+    quality_indices, quality_values = pgs._to_indices(data["quality"])
+    nm1 = np.asarray(data["null_model"])  # single symmetric pair -> n_null = 1
+    nm2 = np.vstack([nm1, nm1])  # two identical pairs -> n_null = 2
+
+    rng = np.random.default_rng(0)
+    for _ in range(5):
+        community_id = list(rng.integers(0, 4, size=nm1.shape[1]))
+        deltas = {}
+        for method in ("louvain", "leiden"):
+            deltas[method] = pgs._evaluate_quality(
+                community_id, quality_indices, quality_values, nm1, 0, method=method
+            ) - pgs._evaluate_quality(
+                community_id, quality_indices, quality_values, nm2, 0, method=method
+            )
+        assert_almost_equal(deltas["leiden"], deltas["louvain"])
+
+
 @pytest.mark.parametrize("n_workers", [1, 2])
 def test_run_is_deterministic(graph, n_workers):
     """Same seed yields identical communities and stabilities across re-runs.

@@ -470,12 +470,15 @@ def _optimise(
 
         partitions = []
         n_null = int(len(null_model) / 2)
+        # The CPM null-model contribution is quadratic in node_sizes, so scaling by
+        # sqrt(n_null) makes each layer contribute n_null * pair_k; after Leiden's
+        # 1/n_null averaging below this yields sum_k pair_k, matching the Louvain backend.
         for null in null_model[::2]:
             partitions.append(
                 leidenalg.CPMVertexPartition(
                     G,
                     weights=quality_values,
-                    node_sizes=null.tolist(),
+                    node_sizes=(np.sqrt(n_null) * null).tolist(),
                     correct_self_loops=True,
                 )
             )
@@ -517,13 +520,15 @@ def _evaluate_quality(
     # evaluate using Leiden method
     if method == "leiden":
         n_null = int(len(null_model) / 2)
+        # Scale node_sizes by sqrt(n_null) so the quadratic CPM null term matches the
+        # Louvain backend once the 1/n_null averaging is applied (see _optimise).
         quality = np.sum(
             [
                 leidenalg.CPMVertexPartition(
                     ig.Graph(edges=zip(*quality_indices), directed=True),
                     initial_membership=partition_id,
                     weights=quality_values,
-                    node_sizes=null.tolist(),
+                    node_sizes=(np.sqrt(n_null) * null).tolist(),
                     correct_self_loops=True,
                 ).quality()
                 for null in null_model[::2]
