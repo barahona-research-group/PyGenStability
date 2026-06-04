@@ -175,6 +175,94 @@ def test__evaluate_quality(graph):
     assert_almost_equal(quality, 0.2741359784037568)
 
 
+def test__evaluate_quality_leiden_asymmetric_null_is_swap_invariant(graph):
+    """Leiden must depend only on the symmetric part of the null model.
+
+    The null contribution ``sum_c S_a(c) S_b(c)`` is invariant under swapping the two
+    vectors of a pair, so Leiden quality for ``null=[a, b]`` must equal that for
+    ``null=[b, a]``. The previous implementation only read ``null_model[::2]`` (the first
+    vector of each pair), so it failed this for asymmetric/signed pairs.
+    """
+    quality_indices, quality_values = pgs._to_indices(graph)
+    n = graph.shape[0]
+    rng = np.random.default_rng(0)
+    a, b = rng.random(n), rng.random(n)
+    community_id = list(rng.integers(0, 3, size=n))
+
+    q_ab = pgs._evaluate_quality(
+        community_id, quality_indices, quality_values, np.array([a, b]), 0, method="leiden"
+    )
+    q_ba = pgs._evaluate_quality(
+        community_id, quality_indices, quality_values, np.array([b, a]), 0, method="leiden"
+    )
+    assert_almost_equal(q_ab, q_ba)
+
+
+def test__evaluate_quality_leiden_multi_pair_matches_louvain(graph):
+    """For ``n_null >= 2`` the Leiden null term must match the Louvain backend (issue #111).
+
+    Isolate the null contribution from the (backend-dependent) edge term by comparing
+    ``Q(nm1) - Q(nm2)``, where ``nm2`` duplicates the single symmetric pair ``nm1``
+    (``n_null = 2``); this difference equals the per-partition null term and must agree
+    between backends.
+    """
+    data = load_constructor("continuous_combinatorial", graph).get_data(1)
+    quality_indices, quality_values = pgs._to_indices(data["quality"])
+    nm1 = np.asarray(data["null_model"])  # single symmetric pair -> n_null = 1
+    nm2 = np.vstack([nm1, nm1])  # two identical pairs -> n_null = 2
+
+    rng = np.random.default_rng(0)
+    for _ in range(5):
+        community_id = list(rng.integers(0, 4, size=nm1.shape[1]))
+        deltas = {}
+        for method in ("louvain", "leiden"):
+            deltas[method] = pgs._evaluate_quality(
+                community_id, quality_indices, quality_values, nm1, 0, method=method
+            ) - pgs._evaluate_quality(
+                community_id, quality_indices, quality_values, nm2, 0, method=method
+            )
+        assert_almost_equal(deltas["leiden"], deltas["louvain"])
+
+
+def test__evaluate_quality_leiden_null_matches_definition(graph_signed):
+    """Leiden's null term equals the generalized-stability definition up to a constant.
+
+    For a signed/asymmetric null (``signed_modularity``), the null contribution computed by
+    Leiden must equal ``sum_c S_a(c) S_b(c)`` summed over pairs, up to a partition-independent
+    constant (so the optimised partition / argmax matches the definition). The previous
+    implementation squared a single vector per pair, dropping the sign of negative-degree
+    terms and giving a partition-dependent error.
+    """
+    data = load_constructor("signed_modularity", graph_signed).get_data(1)
+    quality_indices, quality_values = pgs._to_indices(data["quality"])
+    nm = np.asarray(data["null_model"])
+    n = nm.shape[1]
+
+    def true_null(community_id):
+        community_id = np.asarray(community_id)
+        total = 0.0
+        for k in range(nm.shape[0] // 2):
+            a, b = nm[2 * k], nm[2 * k + 1]
+            for community in np.unique(community_id):
+                mask = community_id == community
+                total += a[mask].sum() * b[mask].sum()
+        return total
+
+    rng = np.random.default_rng(0)
+    offsets = []
+    for _ in range(6):
+        community_id = list(rng.integers(0, 4, size=n))
+        leiden_q = pgs._evaluate_quality(
+            community_id, quality_indices, quality_values, nm, 0, method="leiden"
+        )
+        # zero null model -> Leiden returns the edge term only; subtract to isolate the null
+        edge_q = pgs._evaluate_quality(
+            community_id, quality_indices, quality_values, np.zeros_like(nm), 0, method="leiden"
+        )
+        offsets.append((edge_q - leiden_q) - true_null(community_id))
+    assert_almost_equal(offsets, offsets[0] * np.ones(len(offsets)))
+
+
 @pytest.mark.parametrize("n_workers", [1, 2])
 def test_run_is_deterministic(graph, n_workers):
     """Same seed yields identical communities and stabilities across re-runs.
