@@ -262,9 +262,6 @@ def run(
         constructor_data = _get_constructor_data(
             constructor_obj, scales, pool, tqdm_disable=tqdm_disable
         )
-        if method == "leiden":  # pragma: no cover
-            for data in constructor_data:
-                assert all(data["null_model"][0] == data["null_model"][1])
 
         L.info("Optimise stability...")
         scan_results = _scan_scales(

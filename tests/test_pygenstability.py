@@ -263,6 +263,31 @@ def test__evaluate_quality_leiden_null_matches_definition(graph_signed):
     assert_almost_equal(offsets, offsets[0] * np.ones(len(offsets)))
 
 
+def test_run_leiden_signed_modularity(graph_signed):
+    """Leiden runs end-to-end on an asymmetric/signed null model (signed_modularity).
+
+    This exercises the ``_optimise`` multiplex path with negative layer weights and the
+    previously-blocking symmetric-null guard in ``run``. The old single-vector-per-pair
+    Leiden code crashed on the ``signed_modularity`` null shape, so this path was unusable.
+    """
+    results = pgs.run(
+        graph_signed,
+        constructor="signed_modularity",
+        method="leiden",
+        min_scale=-1,
+        max_scale=0,
+        n_scale=3,
+        n_tries=5,
+        n_workers=1,
+        seed=42,
+        with_optimal_scales=False,
+        tqdm_disable=True,
+    )
+    assert len(results["stability"]) == 3
+    for community_id in results["community_id"]:
+        assert len(community_id) == graph_signed.shape[0]
+
+
 @pytest.mark.parametrize("n_workers", [1, 2])
 def test_run_is_deterministic(graph, n_workers):
     """Same seed yields identical communities and stabilities across re-runs.
