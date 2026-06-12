@@ -499,10 +499,17 @@ def plot_scan_plt(
     ax_mid = plt.subplot(gs[1, 0])
     axes.append(ax_mid)
     ax_mid.set_xticks([])
-    if "ttprime" in all_results:
-        _plot_ttprime(all_results, ax=ax_mid, scales=scales)
+    # Create the block-NVI twin axis *before* plotting ttprime. matplotlib's
+    # twinx() forces the parent y-axis ticks back to the left, which would
+    # otherwise undo the right-side log10(t') ticks set in _plot_ttprime. Doing
+    # it first also adds the ttprime colorbar inset last, so the NVI(t,t')
+    # legend draws on top of the block-NVI curve rather than behind it.
+    ax_block = None
     if "block_nvi" in all_results:
         ax_block = ax_mid.twinx() if "ttprime" in all_results else ax_mid
+    if "ttprime" in all_results:
+        _plot_ttprime(all_results, ax=ax_mid, scales=scales)
+    if ax_block is not None:
         _plot_block_nvi(all_results, ax=ax_block, scales=scales)
         axes.append(ax_block)
 
