@@ -408,12 +408,14 @@ def _plot_ttprime(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> N
 def _plot_NVI(all_results: dict[str, Any], ax: Any, scales: np.ndarray) -> None:
     """Plot variation information."""
     ax.plot(scales, all_results["NVI"], "-", lw=2.0, c="C2", label="VI")
-
+    if "selected_partitions" in all_results:
+        sel = list(all_results["selected_partitions"])
+        ax.plot(scales[sel], np.array(all_results["NVI"])[sel], "o", c="C2", ms=5)
     ax.tick_params("y", colors="C2")
     ax.set_ylabel(r"NVI", color="C2")
     ax.axhline(1, ls="--", lw=1.0, c="C2")
     nvi_max = max(np.max(all_results["NVI"]) * 1.1, 1e-3)
-    ax.axis([scales[0], scales[-1], 0.0, nvi_max])
+    ax.axis([scales[0], scales[-1], -0.01, nvi_max])
     ax.set_xlabel(r"$log_{10}(t)$")
 
 
@@ -430,9 +432,6 @@ def _plot_block_nvi(all_results: dict[str, Any], ax: Any, scales: np.ndarray) ->
     """Plot the block-NVI curve with dots at the selected scales."""
     block_nvi = np.asarray(all_results["block_nvi"])
     ax.plot(scales, block_nvi, "-", lw=1.5, c="k", label="Block NVI")
-    if "selected_partitions" in all_results:
-        sel = list(all_results["selected_partitions"])
-        ax.plot(scales[sel], block_nvi[sel], "o", c="k", ms=5)
     ax.set_ylabel("Block NVI", color="k")
     ax.yaxis.tick_left()
     ax.yaxis.set_label_position("left")
