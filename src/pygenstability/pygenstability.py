@@ -478,43 +478,13 @@ def _to_indices(
 def _leiden_multiplex_layers(graph, quality_values, null_model, initial_membership=None):
     r"""Build the Leiden multiplex layers encoding generalized Markov Stability.
 
-    The generalized Markov Stability quality is
-
-    .. math::
-
-        Q = \mathrm{Tr}\left[H^T\left(F - \sum_k v_{2k-1} v_{2k}^T\right)H\right],
-
-    i.e. an edge/quality term :math:`F` minus a null model that is a sum of (possibly
-    asymmetric) rank-one terms :math:`v_{2k-1} v_{2k}^T`. Under the community sums implied
-    by ``H`` only the symmetric part of the null model matters, and the polarisation
-    identity
-
-    .. math::
-
-        S_a(c)\,S_b(c) = \tfrac{1}{4}\left[S_{a+b}(c)^2 - S_{a-b}(c)^2\right],
-
-    with :math:`S_x(c) = \sum_{i\in c} x_i`, lets us write each pair exactly as a
-    difference of two squared community sums. Each :math:`S_x(c)^2` is precisely what a
-    Leiden ``CPMVertexPartition`` null term (:math:`\sum_c (\sum_{i\in c} n_i)^2` with
-    ``node_sizes`` :math:`n`) computes, so every null pair ``(a, b)`` is represented by
-    two CPM layers with ``node_sizes`` :math:`(a+b)/2` (layer weight ``+1``) and
-    :math:`(a-b)/2` (layer weight ``-1``); leidenalg supports the negative layer weight.
-
-    The edge/quality term lives in its own layer (``node_sizes = 0``) so it is counted
-    exactly once regardless of the number of null pairs. This generalises the original
-    single-layer trick suggested by V. Traag
-    (https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065): for a
-    symmetric pair (``a == b``) the ``(a-b)/2`` layer vanishes and the construction
-    reduces to a single CPM layer carrying both the edge and null terms.
-
-    Args:
-        graph (igraph.Graph): directed graph built from the quality matrix indices.
-        quality_values (list): edge weights of the quality matrix.
-        null_model (array): null model vectors, paired as ``(v_0, v_1), (v_2, v_3), ...``.
-        initial_membership (list): optional fixed membership (used for quality evaluation).
-
-    Returns:
-        tuple: ``(partitions, layer_weights)`` to pass to leidenalg multiplex routines.
+    Each null pair ``(a, b)`` is split via the polarisation identity
+    :math:`S_a S_b = \tfrac{1}{4}(S_{a+b}^2 - S_{a-b}^2)` into two CPM layers with
+    ``node_sizes`` :math:`(a+b)/2` (weight ``+1``) and :math:`(a-b)/2` (weight ``-1``),
+    which handles asymmetric and signed nulls. The edge term gets its own layer so it is
+    counted once. For a symmetric pair (``a == b``) the second layer vanishes, recovering
+    the single-layer trick of V. Traag
+    (https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065).
     """
     n_nodes = graph.vcount()
     membership = {} if initial_membership is None else {"initial_membership": initial_membership}

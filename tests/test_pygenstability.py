@@ -176,13 +176,7 @@ def test__evaluate_quality(graph):
 
 
 def test__evaluate_quality_leiden_asymmetric_null_is_swap_invariant(graph):
-    """Leiden must depend only on the symmetric part of the null model.
-
-    The null contribution ``sum_c S_a(c) S_b(c)`` is invariant under swapping the two
-    vectors of a pair, so Leiden quality for ``null=[a, b]`` must equal that for
-    ``null=[b, a]``. The previous implementation only read ``null_model[::2]`` (the first
-    vector of each pair), so it failed this for asymmetric/signed pairs.
-    """
+    """Leiden quality is invariant under swapping the two vectors of a null pair."""
     quality_indices, quality_values = pgs._to_indices(graph)
     n = graph.shape[0]
     rng = np.random.default_rng(0)
@@ -199,12 +193,10 @@ def test__evaluate_quality_leiden_asymmetric_null_is_swap_invariant(graph):
 
 
 def test__evaluate_quality_leiden_multi_pair_matches_louvain(graph):
-    """For ``n_null >= 2`` the Leiden null term must match the Louvain backend (issue #111).
+    """For n_null >= 2 the Leiden null term matches Louvain (issue #111).
 
-    Isolate the null contribution from the (backend-dependent) edge term by comparing
-    ``Q(nm1) - Q(nm2)``, where ``nm2`` duplicates the single symmetric pair ``nm1``
-    (``n_null = 2``); this difference equals the per-partition null term and must agree
-    between backends.
+    The null contribution is isolated from the edge term via ``Q(nm1) - Q(nm2)``, where
+    ``nm2`` duplicates the symmetric pair ``nm1``.
     """
     data = load_constructor("continuous_combinatorial", graph).get_data(1)
     quality_indices, quality_values = pgs._to_indices(data["quality"])
@@ -225,14 +217,7 @@ def test__evaluate_quality_leiden_multi_pair_matches_louvain(graph):
 
 
 def test__evaluate_quality_leiden_null_matches_definition(graph_signed):
-    """Leiden's null term equals the generalized-stability definition up to a constant.
-
-    For a signed/asymmetric null (``signed_modularity``), the null contribution computed by
-    Leiden must equal ``sum_c S_a(c) S_b(c)`` summed over pairs, up to a partition-independent
-    constant (so the optimised partition / argmax matches the definition). The previous
-    implementation squared a single vector per pair, dropping the sign of negative-degree
-    terms and giving a partition-dependent error.
-    """
+    """Leiden's null term equals sum_c S_a(c) S_b(c) up to a partition-independent constant."""
     data = load_constructor("signed_modularity", graph_signed).get_data(1)
     quality_indices, quality_values = pgs._to_indices(data["quality"])
     nm = np.asarray(data["null_model"])
@@ -264,12 +249,7 @@ def test__evaluate_quality_leiden_null_matches_definition(graph_signed):
 
 
 def test_run_leiden_signed_modularity(graph_signed):
-    """Leiden runs end-to-end on an asymmetric/signed null model (signed_modularity).
-
-    This exercises the ``_optimise`` multiplex path with negative layer weights and the
-    previously-blocking symmetric-null guard in ``run``. The old single-vector-per-pair
-    Leiden code crashed on the ``signed_modularity`` null shape, so this path was unusable.
-    """
+    """Leiden runs end-to-end on a signed/asymmetric null model (signed_modularity)."""
     results = pgs.run(
         graph_signed,
         constructor="signed_modularity",
