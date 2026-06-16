@@ -175,6 +175,30 @@ def test__evaluate_quality(graph):
     assert_almost_equal(quality, 0.2741359784037568)
 
 
+def test__to_indices_symmetrises_asymmetric_quality():
+    """Louvain and Leiden agree on the edge term for an asymmetric quality matrix.
+
+    Tr[H^T F H] depends only on the symmetric part of F, so _to_indices symmetrises;
+    this makes the Louvain (lower-triangle) and Leiden (full directed) backends compute
+    the same edge term for directed/asymmetric F (they differed before).
+    """
+    import scipy.sparse as sp
+
+    rng = np.random.default_rng(0)
+    n = 8
+    quality = sp.csr_matrix(rng.random((n, n)))  # asymmetric
+    qi_louvain, qv_louvain = pgs._to_indices(quality, directed=False)
+    qi_leiden, qv_leiden = pgs._to_indices(quality, directed=True)
+    zero_null = np.zeros((2, n))  # isolate the edge term
+    for _ in range(5):
+        community_id = list(rng.integers(0, 3, size=n))
+        louvain = pgs._evaluate_quality(community_id, qi_louvain, qv_louvain, zero_null, 0)
+        leiden = pgs._evaluate_quality(
+            community_id, qi_leiden, qv_leiden, zero_null, 0, method="leiden"
+        )
+        assert_almost_equal(louvain, leiden)
+
+
 def test__evaluate_quality_leiden_asymmetric_null_is_swap_invariant(graph):
     """Leiden quality is invariant under swapping the two vectors of a null pair."""
     quality_indices, quality_values = pgs._to_indices(graph)

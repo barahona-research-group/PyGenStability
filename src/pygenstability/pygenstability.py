@@ -465,10 +465,17 @@ def _to_indices(
 ) -> tuple[tuple[np.ndarray, np.ndarray], np.ndarray]:
     """Convert a sparse matrix to indices and values.
 
+    The generalized stability ``Tr[H^T F H]`` depends only on the symmetric part of the
+    quality matrix ``F``, so we symmetrise to ``(F + F^T) / 2`` first. This makes the
+    Louvain backend (which only receives the lower triangle) and the Leiden backend (full
+    directed graph) compute the same, correct edge term for asymmetric/directed quality
+    matrices; for symmetric ``F`` it is a no-op.
+
     Args:
         matrix (sparse): sparse matrix to convert
         directed (bool): used for Leiden, which works if graph is full
     """
+    matrix = 0.5 * (matrix + matrix.T)
     if not directed:
         matrix = sp.tril(matrix)
     rows, cols, values = sp.find(matrix)
