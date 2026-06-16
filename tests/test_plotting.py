@@ -13,6 +13,17 @@ def test_plot_scan(results, tmp_path):
     plotting.plot_scan(results, figure_name=tmp_path / "scan.pdf")
     assert (tmp_path / "scan.pdf").exists()
 
+    # linear-scale # clusters branch
+    plotting.plot_scan(
+        results, figure_name=tmp_path / "scan_linear.pdf", n_clusters_log_scale=False
+    )
+    assert (tmp_path / "scan_linear.pdf").exists()
+
+    # missing selected_partitions branch
+    results_no_opt = {k: v for k, v in results.items() if k != "selected_partitions"}
+    plotting.plot_scan(results_no_opt, figure_name=tmp_path / "scan_no_opt.pdf")
+    assert (tmp_path / "scan_no_opt.pdf").exists()
+
     assert (
         plotting.plot_scan(
             results, use_plotly=True, live=False, plotly_filename=str(tmp_path / "scan.html")
@@ -27,6 +38,12 @@ def test_plot_clustered_adjacency(graph, results, tmp_path):
         graph.toarray(), results, 0, figure_name=tmp_path / "clustered_adjacency.pdf"
     )
     assert (tmp_path / "clustered_adjacency.pdf").exists()
+
+    # sparse input branch (densify via .toarray() before np.ix_)
+    plotting.plot_clustered_adjacency(
+        graph, results, 0, figure_name=tmp_path / "clustered_adjacency_sparse.pdf"
+    )
+    assert (tmp_path / "clustered_adjacency_sparse.pdf").exists()
     plt.close('all')
 
 

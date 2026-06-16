@@ -21,6 +21,7 @@ from collections import defaultdict
 from functools import partial
 from functools import wraps
 from time import time
+from typing import Any
 from typing import Callable
 from typing import Sequence
 
@@ -45,6 +46,7 @@ try:
 except ImportError:  # pragma: no cover
     _NO_LOUVAIN = True
 
+from pygenstability.constructors import Constructor
 from pygenstability.constructors import load_constructor
 from pygenstability.io import save_results
 from pygenstability.optimal_scales import identify_optimal_scales
@@ -54,11 +56,11 @@ _DTYPE = np.float64
 THRESHOLD = 1e-8
 
 
-def _timing(f):  # pragma: no cover
+def _timing(f: Callable[..., Any]) -> Callable[..., Any]:  # pragma: no cover
     """Use as decorator to time a function execution if logging is in DEBUG mode."""
 
     @wraps(f)
-    def wrap(*args, **kw):
+    def wrap(*args: Any, **kw: Any) -> Any:
         if logging.root.level == logging.DEBUG:
             t_start = time()
             result = f(*args, **kw)
@@ -72,12 +74,12 @@ def _timing(f):  # pragma: no cover
     return wrap
 
 
-def _get_chunksize(n_comp, pool):
+def _get_chunksize(n_comp: int, pool: Any) -> int:
     """Split jobs accross workers for speedup."""
     return max(1, int(n_comp / pool._processes))  # pylint: disable=protected-access
 
 
-def _graph_checks(graph, dtype=_DTYPE):
+def _graph_checks(graph: Any, dtype: Any = _DTYPE) -> Any:
     """Do some checks and preprocessing of the graph."""
     graph = sp.csr_matrix(graph, dtype=dtype)
     if sp.csgraph.connected_components(graph)[0] > 1:
@@ -95,7 +97,13 @@ def _graph_checks(graph, dtype=_DTYPE):
     return graph
 
 
-def _get_scales(min_scale=-2.0, max_scale=0.5, n_scale=20, log_scale=True, scales=None):
+def _get_scales(
+    min_scale: float = -2.0,
+    max_scale: float = 0.5,
+    n_scale: int = 20,
+    log_scale: bool = True,
+    scales: np.ndarray | None = None,
+) -> np.ndarray:
     """Get the scale vectors."""
     if scales is not None:
         return scales
@@ -104,7 +112,7 @@ def _get_scales(min_scale=-2.0, max_scale=0.5, n_scale=20, log_scale=True, scale
     return np.linspace(min_scale, max_scale, n_scale)
 
 
-def _get_params(all_locals):
+def _get_params(all_locals: dict[str, Any]) -> dict[str, Any]:
     """Get run paramters from the local variables."""
     del all_locals["graph"]
     if hasattr(all_locals["constructor"], "get_data"):
@@ -113,7 +121,12 @@ def _get_params(all_locals):
 
 
 @_timing
-def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
+def _get_constructor_data(
+    constructor: Any,
+    scales: np.ndarray,
+    pool: Any,
+    tqdm_disable: bool = False,
+) -> list[dict[str, Any]]:
     return list(
         tqdm(
             pool.imap(constructor.get_data, scales),
@@ -123,7 +136,7 @@ def _get_constructor_data(constructor, scales, pool, tqdm_disable=False):
     )
 
 
-def _check_method(method):  # pragma: no cover
+def _check_method(method: str) -> str:  # pragma: no cover
     if _NO_LEIDEN and _NO_LOUVAIN:
         raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
 
@@ -141,7 +154,7 @@ def _check_method(method):  # pragma: no cover
 @_timing
 def run(
     graph: sp.spmatrix | None = None,
-    constructor: str | Callable = "linearized",
+    constructor: str | Constructor = "linearized",
     min_scale: float = -2.0,
     max_scale: float = 0.5,
     n_scale: int = 20,
@@ -231,26 +244,30 @@ def run(
         log_scale=log_scale,
         scales=scales,
     )
+    # sync n_scale to the resolved scan length, not the user kwarg
+    n_scale = len(scales)
+    run_params["n_scale"] = n_scale
     exp_comp_mode = _resolve_exp_comp_mode(exp_comp_mode, constructor)
 
-    if constructor_kwargs is None:
-        constructor_kwargs = {}
-    constructor_kwargs.update(
-        {"with_spectral_gap": with_spectral_gap, "exp_comp_mode": exp_comp_mode}
-    )
+    # avoid mutating a caller-supplied constructor_kwargs dict.
+    constructor_kwargs = {
+        **(constructor_kwargs or {}),
+        "with_spectral_gap": with_spectral_gap,
+        "exp_comp_mode": exp_comp_mode,
+    }
 
-    constructor = load_constructor(constructor, graph, **constructor_kwargs)
+    constructor_obj = load_constructor(constructor, graph, **constructor_kwargs)
     with multiprocessing.Pool(n_workers) as pool:
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
-            constructor, scales, pool, tqdm_disable=tqdm_disable
+            constructor_obj, scales, pool, tqdm_disable=tqdm_disable
         )
         if method == "leiden":  # pragma: no cover
             for data in constructor_data:
                 assert all(data["null_model"][0] == data["null_model"][1])
 
         L.info("Optimise stability...")
-        all_results = _scan_scales(
+        scan_results = _scan_scales(
             constructor_data,
             scales,
             pool,
@@ -267,7 +284,7 @@ def run(
         )
 
         all_results = _run_post_scan_analysis(
-            all_results,
+            scan_results,
             pool,
             constructor_data,
             method=method,
@@ -283,7 +300,7 @@ def run(
     return dict(all_results)
 
 
-def _resolve_exp_comp_mode(exp_comp_mode: str, constructor) -> str:
+def _resolve_exp_comp_mode(exp_comp_mode: str, constructor: Any) -> str:
     """Validate exp_comp_mode and force expm for directed/signed constructors."""
     assert exp_comp_mode in ["spectral", "expm"]
     if constructor in ("directed", "linearized_directed", "signed"):
@@ -293,9 +310,9 @@ def _resolve_exp_comp_mode(exp_comp_mode: str, constructor) -> str:
 
 
 def _scan_scales(
-    constructor_data,
-    scales,
-    pool,
+    constructor_data: list[dict[str, Any]],
+    scales: np.ndarray,
+    pool: Any,
     rng: np.random.Generator,
     *,
     n_tries: int,
@@ -306,7 +323,7 @@ def _scan_scales(
     result_file: str,
     tqdm_disable: bool,
     n_scale: int,
-    run_params: dict,
+    run_params: dict[str, Any],
 ) -> defaultdict:
     """Run the per-scale optimisation loop and aggregate results."""
     all_results: defaultdict = defaultdict(list)
@@ -327,9 +344,9 @@ def _scan_scales(
 
 
 def _run_post_scan_analysis(
-    all_results,
-    pool,
-    constructor_data,
+    all_results: defaultdict,
+    pool: Any,
+    constructor_data: list[dict[str, Any]],
     *,
     method: str,
     tqdm_disable: bool,
@@ -338,7 +355,7 @@ def _run_post_scan_analysis(
     with_optimal_scales: bool,
     optimal_scales_kwargs: dict | None,
     n_scale: int,
-):
+) -> dict[str, Any]:
     """Apply postprocessing, ttprime, and optimal-scale selection."""
     if with_postprocessing:
         L.info("Apply postprocessing...")
@@ -356,11 +373,15 @@ def _run_post_scan_analysis(
                     "window_size": max(2, int(0.1 * n_scale)),
                     "basin_radius": max(1, int(0.01 * n_scale)),
                 }
-            all_results = identify_optimal_scales(all_results, **optimal_scales_kwargs)
+            return identify_optimal_scales(all_results, **optimal_scales_kwargs)
     return all_results
 
 
-def _process_runs(scale, results, all_results):
+def _process_runs(
+    scale: float,
+    results: list[tuple[float, list[int]]],
+    all_results: defaultdict,
+) -> np.ndarray:
     """For each scale pick partition with highest stability among all iterations."""
     # collect results from different optimisation runs
     stabilities = np.array([res[0] for res in results])
@@ -377,7 +398,7 @@ def _process_runs(scale, results, all_results):
     return communities
 
 
-def _assign_increasing_ids(community_id):
+def _assign_increasing_ids(community_id: np.ndarray) -> np.ndarray:
     """Assign strictly increasing community IDs starting from 0."""
     community_id = np.asarray(community_id)
     unique_ids, first_ind, inverse = np.unique(community_id, return_index=True, return_inverse=True)
@@ -387,8 +408,17 @@ def _assign_increasing_ids(community_id):
 
 
 @_timing
-def _compute_NVI(communities, all_results, pool, n_partitions=10):
+def _compute_NVI(
+    communities: np.ndarray,
+    all_results: defaultdict,
+    pool: Any,
+    n_partitions: int = 10,
+) -> None:
     """Compute NVI measure between the first n_partitions."""
+    # NVI is pairwise; with < 2 partitions there is nothing to compare.
+    if n_partitions < 2:  # pragma: no cover
+        all_results["NVI"].append(0.0)
+        return
     selected_partitions = communities[:n_partitions]
     # prepare worker to compute NVI between selected partitions
     worker = partial(evaluate_NVI, partitions=selected_partitions)
@@ -403,7 +433,7 @@ def _compute_NVI(communities, all_results, pool, n_partitions=10):
     all_results["NVI"].append(nvi_mean)
 
 
-def evaluate_NVI(index_pair: Sequence[int], partitions: Sequence) -> float:
+def evaluate_NVI(index_pair: Sequence[int], partitions: Any) -> float:
     r"""Evaluations of Normalized Variation of Information (NVI).
 
     NVI is defined for two partitions :math:`p_0` and :math:`p_1` as:
@@ -433,7 +463,9 @@ def evaluate_NVI(index_pair: Sequence[int], partitions: Sequence) -> float:
     return (JE - MI) / JE
 
 
-def _to_indices(matrix, directed=False):
+def _to_indices(
+    matrix: Any, directed: bool = False
+) -> tuple[tuple[np.ndarray, np.ndarray], np.ndarray]:
     """Convert a sparse matrix to indices and values.
 
     Args:
@@ -448,11 +480,18 @@ def _to_indices(matrix, directed=False):
 
 @_timing
 def _optimise(
-    try_idx, seed, quality_indices, quality_values, null_model, global_shift, method="louvain"
-):
+    try_idx: int,
+    seed: int,
+    quality_indices: tuple[np.ndarray, np.ndarray],
+    quality_values: np.ndarray,
+    null_model: np.ndarray,
+    global_shift: float,
+    method: str = "louvain",
+) -> tuple[float, list[int]]:
     """Worker for generalized Markov Stability optimisation runs."""
     if method == "louvain":
-        stability, community_id = generalized_louvain.run_louvain(
+        # generalized_louvain is a pybind11 C++ extension; mypy can't see its symbols.
+        stability, community_id = generalized_louvain.run_louvain(  # type: ignore[attr-defined]
             quality_indices[0],
             quality_indices[1],
             quality_values,
@@ -463,7 +502,7 @@ def _optimise(
             seed,
         )
 
-    if method == "leiden":
+    elif method == "leiden":
         # this implementation uses the trick suggested by V. Traag here:
         # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
@@ -488,22 +527,24 @@ def _optimise(
             partitions, layer_weights=n_null * [1.0 / n_null]
         )
         community_id = partitions[0].membership
+    else:  # pragma: no cover
+        raise ValueError(f"Unknown method {method!r}, expected 'louvain' or 'leiden'")
 
     return stability + global_shift, community_id
 
 
 def _evaluate_quality(
-    partition_id,
-    quality_indices,
-    quality_values,
-    null_model,
-    global_shift,
-    method="louvain",
-):
+    partition_id: list[int],
+    quality_indices: tuple[np.ndarray, np.ndarray],
+    quality_values: np.ndarray,
+    null_model: np.ndarray,
+    global_shift: float,
+    method: str = "louvain",
+) -> float:
     """Worker for generalized Markov Stability evaluations."""
     # evaluate using Louvain method
     if method == "louvain":
-        quality = generalized_louvain.evaluate_quality(
+        quality = generalized_louvain.evaluate_quality(  # type: ignore[attr-defined]
             quality_indices[0],
             quality_indices[1],
             quality_values,
@@ -534,7 +575,13 @@ def _evaluate_quality(
     return quality + global_shift
 
 
-def _run_optimisations(constructor, n_runs, pool, rng, method="louvain"):
+def _run_optimisations(
+    constructor: dict[str, Any],
+    n_runs: int,
+    pool: Any,
+    rng: np.random.Generator,
+    method: str = "louvain",
+) -> list[tuple[float, list[int]]]:
     """Run several generalized Markov Stability optimisation on the current quality matrix."""
     quality_indices, quality_values = _to_indices(
         constructor["quality"], directed=method == "leiden"
@@ -555,7 +602,7 @@ def _run_optimisations(constructor, n_runs, pool, rng, method="louvain"):
 
 
 @_timing
-def _compute_ttprime(all_results, pool):
+def _compute_ttprime(all_results: defaultdict, pool: Any) -> None:
     """Compute NVI(t,t') from the Markov stability results."""
     # prepare worker to compute NVI between selected partitions
     worker = partial(evaluate_NVI, partitions=all_results["community_id"])
@@ -572,7 +619,13 @@ def _compute_ttprime(all_results, pool):
 
 
 @_timing
-def _apply_postprocessing(all_results, pool, constructors, tqdm_disable=False, method="louvain"):
+def _apply_postprocessing(
+    all_results: defaultdict,
+    pool: Any,
+    constructors: list[dict[str, Any]],
+    tqdm_disable: bool = False,
+    method: str = "louvain",
+) -> None:
     """Apply postprocessing."""
     all_results_raw = all_results.copy()
 

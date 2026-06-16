@@ -1,5 +1,9 @@
 """Construct geometric graphs from data for multiscale clustering."""
 
+from __future__ import annotations
+
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -14,7 +18,7 @@ from pygenstability.plotting import plot_scan as pgs_plot_scan
 from pygenstability.pygenstability import run as pgs_run
 
 
-def _compute_CkNN(D, k=5, delta=1):
+def _compute_CkNN(D: np.ndarray, k: int = 5, delta: float = 1) -> np.ndarray:
     """Computes CkNN graph."""
     # obtain rescaled distance matrix, see CkNN paper
     darray_n_nbrs = np.partition(D, k)[:, [k]]
@@ -29,12 +33,12 @@ class _GraphConstruction:
 
     def __init__(
         self,
-        metric="euclidean",
-        method="cknn-mst",
-        k=5,
-        delta=1.0,
-        distance_threshold=np.inf,
-    ):
+        metric: str = "euclidean",
+        method: str = "cknn-mst",
+        k: int = 5,
+        delta: float = 1.0,
+        distance_threshold: float = np.inf,
+    ) -> None:
         # parameters
         self.metric = metric
         self.method = method
@@ -43,9 +47,9 @@ class _GraphConstruction:
         self.distance_threshold = distance_threshold
 
         # attributes
-        self.adjacency_ = None
+        self.adjacency_: Any = None
 
-    def get_graph(self, X):
+    def get_graph(self, X: np.ndarray) -> np.ndarray:
         """Construct graph from samples-by-features matrix."""
         # if precomputed take X as adjacency matrix
         if self.method == "precomputed":
@@ -151,14 +155,14 @@ class DataClustering(_GraphConstruction):
 
     def __init__(
         self,
-        metric="euclidean",
-        graph_method="cknn-mst",
-        k=5,
-        delta=1.0,
-        distance_threshold=np.inf,
-        seed=None,
-        **pgs_kwargs,
-    ):
+        metric: str = "euclidean",
+        graph_method: str = "cknn-mst",
+        k: int = 5,
+        delta: float = 1.0,
+        distance_threshold: float = np.inf,
+        seed: int | None = None,
+        **pgs_kwargs: Any,
+    ) -> None:
 
         # initialise parameters for graph construction
         super().__init__(
@@ -173,10 +177,10 @@ class DataClustering(_GraphConstruction):
         self.pgs_kwargs = {**pgs_kwargs, "seed": seed}
 
         # attributes
-        self.results_ = {}
+        self.results_: dict[str, Any] = {}
 
     @property
-    def labels_(self):
+    def labels_(self) -> list[np.ndarray]:
         """Return labels for robust partitions."""
         labels = []
 
@@ -193,7 +197,7 @@ class DataClustering(_GraphConstruction):
 
         return labels
 
-    def fit(self, X):
+    def fit(self, X: np.ndarray) -> DataClustering:
         """Fit multiscale graph-based data clustering with PyGenStability from data.
 
         Parameters
@@ -216,8 +220,13 @@ class DataClustering(_GraphConstruction):
         return self
 
     def scale_selection(
-        self, kernel_size=0.1, window_size=0.1, max_nvi=1, basin_radius=0.01, store_basins=False
-    ):
+        self,
+        kernel_size: float = 0.1,
+        window_size: float = 0.1,
+        max_nvi: float = 1,
+        basin_radius: float = 0.01,
+        store_basins: bool = False,
+    ) -> list[np.ndarray]:
         """Identify optimal scales [3].
 
         Parameters
@@ -250,27 +259,31 @@ class DataClustering(_GraphConstruction):
         .. [3] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
-        # transform relative values to absolute values
+        # relative values (< 1) are fractions of n_scale; clamp to non-degenerate sizes
+        n_scale = len(self.results_["scales"])
         if kernel_size < 1:
-            kernel_size = int(kernel_size * self.results_["run_params"]["n_scale"])
+            kernel_size = int(kernel_size * n_scale)
         if window_size < 1:
-            window_size = int(window_size * self.results_["run_params"]["n_scale"])
+            window_size = int(window_size * n_scale)
         if basin_radius < 1:
-            basin_radius = max(1, int(basin_radius * self.results_["run_params"]["n_scale"]))
+            basin_radius = int(basin_radius * n_scale)
+        kernel_size = max(2, int(kernel_size))
+        window_size = max(2, int(window_size))
+        basin_radius = max(1, int(basin_radius))
 
         # apply scale selection algorithm
         self.results_ = identify_optimal_scales(
             self.results_,
-            kernel_size=kernel_size,
-            window_size=window_size,
+            kernel_size=int(kernel_size),
+            window_size=int(window_size),
             max_nvi=max_nvi,
-            basin_radius=basin_radius,
+            basin_radius=int(basin_radius),
             store_basins=store_basins,
         )
 
         return self.labels_
 
-    def plot_scan(self, *args, **kwargs):
+    def plot_scan(self, *args: Any, **kwargs: Any) -> Any:
         """Plot summary figure for PyGenStability scan."""
         if not self.results_:
             return None
@@ -278,8 +291,14 @@ class DataClustering(_GraphConstruction):
         return pgs_plot_scan(self.results_, *args, **kwargs)
 
     def plot_robust_partitions(
-        self, x_coord, y_coord, edge_width=1.0, node_size=20.0, cmap="tab20", show=True
-    ):
+        self,
+        x_coord: np.ndarray,
+        y_coord: np.ndarray,
+        edge_width: float = 1.0,
+        node_size: float = 20.0,
+        cmap: str = "tab20",
+        show: bool = False,
+    ) -> None:
         """Plot robust partitions with graph layout.
 
         Parameters
@@ -299,7 +318,7 @@ class DataClustering(_GraphConstruction):
         cmap : str, default='tab20'
             Color map for cluster colors.
 
-        show : bool, default=True
+        show : bool, default=False
             Show the figures.
 
         Returns
@@ -338,11 +357,11 @@ class DataClustering(_GraphConstruction):
 
     def plot_sankey(
         self,
-        optimal_scales=True,
-        live=False,
-        filename="communities_sankey.html",
-        scale_index=None,
-    ):
+        optimal_scales: bool = True,
+        live: bool = False,
+        filename: str = "communities_sankey.html",
+        scale_index: list[int] | None = None,
+    ) -> Any:
         """Plot Sankey diagram.
 
         Parameters
@@ -364,11 +383,14 @@ class DataClustering(_GraphConstruction):
         fig : plotly figure
             Sankey diagram figure.
         """
-        # plot non-trivial optimal scales only
+        # non-trivial scales only, matching the filter labels_ uses
         if optimal_scales:
-            n_partitions = len(self.labels_)
-            # collect indices of non-trivial partitions
-            scale_index = self.results_["selected_partitions"][:n_partitions]
+            n_nodes = self.adjacency_.shape[0]
+            scale_index = [
+                i
+                for i in self.results_["selected_partitions"]
+                if not np.allclose(self.results_["community_id"][i], np.zeros(n_nodes))
+            ]
 
         # plot Sankey diagram
         fig = pgs_plot_sankey(
