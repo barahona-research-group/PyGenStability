@@ -475,7 +475,12 @@ def _to_indices(
     return (rows, cols), values
 
 
-def _leiden_multiplex_layers(graph, quality_values, null_model, initial_membership=None):
+def _leiden_multiplex_layers(
+    graph: Any,
+    quality_values: np.ndarray,
+    null_model: np.ndarray,
+    initial_membership: list[int] | None = None,
+) -> tuple[list[Any], list[float]]:
     r"""Build the Leiden multiplex layers encoding generalized Markov Stability.
 
     Each null pair ``(a, b)`` is split via the polarisation identity
