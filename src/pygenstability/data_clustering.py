@@ -259,10 +259,7 @@ class DataClustering(_GraphConstruction):
         .. [3] J. Schindler, J. Clarke, and M. Barahona, 'Multiscale Mobility Patterns and
                the Restriction of Human Movement', *arXiv:2201.06323*, 2023
         """
-        # transform relative values to absolute values; clamp window sizes to
-        # >= 2 so the pooling / rolling-mean is non-degenerate, and basin
-        # radius to >= 1, regardless of whether the input was relative or
-        # absolute.
+        # relative values (< 1) are fractions of n_scale; clamp to non-degenerate sizes
         n_scale = len(self.results_["scales"])
         if kernel_size < 1:
             kernel_size = int(kernel_size * n_scale)
@@ -386,9 +383,7 @@ class DataClustering(_GraphConstruction):
         fig : plotly figure
             Sankey diagram figure.
         """
-        # plot non-trivial optimal scales only — must match the same trivial-partition
-        # filter that labels_ applies, otherwise the slice can include trivial scales
-        # and drop non-trivial ones at the tail.
+        # non-trivial scales only, matching the filter labels_ uses
         if optimal_scales:
             n_nodes = self.adjacency_.shape[0]
             scale_index = [

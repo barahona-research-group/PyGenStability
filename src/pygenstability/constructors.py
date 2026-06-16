@@ -102,8 +102,7 @@ class Constructor:
         """
         self.graph = sp.csr_matrix(graph)
         self.with_spectral_gap = with_spectral_gap
-        # populated by prepare() in subclasses; typed as Any so we don't have to
-        # litter Optional unwrapping where prepare() guarantees non-None.
+        # populated by prepare() in subclasses; Any avoids Optional unwrapping
         self.spectral_gap: Any = None
         self.exp_comp_mode = exp_comp_mode
 

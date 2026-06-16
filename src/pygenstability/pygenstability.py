@@ -244,9 +244,7 @@ def run(
         log_scale=log_scale,
         scales=scales,
     )
-    # reflect the actual scan length so downstream consumers (run_params, default
-    # optimal_scales_kwargs sizing, DataClustering.scale_selection) see the
-    # length of the resolved `scales` array rather than the user kwarg.
+    # sync n_scale to the resolved scan length, not the user kwarg
     n_scale = len(scales)
     run_params["n_scale"] = n_scale
     exp_comp_mode = _resolve_exp_comp_mode(exp_comp_mode, constructor)
