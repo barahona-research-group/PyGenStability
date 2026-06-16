@@ -45,6 +45,15 @@ all = [
     "diff-pdf-visually",
     "ipython!=8.7.0",
 ]
+docs = [
+    "sphinx",
+    "furo",
+    "sphinx-click",
+    "sphinx-mdinclude",
+    "nbsphinx",
+    "alabaster",
+    "ipython!=8.7.0",
+]
 
 [project.scripts]
 pygenstability = "pygenstability.app:cli"
