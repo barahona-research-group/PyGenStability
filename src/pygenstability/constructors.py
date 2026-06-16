@@ -492,13 +492,20 @@ class constructor_linearized_directed(Constructor):
         dinv_a = sp.diags(dinv) @ graph
         identity = sp.eye(n_nodes, format="csr", dtype=_DTYPE)
 
+        # Deterministic non-uniform v0: a uniform vector can lie exactly in the null
+        # space of M^T - I (e.g. doubly-stochastic walks like a directed cycle),
+        # causing ARPACK error -9 ("starting vector is zero").
+        v0 = np.linspace(1.0, 2.0, n_nodes, dtype=_DTYPE)
+        v0 /= v0.sum()
+
+        self._u_correction: np.ndarray | None = None
         if alpha < 1:
             # Decompose M(alpha) = alpha * D^-1 A + u * 1^T with
             # u = ((1-alpha) * 1 + alpha * a) / N. The rank-1 term u 1^T is kept
             # implicit; only the sparse part is stored as partial_quality_matrix.
             dangling = (out_degrees == 0).astype(_DTYPE)
             u = ((1.0 - alpha) * np.ones(n_nodes, dtype=_DTYPE) + alpha * dangling) / n_nodes
-            self._u_correction: np.ndarray | None = u
+            self._u_correction = u
             self.partial_quality_matrix = (alpha * dinv_a - identity).tocsr()
 
             # Stationary distribution via matrix-free transpose of M(alpha) - I.
@@ -512,18 +519,11 @@ class constructor_linearized_directed(Constructor):
                 return alpha * (graph_t @ (d_inv_diag @ x)) + (u @ x) * ones_vec - x
 
             op = sp.linalg.LinearOperator((n_nodes, n_nodes), matvec=matvec, dtype=_DTYPE)
-            # Deterministic non-uniform v0: a uniform vector can lie exactly in the
-            # null space of M(alpha)^T - I (e.g. doubly-stochastic walks like a
-            # directed cycle), causing ARPACK error -9 ("starting vector is zero").
-            v0 = np.linspace(1.0, 2.0, n_nodes, dtype=_DTYPE)
-            v0 /= v0.sum()
             pi = abs(sp.linalg.eigs(op, which="SM", k=1, v0=v0)[1][:, 0])
         else:  # alpha == 1: pure sparse path, requires strongly connected graph
-            self._u_correction = None
             self.partial_quality_matrix = (dinv_a - identity).tocsr()
-            pi = abs(
-                sp.linalg.eigs(self.partial_quality_matrix.transpose(), which="SM", k=1)[1][:, 0]
-            )
+            op = self.partial_quality_matrix.transpose()
+            pi = abs(sp.linalg.eigs(op, which="SM", k=1, v0=v0)[1][:, 0])
 
         pi /= pi.sum()
         self.partial_null_model = np.array([pi, pi])
