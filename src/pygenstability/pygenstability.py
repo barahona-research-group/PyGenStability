@@ -262,9 +262,6 @@ def run(
         constructor_data = _get_constructor_data(
             constructor_obj, scales, pool, tqdm_disable=tqdm_disable
         )
-        if method == "leiden":  # pragma: no cover
-            for data in constructor_data:
-                assert all(data["null_model"][0] == data["null_model"][1])
 
         L.info("Optimise stability...")
         scan_results = _scan_scales(
@@ -468,14 +465,77 @@ def _to_indices(
 ) -> tuple[tuple[np.ndarray, np.ndarray], np.ndarray]:
     """Convert a sparse matrix to indices and values.
 
+    The generalized stability ``Tr[H^T F H]`` depends only on the symmetric part of the
+    quality matrix ``F``, so we symmetrise to ``(F + F^T) / 2`` first. This makes the
+    Louvain backend (which only receives the lower triangle) and the Leiden backend (full
+    directed graph) compute the same, correct edge term for asymmetric/directed quality
+    matrices; for symmetric ``F`` it is a no-op.
+
     Args:
         matrix (sparse): sparse matrix to convert
         directed (bool): used for Leiden, which works if graph is full
     """
+    matrix = 0.5 * (matrix + matrix.T)
     if not directed:
         matrix = sp.tril(matrix)
     rows, cols, values = sp.find(matrix)
     return (rows, cols), values
+
+
+def _leiden_multiplex_layers(
+    graph: Any,
+    quality_values: np.ndarray,
+    null_model: np.ndarray,
+    initial_membership: list[int] | None = None,
+) -> tuple[list[Any], list[float]]:
+    r"""Build the Leiden multiplex layers encoding generalized Markov Stability.
+
+    Each null pair ``(a, b)`` is split via the polarisation identity
+    :math:`S_a S_b = \tfrac{1}{4}(S_{a+b}^2 - S_{a-b}^2)` into two CPM layers with
+    ``node_sizes`` :math:`(a+b)/2` (weight ``+1``) and :math:`(a-b)/2` (weight ``-1``),
+    which handles asymmetric and signed nulls. The edge term gets its own layer so it is
+    counted once. For a symmetric pair (``a == b``) the second layer vanishes, recovering
+    the single-layer trick of V. Traag
+    (https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065).
+    """
+    n_nodes = graph.vcount()
+    membership = {} if initial_membership is None else {"initial_membership": initial_membership}
+
+    # edge/quality term in a dedicated layer with no null contribution (node_sizes = 0)
+    partitions = [
+        leidenalg.CPMVertexPartition(
+            graph,
+            weights=quality_values,
+            node_sizes=[0] * n_nodes,
+            correct_self_loops=True,
+            **membership,
+        )
+    ]
+    layer_weights = [1.0]
+
+    # null model terms, with no edge contribution (weights = 0), via polarisation
+    zero_weights = [0.0] * len(quality_values)
+    null_model = np.asarray(null_model)
+    for null_plus, null_minus in zip(null_model[::2], null_model[1::2]):
+        for node_sizes, weight in (
+            (0.5 * (null_plus + null_minus), 1.0),
+            (0.5 * (null_plus - null_minus), -1.0),
+        ):
+            # skip vanishing layers (e.g. the antisymmetric layer of a symmetric pair)
+            if not np.any(node_sizes):
+                continue
+            partitions.append(
+                leidenalg.CPMVertexPartition(
+                    graph,
+                    weights=zero_weights,
+                    node_sizes=node_sizes.tolist(),
+                    correct_self_loops=True,
+                    **membership,
+                )
+            )
+            layer_weights.append(weight)
+
+    return partitions, layer_weights
 
 
 @_timing
@@ -503,29 +563,15 @@ def _optimise(
         )
 
     elif method == "leiden":
-        # this implementation uses the trick suggested by V. Traag here:
-        # https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065
         G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        partitions, layer_weights = _leiden_multiplex_layers(G, quality_values, null_model)
 
-        partitions = []
-        n_null = int(len(null_model) / 2)
-        for null in null_model[::2]:
-            partitions.append(
-                leidenalg.CPMVertexPartition(
-                    G,
-                    weights=quality_values,
-                    node_sizes=null.tolist(),
-                    correct_self_loops=True,
-                )
-            )
         optimiser = leidenalg.Optimiser()
         optimiser.set_rng_seed(int(seed))
         # we initialise stability
-        stability = sum(partition.quality() for partition in partitions) / n_null
+        stability = sum(weight * p.quality() for weight, p in zip(layer_weights, partitions))
         # we use Leiden to find optimal partition and update stability according to improvement
-        stability += optimiser.optimise_partition_multiplex(
-            partitions, layer_weights=n_null * [1.0 / n_null]
-        )
+        stability += optimiser.optimise_partition_multiplex(partitions, layer_weights=layer_weights)
         community_id = partitions[0].membership
     else:  # pragma: no cover
         raise ValueError(f"Unknown method {method!r}, expected 'louvain' or 'leiden'")
@@ -557,20 +603,11 @@ def _evaluate_quality(
 
     # evaluate using Leiden method
     if method == "leiden":
-        n_null = int(len(null_model) / 2)
-        quality = np.sum(
-            [
-                leidenalg.CPMVertexPartition(
-                    ig.Graph(edges=zip(*quality_indices), directed=True),
-                    initial_membership=partition_id,
-                    weights=quality_values,
-                    node_sizes=null.tolist(),
-                    correct_self_loops=True,
-                ).quality()
-                for null in null_model[::2]
-            ]
+        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        partitions, layer_weights = _leiden_multiplex_layers(
+            G, quality_values, null_model, initial_membership=partition_id
         )
-        quality /= n_null
+        quality = sum(weight * p.quality() for weight, p in zip(layer_weights, partitions))
 
     return quality + global_shift
 

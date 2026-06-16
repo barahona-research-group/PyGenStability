@@ -311,8 +311,8 @@ class constructor_signed_modularity(Constructor):
         adj_neg = -self.graph.copy()
         adj_neg[self.graph > 0] = 0.0
 
-        deg_plus = adj_pos.sum(1).flatten()
-        deg_neg = adj_neg.sum(1).flatten()
+        deg_plus = np.asarray(adj_pos.sum(1)).flatten()
+        deg_neg = np.asarray(adj_neg.sum(1)).flatten()
 
         deg_norm = deg_plus.sum() + deg_neg.sum()
         # silence divide-by-zero when the graph has only positive or only negative edges
