@@ -77,6 +77,11 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = true
+# C++ sources of the extension, not a python package (they reach the sdist as ext sources)
+exclude = ["pygenstability.generalized_louvain"]
+
+[tool.setuptools.exclude-package-data]
+pygenstability = ["generalized_louvain/*.cpp"]
 
 [tool.setuptools.package-dir]
 "" = "src"
