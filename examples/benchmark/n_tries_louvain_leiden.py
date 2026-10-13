@@ -7,7 +7,8 @@ Leiden tries at a few scales and records, for each method:
 - the number of tries needed to get within 0.1% of the best stability found by any method,
 - the agreement (NMI) of the best partition with the planted one.
 
-Usage: python n_tries_louvain_leiden.py  (writes n_tries.csv, n_tries.md and n_tries.png)
+Usage: python n_tries_louvain_leiden.py  (writes n_tries.csv and n_tries.md here, and the
+figure used in the documentation to docs/source/images/n_tries.png)
 """
 
 import logging
@@ -35,6 +36,7 @@ KS = [1, 2, 5, 10, 20, 50, 100]
 TOLERANCE = 1e-3  # relative gap to the best known stability
 N_BLOCKS = 20
 OUT = Path(__file__).parent
+FIGURE = OUT.parents[1] / "docs" / "source" / "images" / "n_tries.png"
 
 
 def planted_graph(n, seed=0):
@@ -143,7 +145,7 @@ def plot(summary):
     np.atleast_1d(axes)[0].set_ylabel("relative gap of best-of-k to best known")
     np.atleast_1d(axes)[-1].legend(fontsize=7)
     fig.tight_layout()
-    fig.savefig(OUT / "n_tries.png", dpi=150)
+    fig.savefig(FIGURE, dpi=150)
 
 
 if __name__ == "__main__":
