@@ -16,4 +16,5 @@ Documentation of the API of *PyGenStability*.
    dataclustering
    optimal_scales
    io
+   benchmarks
    examples/example
