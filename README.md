@@ -28,6 +28,8 @@ You can install the package using [pypi](https://pypi.org/project/PyGenStability
 pip install pygenstability
 ```
 
+Pre-built wheels are available for Python 3.11 to 3.14 on Linux (x86_64, aarch64), macOS (Intel, Apple Silicon) and Windows (x86_64); on other platforms pip builds the package from source, which requires a C++ compiler.
+
 Using a fresh python3 virtual environment, e.g. conda, may be recommended to avoid conflicts with other python packages. 
 
 By default, the package uses the Louvain algorithm [6] for optimizing generalized Markov Stability. To use the Leiden algorithm [7], install this package with:
