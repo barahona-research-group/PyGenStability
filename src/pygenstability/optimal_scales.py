@@ -136,7 +136,7 @@ def identify_optimal_scales(
 
     # include largest scale if block NVI is lower than other basin centers
     if len(basin_centers) > 0:
-        largest_scale = np.argwhere(block_nvi >= 0).max()
+        largest_scale = np.max(np.argwhere(block_nvi >= 0))
         if block_nvi[largest_scale] < np.min(block_nvi[basin_centers]) - THRESHOLD:
             basin_centers = np.append(basin_centers, largest_scale)
 

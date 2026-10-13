@@ -175,6 +175,54 @@ def test__evaluate_quality(graph):
     assert_almost_equal(quality, 0.2741359784037568)
 
 
+@pytest.mark.parametrize("method", ["louvain", "leiden"])
+def test__optimise_last_node_without_quality_entries(graph, method):
+    """A node without any quality entry is kept (graph size comes from the null model)."""
+    import scipy.sparse as sp
+
+    data = load_constructor("linearized", graph).get_data(1)
+    n = graph.shape[0]
+    quality = sp.lil_matrix(data["quality"])
+    quality[n - 1, :] = 0
+    quality[:, n - 1] = 0
+    quality = sp.csr_matrix(quality)
+    quality.eliminate_zeros()
+    quality_indices, quality_values = pgs._to_indices(quality, directed=method == "leiden")
+    assert quality_indices[0].max() < n - 1
+
+    stability, community_id = pgs._optimise(
+        0, 0, quality_indices, quality_values, data["null_model"], 0.0, method=method
+    )
+    assert len(community_id) == n
+    quality_eval = pgs._evaluate_quality(
+        list(community_id), quality_indices, quality_values, data["null_model"], 0.0, method
+    )
+    assert_almost_equal(stability, quality_eval)
+
+
+def test_generalized_louvain_input_checks(graph):
+    from pygenstability import generalized_louvain
+
+    data = load_constructor("linearized", graph).get_data(1)
+    (rows, cols), values = pgs._to_indices(data["quality"])
+    null_model = np.asarray(data["null_model"])
+    n = null_model.shape[1]
+    args = (rows, cols, values, len(values))
+
+    with pytest.raises(ValueError, match="shape"):
+        generalized_louvain.run_louvain(*args, null_model, 4, 1.0, 0)
+    with pytest.raises(ValueError, match="pairs"):
+        generalized_louvain.run_louvain(*args, null_model[:1], 1, 1.0, 0)
+    with pytest.raises(ValueError, match="n_edges"):
+        generalized_louvain.run_louvain(rows, cols, values, len(values) + 1, null_model, 2, 1.0, 0)
+    with pytest.raises(ValueError, match="out of range"):
+        generalized_louvain.run_louvain(*args, null_model[:, : n - 1], 2, 1.0, 0)
+    with pytest.raises(ValueError, match="partition size"):
+        generalized_louvain.evaluate_quality(*args, null_model, 2, 1.0, [0] * (n - 1))
+    with pytest.raises(ValueError, match="partition ids"):
+        generalized_louvain.evaluate_quality(*args, null_model, 2, 1.0, [n] * n)
+
+
 def test__to_indices_symmetrises_asymmetric_quality():
     """Louvain and Leiden agree on the edge term for an asymmetric quality matrix.
 
