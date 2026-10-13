@@ -1,0 +1,37 @@
+From 805a7f98366fe7a0e5c1b65f21cefb97e88adf54 Mon Sep 17 00:00:00 2001
+From: Alexis Arnaudon <alexis.arnaudon@gmail.com>
+Date: Tue, 13 Oct 2026 20:41:41 +0000
+Subject: [PATCH] Build libleidenalg in Release mode on Linux/macOS
+
+build_libleidenalg.sh configured libleidenalg without CMAKE_BUILD_TYPE.
+With single-config generators (Makefiles, used on Linux and macOS),
+'cmake --build . --config Release' has no effect, so the library was
+compiled without any optimisation flag (-O0): the shipped
+liblibleidenalg.so exports out-of-line std::vector::operator[] and ~900
+other STL helpers. build_igraph.sh already passes
+-DCMAKE_BUILD_TYPE=Release; do the same for libleidenalg.
+
+Measured on a 20k-node CPM problem (one optimise_partition call): 2.2-2.6 s
+with the shipped wheel vs 0.5-0.55 s with an optimised build, identical
+memberships. Windows builds (multi-config generator) are not affected.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ scripts/build_libleidenalg.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/scripts/build_libleidenalg.sh b/scripts/build_libleidenalg.sh
+index eacb545..41fa777 100755
+--- a/scripts/build_libleidenalg.sh
++++ b/scripts/build_libleidenalg.sh
+@@ -40,6 +40,7 @@ echo "Configure libleidenalg build"
+ cmake ${ROOT_DIR}/build-deps/src/libleidenalg \
+     -DCMAKE_INSTALL_PREFIX=${ROOT_DIR}/build-deps/install/ \
+     -DBUILD_SHARED_LIBS=ON \
++    -DCMAKE_BUILD_TYPE=Release \
+     -Digraph_ROOT=${ROOT_DIR}/build-deps/install/lib/cmake/igraph/ \
+     ${EXTRA_CMAKE_ARGS}
+ 
+-- 
+2.43.0
+

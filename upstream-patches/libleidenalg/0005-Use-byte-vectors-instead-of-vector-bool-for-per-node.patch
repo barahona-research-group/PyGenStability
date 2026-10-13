@@ -1,0 +1,72 @@
+From 23a68eec2b1d90ea03ac9505054b9e8c76ef64b7 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 13 Oct 2026 20:30:06 +0000
+Subject: [PATCH 5/5] Use byte vectors instead of vector<bool> for
+ per-node/per-community flags in hot loops
+
+---
+ src/Optimiser.cpp | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/src/Optimiser.cpp b/src/Optimiser.cpp
+index b03a4ce..11b1874 100644
+--- a/src/Optimiser.cpp
++++ b/src/Optimiser.cpp
+@@ -552,7 +552,8 @@ double Optimiser::move_nodes(vector<MutableVertexPartition*> partitions, vector<
+     throw Exception("Maximum community size is smaller than the minimum community size.");  
+ 
+   // Fixed nodes are also stable nodes
+-  vector<bool> is_node_stable(is_membership_fixed);
++  // Byte vectors instead of vector<bool>: avoids bit manipulation in the hot loop
++  vector<char> is_node_stable(is_membership_fixed.begin(), is_membership_fixed.end());
+ 
+   // Establish vertex order
+   // We normally initialize the normal vertex order
+@@ -575,7 +576,7 @@ double Optimiser::move_nodes(vector<MutableVertexPartition*> partitions, vector<
+   // (2) - The quality function should be exactly the same value after
+   //       aggregating/collapsing the graph.
+ 
+-  vector<bool> comm_added(partitions[0]->n_communities(), false);
++  vector<char> comm_added(partitions[0]->n_communities(), false);
+   vector<size_t> comms;
+ 
+   // As long as the queue is not empty
+@@ -832,7 +833,7 @@ double Optimiser::merge_nodes(vector<MutableVertexPartition*> partitions, vector
+   // But if we use a random order, we shuffle this order.
+   shuffle(vertex_order, &rng);
+ 
+-  vector<bool> comm_added(partitions[0]->n_communities(), false);
++  vector<char> comm_added(partitions[0]->n_communities(), false);
+   vector<size_t> comms;
+ 
+   // Iterate over all nodes
+@@ -1038,7 +1039,7 @@ double Optimiser::move_nodes_constrained(vector<MutableVertexPartition*> partiti
+   // Establish vertex order
+   // We normally initialize the normal vertex order
+   // of considering node 0,1,...
+-  vector<bool> is_node_stable(n, false);
++  vector<char> is_node_stable(n, false);
+   // But if we use a random order, we shuffle this order.
+   vector<size_t> nodes = range(n);
+   shuffle(nodes, &rng);
+@@ -1054,7 +1055,7 @@ double Optimiser::move_nodes_constrained(vector<MutableVertexPartition*> partiti
+   // (2) - The quality function should be exactly the same value after
+   //       aggregating/collapsing the graph.
+ 
+-  vector<bool> comm_added(partitions[0]->n_communities(), false);
++  vector<char> comm_added(partitions[0]->n_communities(), false);
+   vector<size_t> comms;
+   vector<size_t> all_neigh_comms_incl_dupes;
+ 
+@@ -1286,7 +1287,7 @@ double Optimiser::merge_nodes_constrained(vector<MutableVertexPartition*> partit
+ 
+   vector< vector<size_t> > constrained_comms = constrained_partition->get_communities();
+ 
+-  vector<bool> comm_added(partitions[0]->n_communities(), false);
++  vector<char> comm_added(partitions[0]->n_communities(), false);
+   vector<size_t> comms;
+   vector<size_t> all_neigh_comms_incl_dupes;
+ 
+-- 
+2.43.0
+

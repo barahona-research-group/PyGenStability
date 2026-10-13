@@ -1,0 +1,30 @@
+From 0ace72e3488ae9c34ec6f9245b4f0ea28e1b4504 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 13 Oct 2026 19:49:31 +0000
+Subject: [PATCH] Default CMAKE_BUILD_TYPE to Release
+
+---
+ CMakeLists.txt | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6e41291..60df3f0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,6 +7,13 @@ include(version)
+ 
+ project(libleidenalg VERSION ${PACKAGE_VERSION_BASE})
+ 
++# Default to an optimised build. Without this, single-config generators
++# (e.g. Makefiles, as used by the wheel build scripts) compile with no
++# optimisation flags at all (-O0), which makes the library several times slower.
++if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
++  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
++endif()
++
+ include(GNUInstallDirs)
+ include(CMakePackageConfigHelpers)
+ include(packaging)
+-- 
+2.43.0
+

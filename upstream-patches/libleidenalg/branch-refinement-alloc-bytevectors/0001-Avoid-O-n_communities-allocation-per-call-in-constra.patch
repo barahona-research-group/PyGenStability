@@ -1,0 +1,117 @@
+From 8dc229582ba75fbde5b7ae9a07fa26172ab14580 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 13 Oct 2026 20:08:04 +0000
+Subject: [PATCH 1/2] Avoid O(n_communities) allocation per call in constrained
+ get_neigh_comms; reuse buffer in refinement
+
+---
+ include/MutableVertexPartition.h |  1 +
+ src/MutableVertexPartition.cpp   | 28 +++++++++++++++++-----------
+ src/Optimiser.cpp                | 16 ++++++----------
+ 3 files changed, 24 insertions(+), 21 deletions(-)
+
+diff --git a/include/MutableVertexPartition.h b/include/MutableVertexPartition.h
+index 45f8f1e..d72f2f3 100644
+--- a/include/MutableVertexPartition.h
++++ b/include/MutableVertexPartition.h
+@@ -129,6 +129,7 @@ class LIBLEIDENALG_EXPORT MutableVertexPartition
+ 
+     vector<size_t> const& get_neigh_comms(size_t v, igraph_neimode_t);
+     vector<size_t> get_neigh_comms(size_t v, igraph_neimode_t mode, vector<size_t> const& constrained_membership);
++    void get_neigh_comms(size_t v, igraph_neimode_t mode, vector<size_t> const& constrained_membership, vector<size_t>& neigh_comms);
+ 
+     // By delegating the responsibility for deleting the graph to the partition,
+     // we no longer have to worry about deleting this graph.
+diff --git a/src/MutableVertexPartition.cpp b/src/MutableVertexPartition.cpp
+index 8e2c083..966d003 100644
+--- a/src/MutableVertexPartition.cpp
++++ b/src/MutableVertexPartition.cpp
+@@ -901,18 +901,24 @@ vector<size_t> const& MutableVertexPartition::get_neigh_comms(size_t v, igraph_n
+ vector<size_t> MutableVertexPartition::get_neigh_comms(size_t v, igraph_neimode_t mode, vector<size_t> const& constrained_membership)
+ {
+   vector<size_t> neigh_comms;
+-  vector<bool> comm_added(this->n_communities(), false);
++  this->get_neigh_comms(v, mode, constrained_membership, neigh_comms);
++  return neigh_comms;
++}
++
++/****************************************************************************
++ Append the communities of all neighbours of v that are in the same
++ constrained community as v to neigh_comms. Communities are included once per
++ neighbour (i.e. including duplicates), so that a random draw from this list
++ is proportional to the number of neighbours in each community. (The previous
++ implementation allocated an unused vector<bool> of size n_communities() on
++ every call, which is O(n) per call at the first level of the refinement.)
++****************************************************************************/
++void MutableVertexPartition::get_neigh_comms(size_t v, igraph_neimode_t mode, vector<size_t> const& constrained_membership, vector<size_t>& neigh_comms)
++{
++  size_t v_constrained = constrained_membership[v];
+   for (size_t u : this->graph->get_neighbours(v, mode))
+   {
+-    if (constrained_membership[v] == constrained_membership[u])
+-    {
+-      size_t comm = this->membership(u);
+-      if (!comm_added[comm])
+-      {
+-        neigh_comms.push_back(comm);
+-        comm_added[comm];
+-      }
+-    }
++    if (v_constrained == constrained_membership[u])
++      neigh_comms.push_back(this->_membership[u]);
+   }
+-  return neigh_comms;
+ }
+diff --git a/src/Optimiser.cpp b/src/Optimiser.cpp
+index 69e931d..b03a4ce 100644
+--- a/src/Optimiser.cpp
++++ b/src/Optimiser.cpp
+@@ -1056,6 +1056,7 @@ double Optimiser::move_nodes_constrained(vector<MutableVertexPartition*> partiti
+ 
+   vector<bool> comm_added(partitions[0]->n_communities(), false);
+   vector<size_t> comms;
++  vector<size_t> all_neigh_comms_incl_dupes;
+ 
+   // As long as the queue is not empty
+   while(!vertex_order.empty())
+@@ -1115,12 +1116,9 @@ double Optimiser::move_nodes_constrained(vector<MutableVertexPartition*> partiti
+         // Draw a random community among the neighbours, proportional to the
+         // frequency of the communities among the neighbours. Notice this is no
+         // longer
+-        vector<size_t> all_neigh_comms_incl_dupes;
++        all_neigh_comms_incl_dupes.clear();
+         for (size_t layer = 0; layer < nb_layers; layer++)
+-        {
+-          vector<size_t> neigh_comm_layer = partitions[layer]->get_neigh_comms(v, IGRAPH_ALL, constrained_partition->membership());
+-          all_neigh_comms_incl_dupes.insert(all_neigh_comms_incl_dupes.end(), neigh_comm_layer.begin(), neigh_comm_layer.end());
+-        }
++          partitions[layer]->get_neigh_comms(v, IGRAPH_ALL, constrained_partition->membership(), all_neigh_comms_incl_dupes);
+         if (all_neigh_comms_incl_dupes.size() > 0)
+         {
+           size_t random_idx = get_random_int(0, all_neigh_comms_incl_dupes.size() - 1, &rng);
+@@ -1290,6 +1288,7 @@ double Optimiser::merge_nodes_constrained(vector<MutableVertexPartition*> partit
+ 
+   vector<bool> comm_added(partitions[0]->n_communities(), false);
+   vector<size_t> comms;
++  vector<size_t> all_neigh_comms_incl_dupes;
+ 
+   // For each node
+   for (size_t v : vertex_order)
+@@ -1349,12 +1348,9 @@ double Optimiser::merge_nodes_constrained(vector<MutableVertexPartition*> partit
+           // Draw a random community among the neighbours, proportional to the
+           // frequency of the communities among the neighbours. Notice this is no
+           // longer
+-          vector<size_t> all_neigh_comms_incl_dupes;
++          all_neigh_comms_incl_dupes.clear();
+           for (size_t layer = 0; layer < nb_layers; layer++)
+-          {
+-            vector<size_t> neigh_comm_layer = partitions[layer]->get_neigh_comms(v, IGRAPH_ALL, constrained_partition->membership());
+-            all_neigh_comms_incl_dupes.insert(all_neigh_comms_incl_dupes.end(), neigh_comm_layer.begin(), neigh_comm_layer.end());
+-          }
++            partitions[layer]->get_neigh_comms(v, IGRAPH_ALL, constrained_partition->membership(), all_neigh_comms_incl_dupes);
+           size_t k = all_neigh_comms_incl_dupes.size();
+           if (k > 0)
+           {
+-- 
+2.43.0
+

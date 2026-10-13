@@ -1,0 +1,397 @@
+From c1a68d73c41a23e4e6456afb33d347b7c90afdc7 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 13 Oct 2026 19:50:22 +0000
+Subject: [PATCH 2/5] Graph: eager CSR adjacency instead of lazy igraph lists +
+ per-call copies
+
+---
+ include/GraphHelper.h          |  75 ++++++++---
+ src/GraphHelper.cpp            | 225 +++++++--------------------------
+ src/MutableVertexPartition.cpp |   8 +-
+ 3 files changed, 105 insertions(+), 203 deletions(-)
+
+diff --git a/include/GraphHelper.h b/include/GraphHelper.h
+index 8e7e72b..4c64823 100644
+--- a/include/GraphHelper.h
++++ b/include/GraphHelper.h
+@@ -41,6 +41,22 @@ template <class T> T sum(vector<T> vec)
+   return sum_of_elems;
+ };
+ 
++// Lightweight read-only view on a contiguous range of indices (neighbours or
++// incident edges of a node), so that no copy is needed to iterate over them.
++class IndexRange
++{
++  public:
++    IndexRange() : _begin(NULL), _end(NULL) { }
++    IndexRange(const size_t* b, const size_t* e) : _begin(b), _end(e) { }
++    inline const size_t* begin() const { return _begin; }
++    inline const size_t* end() const { return _end; }
++    inline size_t size() const { return _end - _begin; }
++    inline size_t operator[](size_t i) const { return _begin[i]; }
++  private:
++    const size_t* _begin;
++    const size_t* _end;
++};
++
+ class Exception : public std::exception
+ {
+   public:
+@@ -99,8 +115,25 @@ class LIBLEIDENALG_EXPORT Graph
+ 
+     Graph* collapse_graph(MutableVertexPartition* partition);
+ 
+-    vector<size_t> const& get_neighbour_edges(size_t v, igraph_neimode_t mode);
+-    vector<size_t> const& get_neighbours(size_t v, igraph_neimode_t mode);
++    // Neighbours and incident edges of v, in the same order as returned by
++    // igraph_incident(..., IGRAPH_LOOPS_TWICE). Stored in a compressed (CSR)
++    // structure that is built once per mode, on first use.
++    inline IndexRange get_neighbour_edges(size_t v, igraph_neimode_t mode)
++    {
++      size_t m = this->mode_index(mode);
++      if (!this->_csr_built[m])
++        this->build_csr(m);
++      const size_t* base = this->_csr_edges[m].data();
++      return IndexRange(base + this->_csr_offsets[m][v], base + this->_csr_offsets[m][v + 1]);
++    }
++    inline IndexRange get_neighbours(size_t v, igraph_neimode_t mode)
++    {
++      size_t m = this->mode_index(mode);
++      if (!this->_csr_built[m])
++        this->build_csr(m);
++      const size_t* base = this->_csr_neighs[m].data();
++      return IndexRange(base + this->_csr_offsets[m][v], base + this->_csr_offsets[m][v + 1]);
++    }
+     size_t get_random_neighbour(size_t v, igraph_neimode_t mode, igraph_rng_t* rng);
+ 
+     inline size_t get_random_node(igraph_rng_t* rng)
+@@ -175,16 +208,27 @@ class LIBLEIDENALG_EXPORT Graph
+     const igraph_t* _graph;
+ 
+     void init_inclist_adjlist();
+-    /* We use lazy inclist and adjlist so that we can easily get whatever
+-     * we need, without needing additional memory.
++    /* Compressed adjacency (CSR) per mode: 0 = OUT, 1 = IN, 2 = ALL. For
++     * undirected graphs only ALL is used. Built lazily per mode, but for all
++     * nodes at once, so that iterating over neighbours never copies.
+      */
+-    igraph_lazy_inclist_t _inclist_in;
+-    igraph_lazy_inclist_t _inclist_out;
+-    igraph_lazy_inclist_t _inclist_all;
+-
+-    igraph_lazy_adjlist_t _adjlist_in;
+-    igraph_lazy_adjlist_t _adjlist_out;
+-    igraph_lazy_adjlist_t _adjlist_all;
++    inline size_t mode_index(igraph_neimode_t mode)
++    {
++      if (!this->_is_directed)
++        return 2; // igraph ignores mode for undirected graphs
++      switch (mode)
++      {
++        case IGRAPH_OUT: return 0;
++        case IGRAPH_IN:  return 1;
++        case IGRAPH_ALL: return 2;
++        default: throw Exception("Invalid mode for getting neighbours.");
++      }
++    }
++    void build_csr(size_t m);
++    bool _csr_built[3];
++    vector<size_t> _csr_offsets[3];
++    vector<size_t> _csr_neighs[3];
++    vector<size_t> _csr_edges[3];
+ 
+     // Utility variables to easily access the strength of each node
+     vector<double> _strength_in;
+@@ -198,15 +242,6 @@ class LIBLEIDENALG_EXPORT Graph
+     vector<double> _node_sizes; // Used for the size of the nodes.
+     vector<double> _node_self_weights; // Used for the self weight of the nodes.
+ 
+-    void cache_neighbours(size_t v, igraph_neimode_t mode);
+-    vector<size_t> _cached_neighs_from; size_t _current_node_cache_neigh_from;
+-    vector<size_t> _cached_neighs_to;   size_t _current_node_cache_neigh_to;
+-    vector<size_t> _cached_neighs_all;  size_t _current_node_cache_neigh_all;
+-
+-    void cache_neighbour_edges(size_t v, igraph_neimode_t mode);
+-    vector<size_t> _cached_neigh_edges_from; size_t _current_node_cache_neigh_edges_from;
+-    vector<size_t> _cached_neigh_edges_to;   size_t _current_node_cache_neigh_edges_to;
+-    vector<size_t> _cached_neigh_edges_all;  size_t _current_node_cache_neigh_edges_all;
+ 
+     double _total_weight;
+     double _total_size;
+diff --git a/src/GraphHelper.cpp b/src/GraphHelper.cpp
+index d4e05a7..8a02a23 100644
+--- a/src/GraphHelper.cpp
++++ b/src/GraphHelper.cpp
+@@ -277,25 +277,57 @@ Graph::~Graph()
+     igraph_destroy((igraph_t*)this->_graph);
+     delete this->_graph;
+   }
+-
+-  igraph_lazy_inclist_destroy(&this->_inclist_in);
+-  igraph_lazy_inclist_destroy(&this->_inclist_out);
+-  igraph_lazy_inclist_destroy(&this->_inclist_all);
+-
+-  igraph_lazy_adjlist_destroy(&this->_adjlist_in);
+-  igraph_lazy_adjlist_destroy(&this->_adjlist_out);
+-  igraph_lazy_adjlist_destroy(&this->_adjlist_all);
+ }
+ 
+ void Graph::init_inclist_adjlist()
+ {
+-  igraph_lazy_inclist_init(this->_graph, &this->_inclist_in, IGRAPH_IN, IGRAPH_LOOPS_TWICE);
+-  igraph_lazy_inclist_init(this->_graph, &this->_inclist_out, IGRAPH_OUT, IGRAPH_LOOPS_TWICE);
+-  igraph_lazy_inclist_init(this->_graph, &this->_inclist_all, IGRAPH_ALL, IGRAPH_LOOPS_TWICE);
++  this->_is_directed = igraph_is_directed(this->_graph);
++  for (size_t m = 0; m < 3; m++)
++  {
++    this->_csr_built[m] = false;
++    this->_csr_offsets[m].clear();
++    this->_csr_neighs[m].clear();
++    this->_csr_edges[m].clear();
++  }
++}
++
++void Graph::build_csr(size_t m)
++{
++  static const igraph_neimode_t modes[3] = {IGRAPH_OUT, IGRAPH_IN, IGRAPH_ALL};
++  igraph_neimode_t mode = modes[m];
++  size_t n = this->vcount();
++  size_t ecount = this->ecount();
+ 
+-  igraph_lazy_adjlist_init(this->_graph, &this->_adjlist_in, IGRAPH_IN, IGRAPH_LOOPS_TWICE, IGRAPH_MULTIPLE);
+-  igraph_lazy_adjlist_init(this->_graph, &this->_adjlist_out, IGRAPH_OUT, IGRAPH_LOOPS_TWICE, IGRAPH_MULTIPLE);
+-  igraph_lazy_adjlist_init(this->_graph, &this->_adjlist_all, IGRAPH_ALL, IGRAPH_LOOPS_TWICE, IGRAPH_MULTIPLE);
++  vector<size_t>& offsets = this->_csr_offsets[m];
++  vector<size_t>& neighs = this->_csr_neighs[m];
++  vector<size_t>& edges = this->_csr_edges[m];
++
++  size_t total = (mode == IGRAPH_ALL) ? 2*ecount : ecount;
++  offsets.resize(n + 1);
++  neighs.resize(total);
++  edges.resize(total);
++
++  igraph_vector_int_t incident;
++  igraph_vector_int_init(&incident, 0);
++  size_t pos = 0;
++  for (size_t v = 0; v < n; v++)
++  {
++    offsets[v] = pos;
++    igraph_incident(this->_graph, &incident, v, mode, IGRAPH_LOOPS_TWICE);
++    size_t degree = igraph_vector_int_size(&incident);
++    for (size_t idx = 0; idx < degree; idx++)
++    {
++      size_t e = VECTOR(incident)[idx];
++      edges[pos] = e;
++      neighs[pos] = IGRAPH_OTHER(this->_graph, e, v);
++      pos++;
++    }
++  }
++  offsets[n] = pos;
++  igraph_vector_int_destroy(&incident);
++  neighs.resize(pos);
++  edges.resize(pos);
++  this->_csr_built[m] = true;
+ }
+ 
+ int Graph::has_self_loops()
+@@ -450,171 +482,6 @@ void Graph::init_admin()
+   else
+     this->_density = 2*w/normalise;
+ 
+-  this->_current_node_cache_neigh_edges_from = n + 1;
+-  this->_current_node_cache_neigh_edges_to = n + 1;
+-  this->_current_node_cache_neigh_edges_all = n + 1;
+-
+-  this->_current_node_cache_neigh_from = n + 1;
+-  this->_current_node_cache_neigh_to = n + 1;
+-  this->_current_node_cache_neigh_all = n + 1;
+-}
+-
+-void Graph::cache_neighbour_edges(size_t v, igraph_neimode_t mode)
+-{
+-  #ifdef DEBUG
+-    cerr << "void Graph::cache_neighbour_edges(" << v << ", " << mode << ");" << endl;
+-  #endif
+-  size_t degree = this->degree(v, mode);
+-  #ifdef DEBUG
+-    cerr << "Degree: " << degree << endl;
+-  #endif
+-
+-  igraph_vector_int_t *incident_edges;
+-
+-  vector<size_t>* _cached_neigh_edges = NULL;
+-  switch (mode)
+-  {
+-    case IGRAPH_IN:
+-      this->_current_node_cache_neigh_edges_from = v;
+-      _cached_neigh_edges = &(this->_cached_neigh_edges_from);
+-      incident_edges = igraph_lazy_inclist_get(&this->_inclist_in, v);
+-      break;
+-    case IGRAPH_OUT:
+-      this->_current_node_cache_neigh_edges_to = v;
+-      _cached_neigh_edges = &(this->_cached_neigh_edges_to);
+-      incident_edges = igraph_lazy_inclist_get(&this->_inclist_out, v);
+-      break;
+-    case IGRAPH_ALL:
+-      this->_current_node_cache_neigh_edges_all = v;
+-      _cached_neigh_edges = &(this->_cached_neigh_edges_all);
+-      incident_edges = igraph_lazy_inclist_get(&this->_inclist_all, v);
+-      break;
+-  }
+-  _cached_neigh_edges->assign(igraph_vector_int_get_ptr(incident_edges, 0),
+-                              igraph_vector_int_get_ptr(incident_edges, degree));
+-  #ifdef DEBUG
+-    cerr << "Number of edges: " << _cached_neigh_edges->size() << endl;
+-  #endif
+-
+-  #ifdef DEBUG
+-    cerr << "exit void Graph::cache_neighbour_edges(" << v << ", " << mode << ");" << endl;
+-  #endif
+-}
+-
+-vector<size_t> const& Graph::get_neighbour_edges(size_t v, igraph_neimode_t mode)
+-{
+-  if (!this->is_directed())
+-    mode = IGRAPH_ALL; // igraph ignores mode for undirected graphs
+-
+-  switch (mode)
+-  {
+-    case IGRAPH_IN:
+-      if (this->_current_node_cache_neigh_edges_from != v)
+-      {
+-        cache_neighbour_edges(v, mode);
+-        this->_current_node_cache_neigh_edges_from = v;
+-      }
+-      return this->_cached_neigh_edges_from;
+-    case IGRAPH_OUT:
+-      if (this->_current_node_cache_neigh_edges_to != v)
+-      {
+-        cache_neighbour_edges(v, mode);
+-        this->_current_node_cache_neigh_edges_to = v;
+-      }
+-      return this->_cached_neigh_edges_to;
+-    case IGRAPH_ALL:
+-      if (this->_current_node_cache_neigh_edges_all != v)
+-      {
+-        cache_neighbour_edges(v, mode);
+-        this->_current_node_cache_neigh_edges_all = v;
+-      }
+-      return this->_cached_neigh_edges_all;
+-  }
+-  throw Exception("Incorrect model for getting neighbour edges.");
+-}
+-
+-void Graph::cache_neighbours(size_t v, igraph_neimode_t mode)
+-{
+-  #ifdef DEBUG
+-    cerr << "void Graph::cache_neighbours(" << v << ", " << mode << ");" << endl;
+-  #endif
+-  size_t degree = this->degree(v, mode);
+-  #ifdef DEBUG
+-    cerr << "Degree: " << degree << endl;
+-  #endif
+-
+-  igraph_vector_int_t *neighbours;
+-
+-  vector<size_t>* _cached_neighs = NULL;
+-  switch (mode)
+-  {
+-    case IGRAPH_IN:
+-      this->_current_node_cache_neigh_from = v;
+-      _cached_neighs = &(this->_cached_neighs_from);
+-      neighbours = igraph_lazy_adjlist_get(&this->_adjlist_in, v);
+-      break;
+-    case IGRAPH_OUT:
+-      this->_current_node_cache_neigh_to = v;
+-      _cached_neighs = &(this->_cached_neighs_to);
+-      neighbours = igraph_lazy_adjlist_get(&this->_adjlist_out, v);
+-      break;
+-    case IGRAPH_ALL:
+-      this->_current_node_cache_neigh_all = v;
+-      _cached_neighs = &(this->_cached_neighs_all);
+-      neighbours = igraph_lazy_adjlist_get(&this->_adjlist_all, v);
+-      break;
+-  }
+-  _cached_neighs->assign(igraph_vector_int_get_ptr(neighbours, 0),
+-                         igraph_vector_int_get_ptr(neighbours, degree));
+-
+-  #ifdef DEBUG
+-    cerr << "Number of edges: " << _cached_neighs->size() << endl;
+-  #endif
+-
+-  #ifdef DEBUG
+-    cerr << "exit void Graph::cache_neighbours(" << v << ", " << mode << ");" << endl;
+-  #endif
+-}
+-
+-vector< size_t > const& Graph::get_neighbours(size_t v, igraph_neimode_t mode)
+-{
+-  if (!this->is_directed())
+-    mode = IGRAPH_ALL; // igraph ignores mode for undirected graphs
+-
+-  switch (mode)
+-  {
+-    case IGRAPH_IN:
+-      if (this->_current_node_cache_neigh_from != v)
+-      {
+-        cache_neighbours(v, mode);
+-        this -> _current_node_cache_neigh_from = v;
+-      }
+-      #ifdef DEBUG
+-        cerr << "Returning " << this->_cached_neighs_from.size() << " incoming neighbours" << endl;
+-      #endif
+-      return this->_cached_neighs_from;
+-    case IGRAPH_OUT:
+-      if (this->_current_node_cache_neigh_to != v)
+-      {
+-        cache_neighbours(v, mode);
+-        this -> _current_node_cache_neigh_to = v;
+-      }
+-      #ifdef DEBUG
+-        cerr << "Returning " << this->_cached_neighs_to.size() << " incoming neighbours" << endl;
+-      #endif
+-      return this->_cached_neighs_to;
+-    case IGRAPH_ALL:
+-      if (this->_current_node_cache_neigh_all != v)
+-      {
+-        cache_neighbours(v, mode);
+-        this->_current_node_cache_neigh_all = v;
+-      }
+-      #ifdef DEBUG
+-        cerr << "Returning " << this->_cached_neighs_all.size() << " incoming neighbours" << endl;
+-      #endif
+-      return this->_cached_neighs_all;
+-  }
+-  throw Exception("Invalid mode for getting neighbours.");
+ }
+ 
+ /********************************************************************************
+diff --git a/src/MutableVertexPartition.cpp b/src/MutableVertexPartition.cpp
+index 8e2c083..fdeb61b 100644
+--- a/src/MutableVertexPartition.cpp
++++ b/src/MutableVertexPartition.cpp
+@@ -641,8 +641,8 @@ void MutableVertexPartition::move_node(size_t v,size_t new_comm)
+     igraph_neimode_t mode = modes[mode_i];
+ 
+     // Loop over all incident edges
+-    vector<size_t> const& neighbours = this->graph->get_neighbours(v, mode);
+-    vector<size_t> const& neighbour_edges = this->graph->get_neighbour_edges(v, mode);
++    IndexRange neighbours = this->graph->get_neighbours(v, mode);
++    IndexRange neighbour_edges = this->graph->get_neighbour_edges(v, mode);
+ 
+     size_t degree = neighbours.size();
+ 
+@@ -828,8 +828,8 @@ void MutableVertexPartition::cache_neigh_communities(size_t v, igraph_neimode_t
+        (*_cached_weight_tofrom_community)[c] = 0;
+ 
+   // Loop over all incident edges
+-  vector<size_t> const& neighbours = this->graph->get_neighbours(v, mode);
+-  vector<size_t> const& neighbour_edges = this->graph->get_neighbour_edges(v, mode);
++  IndexRange neighbours = this->graph->get_neighbours(v, mode);
++  IndexRange neighbour_edges = this->graph->get_neighbour_edges(v, mode);
+ 
+   size_t degree = neighbours.size();
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,85 @@
+From 14d2b34794357fdb87a7e6fde20064fd5f9bd299 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 13 Oct 2026 20:08:47 +0000
+Subject: [PATCH 4/5] Skip edge loops for layers whose edge weights are all
+ zero
+
+---
+ include/GraphHelper.h          |  5 +++++
+ src/GraphHelper.cpp            |  3 +++
+ src/MutableVertexPartition.cpp | 12 +++++++++++-
+ 3 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/include/GraphHelper.h b/include/GraphHelper.h
+index 4c64823..d8ac081 100644
+--- a/include/GraphHelper.h
++++ b/include/GraphHelper.h
+@@ -151,6 +151,10 @@ class LIBLEIDENALG_EXPORT Graph
+     inline double density() { return this->_density; };
+     inline int correct_self_loops() { return this->_correct_self_loops; };
+     inline int is_weighted() { return this->_is_weighted; };
++    // False if every edge has weight exactly zero (e.g. a layer that only
++    // carries node sizes in a multiplex optimisation). Edge loops can then be
++    // skipped, since they cannot change any weight-based administration.
++    inline bool has_nonzero_weights() { return this->_has_nonzero_weights; };
+ 
+     inline double edge_weight(size_t e)
+     {
+@@ -246,6 +250,7 @@ class LIBLEIDENALG_EXPORT Graph
+     double _total_weight;
+     double _total_size;
+     int _is_weighted;
++    bool _has_nonzero_weights;
+     bool _is_directed;
+ 
+     int _correct_self_loops;
+diff --git a/src/GraphHelper.cpp b/src/GraphHelper.cpp
+index 8a02a23..27594b2 100644
+--- a/src/GraphHelper.cpp
++++ b/src/GraphHelper.cpp
+@@ -430,9 +430,12 @@ void Graph::init_admin()
+ 
+   // Determine total weight in the graph.
+   this->_total_weight = 0.0;
++  this->_has_nonzero_weights = false;
+   for (size_t e = 0; e < m; e++) {
+     double w = this->edge_weight(e);
+     this->_total_weight += w;
++    if (w != 0)
++      this->_has_nonzero_weights = true;
+ 
+     size_t from, to;
+     this->edge(e, from, to);
+diff --git a/src/MutableVertexPartition.cpp b/src/MutableVertexPartition.cpp
+index ce3c43a..e68762b 100644
+--- a/src/MutableVertexPartition.cpp
++++ b/src/MutableVertexPartition.cpp
+@@ -636,7 +636,9 @@ void MutableVertexPartition::move_node(size_t v,size_t new_comm)
+ 
+   // Use set for incident edges, because self loop appears twice
+   igraph_neimode_t modes[2] = {IGRAPH_OUT, IGRAPH_IN};
+-  for (size_t mode_i = 0; mode_i < 2; mode_i++)
++  // If all edge weights are zero, the edge loop below cannot change anything.
++  size_t n_modes = this->graph->has_nonzero_weights() ? 2 : 0;
++  for (size_t mode_i = 0; mode_i < n_modes; mode_i++)
+   {
+     igraph_neimode_t mode = modes[mode_i];
+ 
+@@ -827,6 +829,14 @@ void MutableVertexPartition::cache_neigh_communities(size_t v, igraph_neimode_t
+   for (size_t c : *_cached_neighs_comms)
+        (*_cached_weight_tofrom_community)[c] = 0;
+ 
++  // If all edge weights are zero, all weights to/from communities are zero
++  // and no community gets listed, so we can skip the loop over the edges.
++  if (!this->graph->has_nonzero_weights())
++  {
++    _cached_neighs_comms->clear();
++    return;
++  }
++
+   // Loop over all incident edges
+   IndexRange neighbours = this->graph->get_neighbours(v, mode);
+   IndexRange neighbour_edges = this->graph->get_neighbour_edges(v, mode);
+-- 
+2.43.0
+

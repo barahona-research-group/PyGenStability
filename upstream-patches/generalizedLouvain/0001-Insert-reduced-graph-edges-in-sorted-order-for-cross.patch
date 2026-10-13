@@ -1,0 +1,44 @@
+From d0b78f7b2d2177e144d758fa53a20b1619fa600e Mon Sep 17 00:00:00 2001
+From: Alexis Arnaudon <alexis.arnaudon@gmail.com>
+Date: Tue, 13 Oct 2026 20:40:20 +0000
+Subject: [PATCH] Insert reduced-graph edges in sorted order for cross-platform
+ determinism
+
+create_reduced_graph_from_partition iterated an std::unordered_map to add
+inter-community edges. Its iteration order differs between libstdc++,
+libc++ and MSVC, and edge order determines neighbour order (hence
+tie-breaking and float summation order) at the next Louvain level, so the
+same seed could give different partitions on Linux, macOS and Windows.
+Sort the community pairs before inserting.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ CPP/cliques/graphhelpers.h | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/CPP/cliques/graphhelpers.h b/CPP/cliques/graphhelpers.h
+index f24b81e..468150e 100644
+--- a/CPP/cliques/graphhelpers.h
++++ b/CPP/cliques/graphhelpers.h
+@@ -163,7 +163,17 @@ void create_reduced_graph_from_partition(G &reduced_graph,
+ 		pair_to_weight[key] += weights[edge];
+ 	}
+ 
+-	for (const auto &kv : pair_to_weight) {
++	// Insert edges in a canonical (sorted) order: unordered_map iteration order
++	// is implementation-defined (libstdc++ vs libc++), and the edge order sets
++	// the neighbour order at the next level, which breaks ties between equal
++	// gains. Sorting keeps results for a given seed identical across platforms.
++	std::vector<std::pair<std::uint64_t, double>> sorted_pairs(pair_to_weight.begin(),
++			pair_to_weight.end());
++	std::sort(sorted_pairs.begin(), sorted_pairs.end(),
++			[](const std::pair<std::uint64_t, double> &a,
++			   const std::pair<std::uint64_t, double> &b) { return a.first < b.first; });
++
++	for (const auto &kv : sorted_pairs) {
+ 		std::uint32_t lo = static_cast<std::uint32_t>(kv.first & 0xffffffffull);
+ 		std::uint32_t hi = static_cast<std::uint32_t>(kv.first >> 32);
+ 		Node nu = reduced_graph.nodeFromId(static_cast<int>(lo));
+-- 
+2.43.0
+
