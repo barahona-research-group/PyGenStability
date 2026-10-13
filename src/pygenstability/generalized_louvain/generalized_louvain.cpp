@@ -68,6 +68,14 @@ int build_graph_and_null_model(const int_array &from_arr,
     throw py::value_error("edge arrays are shorter than n_edges");
   }
   const int num_nodes = static_cast<int>(null_model_input_arr.shape(1));
+  const int *from = from_arr.data();
+  const int *to = to_arr.data();
+  const double *w = w_arr.data();
+  const double *null_model_input = null_model_input_arr.data();
+
+  // only raw buffers from here on: let other python threads run (the GIL is
+  // re-acquired on return, also when an exception is thrown)
+  py::gil_scoped_release release;
 
   input_graph.reserveNode(num_nodes);
   input_graph.reserveEdge(n_edges);
@@ -75,9 +83,6 @@ int build_graph_and_null_model(const int_array &from_arr,
     input_graph.addNode();
   }
 
-  const int *from = from_arr.data();
-  const int *to = to_arr.data();
-  const double *w = w_arr.data();
   for (int i = 0; i < n_edges; ++i) {
     if (from[i] < 0 || from[i] >= num_nodes || to[i] < 0 ||
         to[i] >= num_nodes) {
@@ -88,7 +93,6 @@ int build_graph_and_null_model(const int_array &from_arr,
                 w[i]);
   }
 
-  const double *null_model_input = null_model_input_arr.data();
   null_model.assign(num_null_vectors, std::vector<double>(num_nodes, 0));
   for (int i = 0; i < num_null_vectors; ++i) {
     for (int j = 0; j < num_nodes; ++j) {
@@ -129,6 +133,8 @@ double evaluate_quality(int_array from_arr, int_array to_arr,
 
   clq::find_linearised_generic_stability quality(time);
 
+  // pure C++ from here on: let other python threads run
+  py::gil_scoped_release release;
   return clq::find_stability<partition>(input_graph, input_graph_weights,
                                         null_model, quality, start_partition,
                                         1e-18);
@@ -158,17 +164,22 @@ run_louvain(int_array from_arr, int_array to_arr, double_array w_arr,
 
   std::vector<partition> optimal_partitions;
 
-  // call Louvain
-  double stability = clq::find_optimal_partition_louvain_gen<partition>(
-      input_graph, input_graph_weights, null_model, quality, quality_gain,
-      start_partition, optimal_partitions, 1e-18, rng);
+  // call Louvain; pure C++ from here on, so let other python threads run
+  double stability;
+  {
+    py::gil_scoped_release release;
+    stability = clq::find_optimal_partition_louvain_gen<partition>(
+        input_graph, input_graph_weights, null_model, quality, quality_gain,
+        start_partition, optimal_partitions, 1e-18, rng);
+  }
 
   partition best_partition = optimal_partitions.back();
 
   return std::make_pair(stability, best_partition.return_partition_vector());
 }
 
-PYBIND11_MODULE(generalized_louvain, m) {
+// no global state: safe to run without the GIL on free-threaded python
+PYBIND11_MODULE(generalized_louvain, m, py::mod_gil_not_used()) {
   m.doc() = R"pbdoc(
         Pybind11 binding of Generalized Louvain
         -----------------------------------------

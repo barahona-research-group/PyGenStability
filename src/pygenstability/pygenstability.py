@@ -18,11 +18,14 @@ import itertools
 import logging
 import multiprocessing
 from collections import defaultdict
+from contextlib import contextmanager
 from functools import partial
 from functools import wraps
+from multiprocessing.pool import ThreadPool
 from time import time
 from typing import Any
 from typing import Callable
+from typing import Iterator
 from typing import Sequence
 
 try:
@@ -42,7 +45,8 @@ from tqdm import tqdm
 try:
     from pygenstability import generalized_louvain
 
-    _NO_LOUVAIN = False
+    # without the compiled extension, the source folder imports as an empty namespace package
+    _NO_LOUVAIN = not hasattr(generalized_louvain, "run_louvain")
 except ImportError:  # pragma: no cover
     _NO_LOUVAIN = True
 
@@ -120,6 +124,20 @@ def _get_params(all_locals: dict[str, Any]) -> dict[str, Any]:
     return all_locals
 
 
+@contextmanager
+def _optimisation_pool(method: str, n_workers: int, pool: Any) -> Iterator[Any]:
+    """Pool for the stability optimisations and evaluations.
+
+    The C++ Louvain releases the GIL, so its runs use threads: they share the quality matrix
+    instead of pickling it to every worker process. Leiden holds the GIL and keeps processes.
+    """
+    if method == "louvain":
+        with ThreadPool(n_workers) as thread_pool:
+            yield thread_pool
+    else:
+        yield pool
+
+
 @_timing
 def _get_constructor_data(
     constructor: Any,
@@ -141,7 +159,10 @@ def _check_method(method: str) -> str:  # pragma: no cover
         raise Exception("Without Louvain or Leiden solver, we cannot run PyGenStability")
 
     if method == "louvain" and _NO_LOUVAIN:
-        L.warning("Louvain is not available, we fallback to leiden.")
+        L.warning(
+            "The compiled Louvain extension is not available (building pygenstability from "
+            "source needs a C++ compiler), we fallback to leiden."
+        )
         return "leiden"
 
     if method == "leiden" and _NO_LEIDEN:
@@ -257,7 +278,10 @@ def run(
     }
 
     constructor_obj = load_constructor(constructor, graph, **constructor_kwargs)
-    with multiprocessing.Pool(n_workers) as pool:
+    with (
+        multiprocessing.Pool(n_workers) as pool,
+        _optimisation_pool(method, n_workers, pool) as optimisation_pool,
+    ):
         L.info("Precompute constructors...")
         constructor_data = _get_constructor_data(
             constructor_obj, scales, pool, tqdm_disable=tqdm_disable
@@ -268,6 +292,7 @@ def run(
             constructor_data,
             scales,
             pool,
+            optimisation_pool,
             rng,
             n_tries=n_tries,
             method=method,
@@ -283,6 +308,7 @@ def run(
         all_results = _run_post_scan_analysis(
             scan_results,
             pool,
+            optimisation_pool,
             constructor_data,
             method=method,
             tqdm_disable=tqdm_disable,
@@ -310,6 +336,7 @@ def _scan_scales(
     constructor_data: list[dict[str, Any]],
     scales: np.ndarray,
     pool: Any,
+    optimisation_pool: Any,
     rng: np.random.Generator,
     *,
     n_tries: int,
@@ -327,7 +354,7 @@ def _scan_scales(
     all_results["run_params"] = run_params
 
     for i, t in tqdm(enumerate(scales), total=n_scale, disable=tqdm_disable):
-        results = _run_optimisations(constructor_data[i], n_tries, pool, rng, method)
+        results = _run_optimisations(constructor_data[i], n_tries, optimisation_pool, rng, method)
         communities = _process_runs(t, results, all_results)
 
         if with_NVI:
@@ -343,6 +370,7 @@ def _scan_scales(
 def _run_post_scan_analysis(
     all_results: defaultdict,
     pool: Any,
+    optimisation_pool: Any,
     constructor_data: list[dict[str, Any]],
     *,
     method: str,
@@ -356,7 +384,9 @@ def _run_post_scan_analysis(
     """Apply postprocessing, ttprime, and optimal-scale selection."""
     if with_postprocessing:
         L.info("Apply postprocessing...")
-        _apply_postprocessing(all_results, pool, constructor_data, tqdm_disable, method=method)
+        _apply_postprocessing(
+            all_results, optimisation_pool, constructor_data, tqdm_disable, method=method
+        )
 
     if with_ttprime or with_optimal_scales:
         L.info("Compute ttprimes...")
