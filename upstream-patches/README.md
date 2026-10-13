@@ -28,3 +28,19 @@ cases and the 20k workload; leidenalg's 688 tests pass.
 - `generalizedLouvain/0001-*`: insert reduced-graph edges in sorted order (cross-platform
   determinism; fixes the 3 Windows `test_dataclustering` failures, see #119/#120). Also open as
   https://github.com/arnaudon/generalizedLouvain/pull/1.
+
+## Validation of the three split libleidenalg branches (each alone on fe2d4e7)
+20k-node CPM workload (linearized t=1), one optimise call, n_iterations=2, 3 seeds; equivalence
+script = 180 cases (all quality functions, directed/undirected, loops, multi-edges, multiplex):
+
+| build | single layer | 2-layer multiplex | results | leidenalg tests |
+|---|---|---|---|---|
+| shipped config (-O0) | 2.24 s | 4.07 s | reference | |
+| -O3, no patches | 0.63 s | 1.08 s | identical | |
+| branch-release-build (no flags passed: new default) | 0.59 s | 1.07 s | identical (180/180, same hashes) | 688 OK |
+| branch-refinement-alloc-bytevectors (Release) | 0.58 s | 1.14 s | identical | 688 OK |
+| branch-csr-zero-weight-layers (Release) | 0.53 s | 0.74 s | identical | 688 OK |
+
+Partition construction also drops from ~30 ms to ~10 ms with the CSR branch. Timings are on a
+shared machine (noisy); the gains of the second and third branches are larger combined
+(full stack: ~0.44 s single, ~0.65 s multiplex).
