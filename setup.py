@@ -13,7 +13,9 @@ setup(
             "pygenstability.generalized_louvain",
             ["src/pygenstability/generalized_louvain/generalized_louvain.cpp"],
             include_dirs=["extra", "generalizedLouvain"],
-            extra_compile_args=["-std=c++11"],
+            cxx_std=11,
+            # use lemon header-only (its compiled library, e.g. lemon::INVALID, is not built)
+            define_macros=[("LEMON_ONLY_TEMPLATES", None)],
             optional=True,
         ),
     ],

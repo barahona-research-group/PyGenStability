@@ -18,5 +18,9 @@
 /* #undef LEMON_DEFAULT_LP */
 /* #undef LEMON_DEFAULT_MIP */
 
+// pthread is not available with MSVC: on Windows fall back to lemon's no-op
+// lock (graphs are built and used by a single thread in pygenstability)
+#if !defined(_WIN32)
 #define LEMON_USE_PTHREAD 1
+#endif
 /* #undef LEMON_USE_WIN32_THREADS */

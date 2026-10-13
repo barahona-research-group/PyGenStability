@@ -36,172 +36,125 @@ double find_stability(T &graph, W &weights, vec2 null_model_vec,
 }
 } // namespace clq
 
-double evaluate_quality(py::array_t<int> from_arr, py::array_t<int> to_arr,
-                        py::array_t<double> w_arr, int n_edges,
-                        py::array_t<double> null_model_input_arr,
-                        int num_null_vectors, double time,
-                        py::array_t<int> partition_arr) {
+namespace {
 
-  // convert input arrys tto pointers
-  py::buffer_info info_from = from_arr.request();
-  auto from = static_cast<int *>(info_from.ptr);
+// C-contiguous arrays of the expected dtype (pybind11 converts/copies otherwise)
+using int_array = py::array_t<int, py::array::c_style | py::array::forcecast>;
+using double_array = py::array_t<double, py::array::c_style | py::array::forcecast>;
 
-  py::buffer_info info_to = to_arr.request();
-  auto to = static_cast<int *>(info_to.ptr);
+// Build the graph and null model from the python inputs.
+//
+// The number of nodes is taken from the null model (shape (num_null_vectors,
+// num_nodes)), not from the largest node id in the edge list, so that nodes
+// without any quality entry (e.g. the last node) are not silently dropped.
+int build_graph_and_null_model(const int_array &from_arr,
+                               const int_array &to_arr,
+                               const double_array &w_arr, int n_edges,
+                               const double_array &null_model_input_arr,
+                               int num_null_vectors,
+                               lemon::SmartGraph &input_graph,
+                               lemon::SmartGraph::EdgeMap<double> &weights,
+                               clq::vec2 &null_model) {
+  if (null_model_input_arr.ndim() != 2 ||
+      null_model_input_arr.shape(0) != num_null_vectors) {
+    throw py::value_error(
+        "null_model must have shape (num_null_vectors, num_nodes)");
+  }
+  if (num_null_vectors % 2 != 0) {
+    throw py::value_error("null model vectors must be provided as pairs");
+  }
+  if (n_edges < 0 || from_arr.size() < n_edges || to_arr.size() < n_edges ||
+      w_arr.size() < n_edges) {
+    throw py::value_error("edge arrays are shorter than n_edges");
+  }
+  const int num_nodes = static_cast<int>(null_model_input_arr.shape(1));
 
-  py::buffer_info info_w = w_arr.request();
-  auto w = static_cast<double *>(info_w.ptr);
-
-  py::buffer_info info_null_model_input = null_model_input_arr.request();
-  auto null_model_input = static_cast<double *>(info_null_model_input.ptr);
-
-  py::buffer_info info_partition = partition_arr.request();
-  auto partition_vec = static_cast<int *>(info_partition.ptr);
-
-  // initialise markov time from input
-  double current_markov_time = 1;
-  current_markov_time = time;
-
-  // initialise graph from input
-  lemon::SmartGraph input_graph;
-  lemon::SmartGraph::EdgeMap<double> input_graph_weights(input_graph);
-
-  int max_node_id_seen = -1;
-  for (int i = 0; i < n_edges; ++i) {
-    int node1_id = from[i];
-    int node2_id = to[i];
-    double weight = w[i];
-
-    if (node1_id > max_node_id_seen) {
-      int difference = node1_id - max_node_id_seen;
-      for (int i = 0; i < difference; ++i) {
-        input_graph.addNode();
-      }
-      max_node_id_seen = node1_id;
-    }
-
-    if (node2_id > max_node_id_seen) {
-      int difference = node2_id - max_node_id_seen;
-      for (int i = 0; i < difference; ++i) {
-        input_graph.addNode();
-      }
-      max_node_id_seen = node2_id;
-    }
-
-    input_graph_weights.set(
-        input_graph.addEdge(input_graph.nodeFromId(node1_id),
-                            input_graph.nodeFromId(node2_id)),
-        weight);
+  input_graph.reserveNode(num_nodes);
+  input_graph.reserveEdge(n_edges);
+  for (int i = 0; i < num_nodes; ++i) {
+    input_graph.addNode();
   }
 
-  int num_nodes = lemon::countNodes(input_graph);
+  const int *from = from_arr.data();
+  const int *to = to_arr.data();
+  const double *w = w_arr.data();
+  for (int i = 0; i < n_edges; ++i) {
+    if (from[i] < 0 || from[i] >= num_nodes || to[i] < 0 ||
+        to[i] >= num_nodes) {
+      throw py::value_error("edge node id out of range of the null model");
+    }
+    weights.set(input_graph.addEdge(input_graph.nodeFromId(from[i]),
+                                    input_graph.nodeFromId(to[i])),
+                w[i]);
+  }
 
-  // initialise null model
-  std::vector<std::vector<double>> null_model(
-      num_null_vectors, std::vector<double>(num_nodes, 0));
+  const double *null_model_input = null_model_input_arr.data();
+  null_model.assign(num_null_vectors, std::vector<double>(num_nodes, 0));
   for (int i = 0; i < num_null_vectors; ++i) {
     for (int j = 0; j < num_nodes; ++j) {
-      null_model[i][j] = null_model_input[i * (num_nodes) + j];
+      null_model[i][j] = null_model_input[i * num_nodes + j];
     }
   }
+  return num_nodes;
+}
 
-  // define type for vector partition initialise start partition, qualitiy
-  // functions etc.
-  typedef clq::VectorPartition partition;
+} // namespace
 
+double evaluate_quality(int_array from_arr, int_array to_arr,
+                        double_array w_arr, int n_edges,
+                        double_array null_model_input_arr,
+                        int num_null_vectors, double time,
+                        int_array partition_arr) {
+  lemon::SmartGraph input_graph;
+  lemon::SmartGraph::EdgeMap<double> input_graph_weights(input_graph);
+  clq::vec2 null_model;
+  int num_nodes = build_graph_and_null_model(
+      from_arr, to_arr, w_arr, n_edges, null_model_input_arr,
+      num_null_vectors, input_graph, input_graph_weights, null_model);
+
+  if (partition_arr.size() != num_nodes) {
+    throw py::value_error("partition size does not match number of nodes");
+  }
+  const int *partition_vec = partition_arr.data();
   std::vector<int> part_test(num_nodes);
   for (int i = 0; i < num_nodes; ++i) {
+    if (partition_vec[i] < 0 || partition_vec[i] >= num_nodes) {
+      throw py::value_error("partition ids must be in [0, num_nodes)");
+    }
     part_test[i] = partition_vec[i];
   }
 
+  typedef clq::VectorPartition partition;
   partition start_partition(part_test);
 
-  clq::find_linearised_generic_stability quality(current_markov_time);
+  clq::find_linearised_generic_stability quality(time);
 
-  double stability = clq::find_stability<partition>(
-      input_graph, input_graph_weights, null_model, quality, start_partition,
-      1e-18);
-
-  return stability;
+  return clq::find_stability<partition>(input_graph, input_graph_weights,
+                                        null_model, quality, start_partition,
+                                        1e-18);
 }
 
 std::pair<double, std::vector<int>>
-run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
-            py::array_t<double> w_arr, int n_edges,
-            py::array_t<double> null_model_input_arr, int num_null_vectors,
-            double time,
-            unsigned int seed) {
+run_louvain(int_array from_arr, int_array to_arr, double_array w_arr,
+            int n_edges, double_array null_model_input_arr,
+            int num_null_vectors, double time, unsigned int seed) {
 
   std::mt19937 rng(seed);
-  // convert input arrays to pointers
-  py::buffer_info info_from = from_arr.request();
-  auto from = static_cast<int *>(info_from.ptr);
 
-  py::buffer_info info_to = to_arr.request();
-  auto to = static_cast<int *>(info_to.ptr);
-
-  py::buffer_info info_w = w_arr.request();
-  auto w = static_cast<double *>(info_w.ptr);
-
-  py::buffer_info info_null_model_input = null_model_input_arr.request();
-  auto null_model_input = static_cast<double *>(info_null_model_input.ptr);
-
-  // initialise markov time from input
-  double current_markov_time = 1;
-  current_markov_time = time;
-
-  // initialise graph from input
   lemon::SmartGraph input_graph;
   lemon::SmartGraph::EdgeMap<double> input_graph_weights(input_graph);
+  clq::vec2 null_model;
+  int num_nodes = build_graph_and_null_model(
+      from_arr, to_arr, w_arr, n_edges, null_model_input_arr,
+      num_null_vectors, input_graph, input_graph_weights, null_model);
 
-  int max_node_id_seen = -1;
-  for (int i = 0; i < n_edges; ++i) {
-    int node1_id = from[i];
-    int node2_id = to[i];
-    double weight = w[i];
-
-    if (node1_id > max_node_id_seen) {
-      int difference = node1_id - max_node_id_seen;
-      for (int i = 0; i < difference; ++i) {
-        input_graph.addNode();
-      }
-      max_node_id_seen = node1_id;
-    }
-
-    if (node2_id > max_node_id_seen) {
-      int difference = node2_id - max_node_id_seen;
-      for (int i = 0; i < difference; ++i) {
-        input_graph.addNode();
-      }
-      max_node_id_seen = node2_id;
-    }
-
-    input_graph_weights.set(
-        input_graph.addEdge(input_graph.nodeFromId(node1_id),
-                            input_graph.nodeFromId(node2_id)),
-        weight);
-  }
-
-  int num_nodes = lemon::countNodes(input_graph);
-
-  // initialise null model
-  std::vector<std::vector<double>> null_model(
-      num_null_vectors, std::vector<double>(num_nodes, 0));
-  for (int i = 0; i < num_null_vectors; ++i) {
-    for (int j = 0; j < num_nodes; ++j) {
-      null_model[i][j] = null_model_input[i * (num_nodes) + j];
-    }
-  }
-
-  // define type for vector partition initialise start partition, qualitiy
-  // functions etc.
   typedef clq::VectorPartition partition;
 
-  partition start_partition(lemon::countNodes(input_graph));
+  partition start_partition(num_nodes);
   start_partition.initialise_as_singletons();
 
-  clq::find_linearised_generic_stability quality(current_markov_time);
-  clq::linearised_generic_stability_gain quality_gain(current_markov_time);
+  clq::find_linearised_generic_stability quality(time);
+  clq::linearised_generic_stability_gain quality_gain(time);
 
   std::vector<partition> optimal_partitions;
 
@@ -212,11 +165,7 @@ run_louvain(py::array_t<int> from_arr, py::array_t<int> to_arr,
 
   partition best_partition = optimal_partitions.back();
 
-  // make a pair of stability and partitions
-  std::pair<double, std::vector<int>> output;
-  output = std::make_pair(stability, best_partition.return_partition_vector());
-
-  return output;
+  return std::make_pair(stability, best_partition.return_partition_vector());
 }
 
 PYBIND11_MODULE(generalized_louvain, m) {

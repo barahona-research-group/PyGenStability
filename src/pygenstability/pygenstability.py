@@ -563,7 +563,7 @@ def _optimise(
         )
 
     elif method == "leiden":
-        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        G = ig.Graph(n=np.shape(null_model)[1], edges=zip(*quality_indices), directed=True)
         partitions, layer_weights = _leiden_multiplex_layers(G, quality_values, null_model)
 
         optimiser = leidenalg.Optimiser()
@@ -603,7 +603,7 @@ def _evaluate_quality(
 
     # evaluate using Leiden method
     if method == "leiden":
-        G = ig.Graph(edges=zip(*quality_indices), directed=True)
+        G = ig.Graph(n=np.shape(null_model)[1], edges=zip(*quality_indices), directed=True)
         partitions, layer_weights = _leiden_multiplex_layers(
             G, quality_values, null_model, initial_membership=partition_id
         )

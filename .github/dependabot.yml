@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # keep the actions used in the workflows up to date
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+  # propose bumps of the generalizedLouvain submodule
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: monthly
