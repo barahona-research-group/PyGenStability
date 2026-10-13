@@ -494,12 +494,25 @@ def _leiden_multiplex_layers(
     :math:`S_a S_b = \tfrac{1}{4}(S_{a+b}^2 - S_{a-b}^2)` into two CPM layers with
     ``node_sizes`` :math:`(a+b)/2` (weight ``+1``) and :math:`(a-b)/2` (weight ``-1``),
     which handles asymmetric and signed nulls. The edge term gets its own layer so it is
-    counted once. For a symmetric pair (``a == b``) the second layer vanishes, recovering
-    the single-layer trick of V. Traag
+    counted once. For a single symmetric pair (``a == b``) the edge and null terms are
+    combined in one layer, the single-layer trick of V. Traag
     (https://github.com/vtraag/leidenalg/pull/109#issuecomment-1283963065).
     """
     n_nodes = graph.vcount()
     membership = {} if initial_membership is None else {"initial_membership": initial_membership}
+    null_model = np.asarray(null_model)
+
+    # a single symmetric pair (most constructors) fits exactly in one CPM layer, which is
+    # about twice as fast to optimise as the edge layer plus a null layer
+    if len(null_model) == 2 and np.array_equal(null_model[0], null_model[1]):
+        single_layer = leidenalg.CPMVertexPartition(
+            graph,
+            weights=quality_values,
+            node_sizes=null_model[0].tolist(),
+            correct_self_loops=True,
+            **membership,
+        )
+        return [single_layer], [1.0]
 
     # edge/quality term in a dedicated layer with no null contribution (node_sizes = 0)
     partitions = [
@@ -515,7 +528,6 @@ def _leiden_multiplex_layers(
 
     # null model terms, with no edge contribution (weights = 0), via polarisation
     zero_weights = [0.0] * len(quality_values)
-    null_model = np.asarray(null_model)
     for null_plus, null_minus in zip(null_model[::2], null_model[1::2]):
         for node_sizes, weight in (
             (0.5 * (null_plus + null_minus), 1.0),

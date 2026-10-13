@@ -240,6 +240,30 @@ def test__evaluate_quality_leiden_multi_pair_matches_louvain(graph):
         assert_almost_equal(deltas["leiden"], deltas["louvain"])
 
 
+def test__leiden_single_layer_matches_multiplex(graph):
+    """The single-layer path for one symmetric null pair gives the same quality as the
+    multiplex path (forced here by appending a zero pair, which does not change the objective).
+    """
+    data = load_constructor("continuous_combinatorial", graph).get_data(1)
+    quality_indices, quality_values = pgs._to_indices(data["quality"], directed=True)
+    null_model = np.asarray(data["null_model"])
+    null_model_multiplex = np.vstack([null_model, np.zeros_like(null_model)])
+    G = pgs.ig.Graph(n=null_model.shape[1], edges=zip(*quality_indices), directed=True)
+    assert len(pgs._leiden_multiplex_layers(G, quality_values, null_model)[0]) == 1
+    assert len(pgs._leiden_multiplex_layers(G, quality_values, null_model_multiplex)[0]) == 2
+
+    rng = np.random.default_rng(0)
+    for _ in range(5):
+        community_id = list(rng.integers(0, 4, size=null_model.shape[1]))
+        single = pgs._evaluate_quality(
+            community_id, quality_indices, quality_values, null_model, 0, method="leiden"
+        )
+        multiplex = pgs._evaluate_quality(
+            community_id, quality_indices, quality_values, null_model_multiplex, 0, method="leiden"
+        )
+        assert_almost_equal(single, multiplex)
+
+
 def test__evaluate_quality_leiden_null_matches_definition(graph_signed):
     """Leiden's null term equals sum_c S_a(c) S_b(c) up to a partition-independent constant."""
     data = load_constructor("signed_modularity", graph_signed).get_data(1)
