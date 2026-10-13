@@ -32,7 +32,7 @@ env:
   MACOSX_DEPLOYMENT_TARGET: '11.0'
   CIBW_BUILD_VERBOSITY: 1
   # Keep in sync with requires-python and the versions tested in run-tox.yml
-  CIBW_BUILD: 'cp311-* cp312-* cp313-* cp314-*'
+  CIBW_BUILD: 'cp311-* cp312-* cp313-* cp314-* cp314t-*'
   CIBW_SKIP: '*-manylinux_i686 *-musllinux_i686 *-win32'
   # The extension is optional in setup.py, so a failed compile would silently
   # produce a wheel without it: check that it is there and works.
