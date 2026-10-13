@@ -1,13 +1,26 @@
 [build-system]
-requires = ["setuptools", "numpy", "cython", "pybind11>=2.6.0", "wheel"]
+requires = ["setuptools>=77", "pybind11>=2.10.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyGenStability"
-version = "0.2.7"
+version = "0.3.0"
 description = "Python binding of generalised Louvain with Markov Stability"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: C++",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering",
+]
 authors = [
     {name = "Alexis Arnaudon", email = "alexis.arnaudon@epfl.ch"},
     {name = "Juni Schindler", email = "juni.schindler19@imperial.ac.uk"},

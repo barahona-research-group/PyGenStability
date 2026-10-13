@@ -3,14 +3,15 @@ name: Publish sdist and wheels macos-manylinux
 on:
   release:
     types: [created]
-    
+  workflow_dispatch:
+
 env:
   CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
   MACOSX_DEPLOYMENT_TARGET: '11.0'
   CIBW_BUILD_VERBOSITY: 2
-  # Only build on Python 3.x
-  CIBW_BUILD: 'cp3?-*'
-  CIBW_SKIP: 'cp39-* *-manylinux_i686'
+  # Keep in sync with requires-python and the versions tested in run-tox.yml
+  CIBW_BUILD: 'cp311-* cp312-* cp313-* cp314-*'
+  CIBW_SKIP: '*-manylinux_i686 *-musllinux_i686'
 
 jobs:
   build_wheels:
@@ -21,67 +22,55 @@ jobs:
         os: [ubuntu-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: Install cibuildwheel
-        run: |
-          python -m pip install cibuildwheel
-      - name: Build wheels on Linux
-        if: runner.os == 'Linux'
-        env:
-          CIBW_BEFORE_BUILD: |
-            yum update -y
-            python -m pip install pybind11
-        run: |
-          python -m cibuildwheel --output-dir dist
-      - name: Build wheels Mac OS
-        if: runner.os == 'macOS'
-        env:
-          CIBW_BEFORE_BUILD: |
-            brew update
-            brew unlink gcc@9
-            brew reinstall cmake
-            python -m pip install pybind11
-        run: |
-          python -m cibuildwheel --output-dir dist
+        run: python -m pip install cibuildwheel==4.3.1
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir dist
+
       - name: Store wheel as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.os }}-${{ matrix.python-version }}
+          name: dist-${{ matrix.os }}
           path: dist
 
   build_sdist:
     name: Build sdist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Set up Python 3.11
-        uses: actions/setup-python@master
+
+      - uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: '3.13'
+
       - name: Build a source tarball
         run: |
-          python -m pip install pybind11
-          python setup.py sdist
+          python -m pip install build
+          python -m build --sdist
+
       - name: Store sdist as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-sdist
           path: dist
 
   upload_wheels:
     runs-on: ubuntu-latest
     needs: [build_wheels, build_sdist]
     name: Upload wheels to PyPI
+    if: github.event_name == 'release'
     steps:
       - name: Download artifacts produced during the build_wheels and build_sdist jobs
         uses: actions/download-artifact@v4
